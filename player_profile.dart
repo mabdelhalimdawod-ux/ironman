@@ -9,7 +9,6 @@ const _sky = Color(0xFFD6EEFB);
 const _yellow = Color(0xFFFFC93C);
 const _green = Color(0xFF4CAF50);
 const _orange = Color(0xFFFF9800);
-const _red = Color(0xFFF44336);
 
 /// صفحة ملف اللاعب التفصيلي مع التحليلات الفسيولوجية
 class PlayerProfilePage extends StatefulWidget {
@@ -368,7 +367,6 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
   Widget _lineChartCard(
     List<FlSpot> spots,
     Color color, {
-    String? yLabel,
     double? refLine,
     String? refLabel,
   }) {

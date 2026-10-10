@@ -10,5 +10,10 @@ dependencies:
   sqflite: ^2.3.0
   path: ^1.9.0
   fl_chart: ^0.69.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
 flutter:
   uses-material-design: true

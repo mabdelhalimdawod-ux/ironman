@@ -486,7 +486,7 @@ class DB {
       // تقدير من اختبار واحد
       final t = testList.first;
       final estimated = estimateCPFromSingle(
-          t['avg_power']!, t['duration_seconds'] as int);
+          (t['avg_power'] as num).toDouble(), t['duration_seconds'] as int);
       result = {'cp': estimated, 'w_prime': 0};
       method = 'estimated';
     }
