@@ -295,7 +295,7 @@ class DB {
 
   static Future<Database> _open() async {
     final path = join(await getDatabasesPath(), 'rowing.db');
-    return openDatabase(path, version: 3,
+    return openDatabase(path, version: 4,
         onCreate: (d, v) async {
           await d.execute(
               'CREATE TABLE players(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mhr INTEGER, active INTEGER DEFAULT 1)');
@@ -325,6 +325,8 @@ class DB {
               max_power REAL,
               duration_seconds INTEGER,
               distance INTEGER,
+              split_500 REAL,
+              ef REAL,
               PRIMARY KEY(player_id, date, idx)
             )
           ''');
@@ -396,6 +398,10 @@ class DB {
                 PRIMARY KEY(player_id, date)
               )
             ''');
+          }
+          if (oldVersion < 4) {
+            await d.execute('ALTER TABLE logs ADD COLUMN split_500 REAL');
+            await d.execute('ALTER TABLE logs ADD COLUMN ef REAL');
           }
         });
   }
