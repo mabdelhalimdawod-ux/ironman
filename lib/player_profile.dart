@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'db.dart';
+import 'app_strings.dart';
 import 'dart:math';
 
 // ==================== ألوان التصميم ====================
@@ -10,7 +11,7 @@ const _yellow = Color(0xFFFFC93C);
 const _green = Color(0xFF4CAF50);
 const _orange = Color(0xFFFF9800);
 
-/// صفحة ملف اللاعب التفصيلي مع التحليلات الفسيولوجية
+/// صفحة ملف اللاعب التفصيلي مع التحليلات الفسيولوجية (محوّلة لنمط الترجمة)
 class PlayerProfilePage extends StatefulWidget {
   final Map<String, Object?> player;
   const PlayerProfilePage({super.key, required this.player});
@@ -49,9 +50,11 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('${p['name']}'),
+        title: Text('${p['name']} - ${s.athleteDetails}'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -63,50 +66,50 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
         ],
       ),
       body: loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: _navy))
           : logs.isEmpty
-              ? _emptyState()
+              ? _emptyState(s)
               : ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    _playerCard(),
+                    _playerCard(s),
                     if (alerts.isNotEmpty) ...[
-                      _sectionTitle('🚨 تنبيهات'),
+                      _sectionTitle(s.overtrainingAlerts),
                       _alertsCard(),
                     ],
-                    _sectionTitle('🎯 مؤشر الجاهزية'),
-                    _readinessCard(),
-                    _sectionTitle('⚖️ التوازن الفسيولوجي'),
-                    _balanceRadar(),
-                    _sectionTitle('❤️ اتجاه نبض الراحة (RHR)'),
+                    _sectionTitle(s.readinessScore),
+                    _readinessCard(s),
+                    _sectionTitle(s.physiologicalBalance),
+                    _balanceRadar(s),
+                    _sectionTitle('${s.rhrLabel} - RHR'),
                     _rhrChart(),
-                    _sectionTitle('💓 اتجاه تغير النبض (HRV)'),
+                    _sectionTitle('${s.hrvLabel} - HRV'),
                     _hrvChart(),
-                    _sectionTitle('🔄 الاستشفاء'),
-                    _recoveryChart(),
-                    _sectionTitle('⚖️ الوزن'),
+                    _sectionTitle(s.recoveryAnalytics),
+                    _recoveryChart(s),
+                    _sectionTitle(s.weightLabel),
                     _weightChart(),
-                    _sectionTitle('📊 توزيع مناطق التدريب'),
+                    _sectionTitle('📊 ${s.isArabic ? 'توزيع مناطق التدريب' : 'Training Zones Distribution'}'),
                     _zonesChart(),
-                    _sectionTitle('📋 آخر التسجيلات'),
-                    _recentLogsTable(),
+                    _sectionTitle(s.sessionsHistory),
+                    _recentLogsTable(s),
                     const SizedBox(height: 32),
                   ],
                 ),
     );
   }
 
-  Widget _emptyState() => const Center(
+  Widget _emptyState(AppStrings s) => Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.insert_chart_outlined, size: 80, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('لا توجد بيانات مسجلة بعد',
-                style: TextStyle(fontSize: 20, color: Colors.grey)),
-            SizedBox(height: 8),
-            Text('سجّل بيانات اللاعب من صفحة "تسجيل"',
-                style: TextStyle(color: Colors.grey)),
+            const Icon(Icons.insert_chart_outlined, size: 80, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(s.noLogsForPlayer,
+                style: const TextStyle(fontSize: 18, color: Colors.grey)),
+            const SizedBox(height: 8),
+            Text(s.tapPlayerToLog,
+                style: const TextStyle(color: Colors.grey)),
           ],
         ),
       );
@@ -115,10 +118,10 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
       padding: const EdgeInsets.only(top: 20, bottom: 8),
       child: Text(t,
           style: const TextStyle(
-              fontSize: 20, fontWeight: FontWeight.bold, color: _navy)));
+              fontSize: 18, fontWeight: FontWeight.bold, color: _navy)));
 
   // ==================== بطاقة اللاعب ====================
-  Widget _playerCard() {
+  Widget _playerCard(AppStrings s) {
     final latest = logs.isNotEmpty ? logs.first : null;
     final sessionCount7 = logs.where((l) {
       final d = DateTime.tryParse(l['date'] as String? ?? '');
@@ -152,9 +155,9 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                             color: Colors.white)),
-                    Text('MHR: $mhr  •  الحالة: ${p['active'] == 1 ? 'نشط' : 'غير نشط'}',
+                    Text('${s.maxHRLabel}: $mhr • ${p['active'] == 1 ? s.playerStatusActive : s.playerStatusInactive}',
                         style: TextStyle(
-                            fontSize: 16, color: Colors.white.withOpacity(0.8))),
+                            fontSize: 14, color: Colors.white.withOpacity(0.8))),
                   ],
                 ),
               ),
@@ -163,12 +166,12 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _statChip('حصص الأسبوع', '$sessionCount7'),
-                _statChip('إجمالي السجلات', '${logs.length}'),
+                _statChip(s.isArabic ? 'حصص الأسبوع' : 'Weekly', '$sessionCount7'),
+                _statChip(s.isArabic ? 'إجمالي السجلات' : 'Total Logs', '${logs.length}'),
                 if (latest != null && latest['rhr'] != null)
-                  _statChip('آخر RHR', '${latest['rhr']}'),
+                  _statChip(s.isArabic ? 'آخر RHR' : 'Latest RHR', '${latest['rhr']}'),
                 if (baseline.isNotEmpty && baseline['avg_rhr'] != null)
-                  _statChip('متوسط RHR', '${baseline['avg_rhr']?.round()}'),
+                  _statChip(s.isArabic ? 'متوسط RHR' : 'Avg RHR', '${baseline['avg_rhr']?.round()}'),
               ],
             ),
           ],
@@ -180,12 +183,12 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
   Widget _statChip(String label, String value) => Column(children: [
         Text(value,
             style: const TextStyle(
-                fontSize: 22,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: _yellow)),
         Text(label,
             style: TextStyle(
-                fontSize: 12, color: Colors.white.withOpacity(0.7))),
+                fontSize: 11, color: Colors.white.withOpacity(0.7))),
       ]);
 
   // ==================== التنبيهات ====================
@@ -199,7 +202,7 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
               for (final a in alerts)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(a, style: const TextStyle(fontSize: 16)),
+                  child: Text(a, style: const TextStyle(fontSize: 15)),
                 ),
             ],
           ),
@@ -207,7 +210,7 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
       );
 
   // ==================== مؤشر الجاهزية ====================
-  Widget _readinessCard() {
+  Widget _readinessCard(AppStrings s) {
     final latest = logs.isNotEmpty ? logs.first : null;
     double score = 75;
     if (latest != null && baseline.isNotEmpty) {
@@ -246,25 +249,25 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                 children: [
                   Text('${score.round()}%',
                       style: TextStyle(
-                          fontSize: 32,
+                          fontSize: 30,
                           fontWeight: FontWeight.bold,
                           color: color)),
                   Text(text,
-                      style: TextStyle(fontSize: 16, color: color)),
+                      style: TextStyle(fontSize: 15, color: color)),
                 ],
               ),
             ],
           ),
           const SizedBox(height: 16),
           if (latest != null) ...[
-            _readinessDetail('نبض الراحة', '${latest['rhr'] ?? '-'}',
-                'المتوسط: ${baseline['avg_rhr']?.round() ?? '-'}'),
-            _readinessDetail('تغير النبض', '${latest['hrv'] ?? '-'}',
-                'المتوسط: ${baseline['avg_hrv']?.round() ?? '-'}'),
-            _readinessDetail('الإرهاق',
+            _readinessDetail(s.rhrLabel, '${latest['rhr'] ?? '-'}',
+                '${s.isArabic ? 'المتوسط' : 'Avg'}: ${baseline['avg_rhr']?.round() ?? '-'}'),
+            _readinessDetail(s.hrvLabel, '${latest['hrv'] ?? '-'}',
+                '${s.isArabic ? 'المتوسط' : 'Avg'}: ${baseline['avg_hrv']?.round() ?? '-'}'),
+            _readinessDetail(s.fatigueLabel,
                 fatigueLabels[latest['fatigue'] as int?] ?? '-', ''),
-            _readinessDetail('النوم',
-                '${latest['sleep_hours'] ?? '-'} ساعات', ''),
+            _readinessDetail(s.sleepLabel,
+                '${latest['sleep_hours'] ?? '-'} ${s.hours}', ''),
           ],
         ]),
       ),
@@ -276,24 +279,24 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
       child: Row(children: [
         Expanded(
             child: Text(label,
-                style: const TextStyle(fontSize: 16, color: Colors.grey))),
+                style: const TextStyle(fontSize: 14, color: Colors.grey))),
         Text(value,
             style:
-                const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
         if (sub.isNotEmpty) ...[
           const SizedBox(width: 8),
           Text(sub,
-              style: const TextStyle(fontSize: 13, color: Colors.grey)),
+              style: const TextStyle(fontSize: 12, color: Colors.grey)),
         ],
       ]));
 
   // ==================== رادار التوازن الفسيولوجي ====================
-  Widget _balanceRadar() {
+  Widget _balanceRadar(AppStrings s) {
     if (balance.isEmpty) {
-      return const Card(
+      return Card(
           child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('لا توجد بيانات كافية لعرض التوازن')));
+              padding: const EdgeInsets.all(16),
+              child: Text(s.isArabic ? 'لا توجد بيانات كافية لعرض التوازن' : 'Not enough data for balance radar')));
     }
 
     final keys = balance.keys.toList();
@@ -304,14 +307,14 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(children: [
-          Text('المؤشر العام: ${avgScore.round()}%',
+          Text('${s.isArabic ? 'المؤشر العام' : 'Overall Index'}: ${avgScore.round()}%',
               style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Color(readinessColor(avgScore)))),
           const SizedBox(height: 16),
           SizedBox(
-            height: 280,
+            height: 260,
             child: RadarChart(
               RadarChartData(
                 radarShape: RadarShape.polygon,
@@ -324,7 +327,7 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                 tickCount: 4,
                 ticksTextStyle: const TextStyle(fontSize: 0),
                 titleTextStyle: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: _navy),
                 getTitle: (i, _) =>
@@ -344,7 +347,6 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
             ),
           ),
           const SizedBox(height: 12),
-          // شرح المحاور
           Wrap(
             spacing: 8,
             runSpacing: 4,
@@ -352,7 +354,7 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
               for (int i = 0; i < keys.length; i++)
                 Chip(
                   label: Text('${keys[i]}: ${values[i].round()}%',
-                      style: const TextStyle(fontSize: 12)),
+                      style: const TextStyle(fontSize: 11)),
                   backgroundColor: Color(readinessColor(values[i]))
                       .withOpacity(0.2),
                 ),
@@ -384,7 +386,7 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: SizedBox(
-          height: 200,
+          height: 190,
           child: LineChart(
             LineChartData(
               minY: minY,
@@ -459,7 +461,7 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                             TextStyle(
                                 color: color,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 14),
+                                fontSize: 13),
                           ))
                       .toList(),
                 ),
@@ -514,12 +516,12 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
   }
 
   // ==================== الاستشفاء ====================
-  Widget _recoveryChart() {
+  Widget _recoveryChart(AppStrings s) {
     if (recoveryData.isEmpty) {
-      return const Card(
+      return Card(
           child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('لا توجد بيانات استشفاء (سجّل النبض بعد التمرين)')));
+              padding: const EdgeInsets.all(16),
+              child: Text(s.isArabic ? 'لا توجد بيانات استشفاء مسجلة' : 'No recovery data recorded')));
     }
 
     final reversedData = recoveryData.reversed.toList();
@@ -534,11 +536,13 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
 
     return Column(children: [
       _lineChartCard(spots, _green, refLine: 20, refLabel: 'هدف: 20%+'),
-      const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Text(
-          '💡 نسبة الاستشفاء = مدى انخفاض النبض بعد التمرين. أعلى من 20% = ممتاز',
-          style: TextStyle(fontSize: 13, color: Colors.grey),
+          s.isArabic
+              ? '💡 نسبة الاستشفاء = مدى انخفاض النبض بعد التمرين. أعلى من 20% = ممتاز'
+              : '💡 Recovery Rate = Heart rate drop post-workout. >20% = Excellent',
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
         ),
       ),
     ]);
@@ -591,7 +595,7 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
         padding: const EdgeInsets.all(16),
         child: Column(children: [
           SizedBox(
-            height: 200,
+            height: 190,
             child: BarChart(
               BarChartData(
                 alignment: BarChartAlignment.spaceAround,
@@ -628,7 +632,7 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                       BarChartRodData(
                         toY: zonesDist.values.elementAt(i).toDouble(),
                         color: colors[i % colors.length],
-                        width: 28,
+                        width: 26,
                         borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(6)),
                       ),
@@ -646,12 +650,12 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
   }
 
   // ==================== جدول آخر التسجيلات ====================
-  Widget _recentLogsTable() {
+  Widget _recentLogsTable(AppStrings s) {
     final recentLogs = logs.take(15).toList();
     if (recentLogs.isEmpty) {
-      return const Card(
+      return Card(
           child: Padding(
-              padding: EdgeInsets.all(16), child: Text('لا توجد سجلات')));
+              padding: const EdgeInsets.all(16), child: Text(s.noData)));
     }
 
     return Card(
@@ -660,17 +664,17 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
         child: DataTable(
           headingRowColor: WidgetStateProperty.all(_sky),
           columnSpacing: 14,
-          columns: const [
-            DataColumn(label: Text('التاريخ', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('النوع', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('RHR', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('HRV', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('النبض', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('أقصى', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('بعد', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('دقيقة', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('الوزن', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('إرهاق', style: TextStyle(fontWeight: FontWeight.bold))),
+          columns: [
+            DataColumn(label: Text(s.isArabic ? 'التاريخ' : 'Date', style: const TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text(s.isArabic ? 'النوع' : 'Kind', style: const TextStyle(fontWeight: FontWeight.bold))),
+            const DataColumn(label: Text('RHR', style: TextStyle(fontWeight: FontWeight.bold))),
+            const DataColumn(label: Text('HRV', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text(s.workoutHRLabel, style: const TextStyle(fontWeight: FontWeight.bold))),
+            const DataColumn(label: Text('HR Max', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text(s.postHRLabel, style: const TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text(s.hr1MinLabel, style: const TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text(s.weightLabel, style: const TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text(s.fatigueLabel, style: const TextStyle(fontWeight: FontWeight.bold))),
           ],
           rows: [
             for (final l in recentLogs)
@@ -709,11 +713,11 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
         final lower = (mhr * z[0] / 100).round();
         final upper = (mhr * z[1] / 100).round();
         if (hr < lower - 5) {
-          textColor = Colors.blue; // أقل من المطلوب
+          textColor = Colors.blue;
         } else if (hr > upper + 5) {
-          textColor = Colors.red; // أعلى من المطلوب
+          textColor = Colors.red;
         } else {
-          textColor = _green; // في النطاق
+          textColor = _green;
         }
       }
     }

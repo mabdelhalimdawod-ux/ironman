@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'db.dart';
 import 'app_strings.dart';
-import 'player_entry_page.dart';
+import 'program_service.dart';
+import 'athlete_day_entry_page.dart';
 
 const Color _navy = Color(0xFF0D3B66);
 const Color _sky = Color(0xFFE8F4FC);
 const Color _gold = Color(0xFFFFC93C);
+const Color _green = Color(0xFF2E7D32);
 
-/// التاب الثاني: التمارين (Workout & Sessions Tab)
+/// تاب "التمارين" (Workouts Tab):
+/// - هيدر علوي يعرض كل تمارين اليوم الجاية من تاب البرنامج بمواعيدها ونوعها
+/// - تحت الهيدر قائمة أسماء اللاعبين
+/// - بالضغط على اسم لاعب تدخل لصفحته الفرعية لتسجيل فورمات تمارين اليوم
+/// - بعد الحفظ يتم الرجوع تلقائياً واسم اللاعب الذي أتم تسجيل كل تمارين يومه يتغير لونه
 class WorkoutsTab extends StatefulWidget {
   const WorkoutsTab({super.key});
 
@@ -17,10 +23,11 @@ class WorkoutsTab extends StatefulWidget {
 
 class _WorkoutsTabState extends State<WorkoutsTab> {
   DateTime _selectedDate = DateTime.now();
-  List<Map<String, Object?>> _sessions = [];
-  int _selectedSessionIdx = 0;
+  List<Map<String, Object?>> _todayWorkouts = [];
   List<Map<String, Object?>> _players = [];
-  Set<int> _loggedPlayerIds = {};
+  
+  // خريطة لتتبع عدد التمارين المسجلة لكل لاعب اليوم: playerId -> count of logged sessions
+  final Map<int, int> _playerCompletedCounts = {};
   bool _loading = true;
 
   @override
@@ -33,37 +40,23 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
     setState(() => _loading = true);
     final dateStr = dstr(_selectedDate);
 
-    // 1. جلب حصص اليوم
-    _sessions = await DB.sessions(dateStr);
-    if (_sessions.isEmpty) {
-      // إذا لم تكن هناك حصص، ننشئ حصة افتراضية لليوم لتسهيل التجربة
-      await DB.put('sessions', {
-        'date': dateStr,
-        'idx': 0,
-        'kind': 'Erg',
-        'zone': 'Z2',
-      });
-      _sessions = await DB.sessions(dateStr);
-    }
-
-    if (_selectedSessionIdx >= _sessions.length) {
-      _selectedSessionIdx = 0;
-    }
+    // 1. جلب تمارين اليوم الجاية من تاب البرنامج وقالب السيكل النشط بمواعيدها
+    _todayWorkouts = await ProgramService.getTodayWorkouts(_selectedDate);
 
     // 2. جلب اللاعبين النشطين
     _players = await DB.q('SELECT * FROM players WHERE active=1 ORDER BY name');
 
-    // 3. جلب معرفات اللاعبين المسجلين لهذه الحصة
-    if (_sessions.isNotEmpty) {
-      final currentSession = _sessions[_selectedSessionIdx];
-      final currentIdx = currentSession['idx'] as int? ?? 0;
-      final logs = await DB.q(
-        'SELECT player_id FROM logs WHERE date=? AND idx=?',
-        [dateStr, currentIdx],
-      );
-      _loggedPlayerIds = logs.map((e) => e['player_id'] as int).toSet();
-    } else {
-      _loggedPlayerIds = {};
+    // 3. فحص سجلات كل لاعب لليوم لمعرفة من أتم كل التمارين
+    _playerCompletedCounts.clear();
+    final todayLogs = await DB.q(
+      'SELECT player_id, COUNT(DISTINCT idx) as cnt FROM logs WHERE date = ? GROUP BY player_id',
+      [dateStr],
+    );
+
+    for (final row in todayLogs) {
+      final pid = row['player_id'] as int;
+      final cnt = (row['cnt'] as num?)?.toInt() ?? 0;
+      _playerCompletedCounts[pid] = cnt;
     }
 
     if (mounted) setState(() => _loading = false);
@@ -90,36 +83,27 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
     );
 
     if (picked != null) {
-      setState(() {
-        _selectedDate = picked;
-        _selectedSessionIdx = 0;
-      });
+      setState(() => _selectedDate = picked);
       _loadAll();
     }
   }
 
-  Future<void> _addSession() async {
+  void _openAthleteEntry(Map<String, Object?> player) async {
     final dateStr = dstr(_selectedDate);
-    final newIdx = _sessions.length;
-    await DB.put('sessions', {
-      'date': dateStr,
-      'idx': newIdx,
-      'kind': 'Erg',
-      'zone': 'Z2',
-    });
-    setState(() => _selectedSessionIdx = newIdx);
-    _loadAll();
-  }
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => AthleteDayEntryPage(
+          player: player,
+          date: dateStr,
+          sessions: _todayWorkouts,
+        ),
+      ),
+    );
 
-  Future<void> _updateSession(int idx, String kind, String zone) async {
-    final dateStr = dstr(_selectedDate);
-    await DB.put('sessions', {
-      'date': dateStr,
-      'idx': idx,
-      'kind': kind,
-      'zone': zone,
-    });
-    _loadAll();
+    // إذا تم الحفظ، نعيد تحميل البيانات فوراً ليتغير لون اسم اللاعب
+    if (result == true || mounted) {
+      _loadAll();
+    }
   }
 
   @override
@@ -131,7 +115,7 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
       return const Center(child: CircularProgressIndicator(color: _navy));
     }
 
-    final currentSession = _sessions.isNotEmpty ? _sessions[_selectedSessionIdx] : null;
+    final totalSessionsCount = _todayWorkouts.length;
 
     return RefreshIndicator(
       onRefresh: _loadAll,
@@ -139,414 +123,418 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         children: [
-          // شريط اختيار التاريخ والحصة
-          _buildDateAndSessionHeader(s, dateStr),
-          const SizedBox(height: 14),
+          // ══════════════════════════════════════════════════
+          // الهيدر العلوي: يعرض كل تمارين اليوم الجاية من تاب البرنامج بمواعيدها
+          // ══════════════════════════════════════════════════
+          _buildTodayWorkoutsHeader(s, dateStr),
+          const SizedBox(height: 16),
 
-          // بطاقة إعدادات وتفاصيل الحصة الحالية
-          if (currentSession != null)
-            _buildCurrentSessionCard(s, currentSession)
-          else
-            _buildNoSessionCard(s),
-          const SizedBox(height: 20),
-
-          // عنوان قائمة اللاعبين وإحصائية التسجيل
-          _buildPlayersSectionHeader(s),
+          // ══════════════════════════════════════════════════
+          // قائمة أسماء اللاعبين
+          // ══════════════════════════════════════════════════
+          _buildPlayersSectionHeader(s, totalSessionsCount),
           const SizedBox(height: 10),
 
-          // قائمة اللاعبين
           if (_players.isEmpty)
             _buildNoPlayersCard(s)
           else
-            ..._players.map((p) => _buildPlayerItem(s, p, currentSession)),
+            ..._players.map((p) => _buildPlayerItem(s, p, totalSessionsCount)),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
         ],
       ),
     );
   }
 
-  Widget _buildDateAndSessionHeader(AppStrings s, String dateStr) {
-    return Row(
-      children: [
-        // زر التاريخ
-        Expanded(
-          child: InkWell(
-            onTap: _pickDate,
-            borderRadius: BorderRadius.circular(14),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: _navy,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: _navy.withAlpha(40),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.calendar_month, color: _gold, size: 22),
-                  const SizedBox(width: 10),
-                  Column(
+  /// الهيدر العلوي لحصص اليوم بمواعيدها
+  Widget _buildTodayWorkoutsHeader(AppStrings s, String dateStr) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: const LinearGradient(
+            colors: [_navy, Color(0xFF1B4975)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // شريط اختيار التاريخ وعنوان تمارين اليوم
+            Row(
+              children: [
+                const Icon(Icons.fitness_center, color: _gold, size: 26),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        s.todaySession,
-                        style: const TextStyle(color: Colors.white70, fontSize: 11),
+                        s.todaysWorkoutsHeader,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                       Text(
-                        dateStr,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        s.todaysWorkoutsSubtitle,
+                        style: const TextStyle(fontSize: 12, color: Colors.white70),
                       ),
                     ],
                   ),
-                  const Spacer(),
-                  const Icon(Icons.arrow_drop_down, color: Colors.white70),
-                ],
-              ),
+                ),
+                InkWell(
+                  onTap: _pickDate,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.18),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.white30),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.calendar_today, color: _gold, size: 16),
+                        const SizedBox(width: 6),
+                        Text(
+                          dateStr,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        // زر إضافة حصة إضافية لليوم
-        if (_sessions.length < 4)
-          IconButton.filled(
-            onPressed: _addSession,
-            icon: const Icon(Icons.add, color: _navy),
-            style: IconButton.styleFrom(
-              backgroundColor: _gold,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            tooltip: s.addNewSession,
-          ),
-      ],
-    );
-  }
+            const Divider(color: Colors.white24, height: 20),
 
-  Widget _buildCurrentSessionCard(AppStrings s, Map<String, Object?> session) {
-    final idx = session['idx'] as int? ?? 0;
-    final kind = session['kind'] as String? ?? 'Erg';
-    final zone = session['zone'] as String? ?? 'Z2';
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade300),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(8),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        children: [
-          // شريط التبديل بين الحصص إذا وجدت أكثر من حصة
-          if (_sessions.length > 1) ...[
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: List.generate(_sessions.length, (i) {
-                  final isSelected = i == _selectedSessionIdx;
-                  return Padding(
-                    padding: const EdgeInsets.only(left: 8),
-                    child: ChoiceChip(
-                      label: Text('${s.sessionNumber} ${i + 1}'),
-                      selected: isSelected,
-                      selectedColor: _navy,
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : _navy,
-                        fontWeight: FontWeight.bold,
+            // عرض كل تمارين اليوم بمواعيدها وأنواعها والزون
+            if (_todayWorkouts.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.nightlight_round, color: _gold, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        s.noWorkoutsToday,
+                        style: const TextStyle(color: Colors.white, fontSize: 13),
                       ),
-                      onSelected: (val) {
-                        if (val) {
-                          setState(() => _selectedSessionIdx = i);
-                          _loadAll();
-                        }
-                      },
+                    ),
+                  ],
+                ),
+              )
+            else
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: List.generate(_todayWorkouts.length, (idx) {
+                  final session = _todayWorkouts[idx];
+                  final time = session['time'] as String? ?? '07:00';
+                  final kind = session['kind'] as String? ?? 'Erg';
+                  final zone = session['zone'] as String? ?? 'Z2';
+
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: _gold.withOpacity(0.4)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: _gold,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            '${idx + 1}',
+                            style: const TextStyle(
+                              color: _navy,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '$kind • الساعة $time',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                            Text(
+                              'الزون: $zone',
+                              style: const TextStyle(
+                                color: _gold,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   );
                 }),
               ),
-            ),
-            const Divider(height: 20),
           ],
-          Row(
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlayersSectionHeader(AppStrings s, int totalSessions) {
+    int fullyCompletedCount = 0;
+    if (totalSessions > 0) {
+      for (final p in _players) {
+        final pid = p['id'] as int;
+        final logged = _playerCompletedCounts[pid] ?? 0;
+        if (logged >= totalSessions) {
+          fullyCompletedCount++;
+        }
+      }
+    }
+
+    return Row(
+      children: [
+        const Icon(Icons.people_alt, color: _navy, size: 22),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                backgroundColor: _navy,
-                radius: 20,
-                child: Text(
-                  '${idx + 1}',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              Text(
+                s.athletesListTitle,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: _navy,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  initialValue: kind,
-                  decoration: InputDecoration(
-                    labelText: s.workoutType,
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  items: kinds.map((k) => DropdownMenuItem(value: k, child: Text(k))).toList(),
-                  onChanged: (v) {
-                    if (v != null) _updateSession(idx, v, zone);
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  initialValue: zone,
-                  decoration: InputDecoration(
-                    labelText: s.targetZone,
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  items: zones.keys.map((z) => DropdownMenuItem(value: z, child: Text(z))).toList(),
-                  onChanged: (v) {
-                    if (v != null) _updateSession(idx, kind, v);
-                  },
-                ),
+              Text(
+                s.tapAthleteToLogMulti,
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNoSessionCard(AppStrings s) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _sky,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(s.noUpcomingSessions, style: const TextStyle(fontWeight: FontWeight.bold)),
-          FilledButton.icon(
-            onPressed: _addSession,
-            icon: const Icon(Icons.add),
-            label: Text(s.addNewSession),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPlayersSectionHeader(AppStrings s) {
-    final recorded = _loggedPlayerIds.length;
-    final total = _players.length;
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              s.playersList,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: _navy,
-              ),
-            ),
-            Text(
-              s.tapPlayerToLog,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-            ),
-          ],
         ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: recorded == total && total > 0 ? Colors.green.shade50 : _sky,
+            color: fullyCompletedCount == _players.length && _players.isNotEmpty
+                ? _green.withOpacity(0.15)
+                : Colors.grey.shade100,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: recorded == total && total > 0 ? Colors.green : _navy.withAlpha(60),
+              color: fullyCompletedCount == _players.length && _players.isNotEmpty
+                  ? _green
+                  : Colors.grey.shade300,
             ),
           ),
           child: Text(
-            '$recorded / $total ${s.statusRecorded}',
+            '$fullyCompletedCount / ${_players.length} مكتمل',
             style: TextStyle(
-              fontWeight: FontWeight.bold,
               fontSize: 12,
-              color: recorded == total && total > 0 ? Colors.green.shade800 : _navy,
+              fontWeight: FontWeight.bold,
+              color: fullyCompletedCount == _players.length && _players.isNotEmpty
+                  ? _green
+                  : _navy,
             ),
           ),
         ),
       ],
+    );
+  }
+
+  /// عنصر اللاعب في القائمة - يتغير لونه بالكامل عند إكمال تسجيل جميع تمارين اليوم
+  Widget _buildPlayerItem(AppStrings s, Map<String, Object?> player, int totalSessions) {
+    final pid = player['id'] as int;
+    final name = player['name'] as String? ?? '';
+    final mhr = player['mhr'] as int? ?? 190;
+    final loggedCount = _playerCompletedCounts[pid] ?? 0;
+
+    final isFullyCompleted = totalSessions > 0 && loggedCount >= totalSessions;
+    final isPartiallyCompleted = loggedCount > 0 && loggedCount < totalSessions;
+
+    // ألوان الحالة
+    final Color cardBg = isFullyCompleted
+        ? const Color(0xFFE8F5E9) // أخضر فاتح مريح
+        : isPartiallyCompleted
+            ? const Color(0xFFFFF8E1) // عنبري فاتح
+            : Colors.white;
+
+    final Color borderColor = isFullyCompleted
+        ? _green
+        : isPartiallyCompleted
+            ? Colors.amber.shade700
+            : Colors.grey.shade200;
+
+    final Color nameColor = isFullyCompleted
+        ? _green // يتغير لون اسم اللاعب للأخضر عند إكمال كل تمارين يومه!
+        : isPartiallyCompleted
+            ? Colors.amber.shade900
+            : _navy;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      elevation: isFullyCompleted ? 2 : 1,
+      color: cardBg,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: borderColor, width: isFullyCompleted ? 1.5 : 1),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _openAthleteEntry(player),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              // أفاتار اللاعب بلون مميز
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: isFullyCompleted ? _green : _navy,
+                child: Text(
+                  name.isNotEmpty ? name[0] : 'P',
+                  style: TextStyle(
+                    color: isFullyCompleted ? Colors.white : _gold,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // اسم اللاعب وتفاصيله (اللون يتغير هنا مباشرة)
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: nameColor, // تغيير لون اسم اللاعب!
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${s.maxHRLabel}: $mhr bpm',
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    ),
+                  ],
+                ),
+              ),
+
+              // شارة حالة إكمال التمارين لليوم
+              if (isFullyCompleted)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: _green,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.check_circle, color: Colors.white, size: 15),
+                      const SizedBox(width: 4),
+                      Text(
+                        s.allWorkoutsCompleted,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else if (isPartiallyCompleted)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade700,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    s.partialWorkoutsCompleted(loggedCount, totalSessions),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    s.noWorkoutsCompletedYet,
+                    style: TextStyle(
+                      color: Colors.grey.shade700,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+
+              const SizedBox(width: 6),
+              Icon(
+                Icons.chevron_left_rounded,
+                color: isFullyCompleted ? _green : Colors.grey.shade400,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
   Widget _buildNoPlayersCard(AppStrings s) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Text(
-          s.noActivePlayers,
-          style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-        ),
-      ),
-    );
-  }
-
-  // بطاقة اللاعب مع تغيير اللون الواضح عند تسجيل البيانات
-  Widget _buildPlayerItem(
-    AppStrings s,
-    Map<String, Object?> player,
-    Map<String, Object?>? session,
-  ) {
-    final id = player['id'] as int;
-    final isLogged = _loggedPlayerIds.contains(id);
-    final name = player['name'] as String? ?? 'لاعب';
-
-    // الألوان الديناميكية بناءً على حالة التسجيل
-    final cardBg = isLogged ? const Color(0xFFE8F8F0) : Colors.white;
-    final borderColor = isLogged ? Colors.green.shade400 : Colors.grey.shade200;
-    final nameColor = isLogged ? Colors.green.shade900 : _navy;
-    final avatarBg = isLogged ? Colors.green.shade700 : _navy;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Material(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: session == null
-              ? null
-              : () async {
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => Directionality(
-                        textDirection: AppLanguage.instance.isArabic
-                            ? TextDirection.rtl
-                            : TextDirection.ltr,
-                        child: PlayerEntryPage(
-                          date: dstr(_selectedDate),
-                          session: session,
-                          player: player,
-                        ),
-                      ),
-                    ),
-                  );
-                  if (result == true || mounted) {
-                    _loadAll(); // تحديث فوري لحالة التسجيل وتغيير اللون
-                  }
-                },
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: borderColor, width: isLogged ? 1.5 : 1.0),
-              boxShadow: isLogged
-                  ? [
-                      BoxShadow(
-                        color: Colors.green.withAlpha(20),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ]
-                  : null,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Icon(Icons.person_off_outlined, size: 48, color: Colors.grey.shade400),
+            const SizedBox(height: 12),
+            Text(
+              s.noActivePlayers,
+              style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: Row(
-              children: [
-                // الصورة الرمزية مع تلوين مميز
-                CircleAvatar(
-                  backgroundColor: avatarBg,
-                  radius: 22,
-                  child: isLogged
-                      ? const Icon(Icons.check, color: Colors.white, size: 22)
-                      : Text(
-                          name.isNotEmpty ? name[0] : 'P',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                ),
-                const SizedBox(width: 14),
-                // اسم اللاعب ومعلومات النبض
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: nameColor,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Text(
-                            'MHR: ${player['mhr']}',
-                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                          ),
-                          const SizedBox(width: 8),
-                          if (isLogged)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: Colors.green.shade100,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                s.statusRecorded,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green.shade800,
-                                ),
-                              ),
-                            )
-                          else
-                            Text(
-                              '• ${s.statusPending}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.red.shade400,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                // أيقونة التعديل / الدخول
-                Icon(
-                  isLogged ? Icons.edit_note : Icons.chevron_left,
-                  color: isLogged ? Colors.green.shade700 : _navy,
-                ),
-              ],
-            ),
-          ),
+          ],
         ),
       ),
     );
