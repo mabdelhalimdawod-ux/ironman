@@ -37,7 +37,7 @@ void main() {
       expect(lang.isArabic, isTrue);
       
       final stringsAr = AppStrings(true);
-      expect(stringsAr.tabDashboard, equals('Ironman Dashboard'));
+      expect(stringsAr.tabDashboard, equals('Engine Rowing Dashboard'));
       expect(stringsAr.tabWorkouts, equals('التمارين'));
       expect(stringsAr.tabSettings, equals('الإعدادات'));
 

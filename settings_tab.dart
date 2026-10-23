@@ -261,7 +261,7 @@ class _SettingsTabState extends State<SettingsTab> {
           ),
           const SizedBox(height: 6),
           Text(
-            '• Ironman Dashboard: الجاهزية، السيكل، الحصة القادمة، اتجاه وتنبيه EF للفريق\n'
+            '• Engine Rowing Dashboard: الجاهزية، السيكل، الحصة القادمة، اتجاه وتنبيه EF للفريق\n'
             '• التمارين: فتح حصة اليوم، قائمة اللاعبين مع تلوين حالة التسجيل، فورم إدخال متكامل مع NP و Decoupling للاعبين الأساسيين\n'
             '• الإعدادات: بنية الترجمة والتبديل السلس بين اللغات',
             style: TextStyle(fontSize: 12, color: Colors.grey.shade800, height: 1.5),

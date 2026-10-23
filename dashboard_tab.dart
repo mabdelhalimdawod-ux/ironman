@@ -8,7 +8,7 @@ const Color _gold = Color(0xFFFFC93C);
 const Color _accentBlue = Color(0xFF1E88E5);
 const Color _cardBg = Color(0xFFF7FAFC);
 
-/// التاب الأول: Ironman Dashboard
+/// التاب الأول: Engine Rowing Dashboard
 class DashboardTab extends StatefulWidget {
   const DashboardTab({super.key});
 

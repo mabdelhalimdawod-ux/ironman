@@ -1,6 +1,6 @@
 {
-    "name": "rowing_app",
-    "short_name": "rowing_app",
+    "name": "Engine Rowing",
+    "short_name": "Engine Rowing",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

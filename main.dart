@@ -22,7 +22,7 @@ class IronmanApp extends StatelessWidget {
 
         return MaterialApp(
           debugShowCheckedModeBanner: false,
-          title: 'Ironman Rowing',
+          title: 'Engine Rowing',
           locale: AppLanguage.instance.locale,
           builder: (context, child) {
             return Directionality(
@@ -281,12 +281,12 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
                                   color: yellow, size: 26),
                               const SizedBox(width: 10),
                               Text(
-                                'IRONMAN',
+                                'ENGINE ROWING',
                                 style: TextStyle(
                                   color: yellow,
-                                  fontSize: _navWidth > 240 ? 20 : 17,
+                                  fontSize: _navWidth > 240 ? 18 : 14,
                                   fontWeight: FontWeight.w800,
-                                  letterSpacing: 2.5,
+                                  letterSpacing: 1.5,
                                 ),
                               ),
                             ],

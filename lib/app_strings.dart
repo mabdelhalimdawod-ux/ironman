@@ -35,8 +35,8 @@ class AppStrings {
   }
 
   // ==================== General App ====================
-  String get appTitle => isArabic ? 'تطبيق Ironman للتجديف' : 'Ironman Rowing App';
-  String get tabDashboard => isArabic ? 'Ironman Dashboard' : 'Ironman Dashboard';
+  String get appTitle => isArabic ? 'تطبيق انجن روينج للتجديف' : 'Engine Rowing App';
+  String get tabDashboard => isArabic ? 'Engine Rowing Dashboard' : 'Engine Rowing Dashboard';
   String get tabProgram => isArabic ? 'البرنامج' : 'Program';
   String get tabWorkouts => isArabic ? 'التمارين' : 'Workouts';
   String get tabPlayers => isArabic ? 'اللاعبين' : 'Athletes';
@@ -239,6 +239,6 @@ class AppStrings {
   String get english => isArabic ? 'الإنجليزية' : 'English';
   String get appArchitecture => isArabic ? 'بنية التطبيق' : 'App Architecture';
   String get phase2Active => isArabic ? 'المرحلة الثانية: البرنامج وقوالب السيكلات، تمارين اليوم، وبوابة اللاعبين' : 'Phase 2: Program & Cycle Templates, Daily Workouts, Athletes Gateway';
-  String get phase1Active => isArabic ? 'المرحلة الأولى: لوحة Ironman، التمارين، والإعدادات' : 'Phase 1: Ironman Dashboard, Workouts & Settings';
+  String get phase1Active => isArabic ? 'المرحلة الأولى: لوحة انجن روينج، التمارين، والإعدادات' : 'Phase 1: Engine Rowing Dashboard, Workouts & Settings';
   String get databaseStatus => isArabic ? 'حالة قاعدة البيانات: متصلة ونشطة' : 'Database Status: Connected & Active';
 }
