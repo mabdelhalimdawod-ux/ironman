@@ -361,30 +361,6 @@ class AuthService {
     return LoginResult.success(user);
   }
 
-    final user = AppUser.fromMap(userMap);
-
-    // فحص اشتراك المستخدم نفسه
-    if (!user.subscriptionActive) {
-      return LoginResult.failure(LoginError.accountInactive);
-    }
-
-    // إذا كان لاعباً تابعاً لمدرب، يتم فحص اشتراك المدرب
-    if (user.isAthlete && user.coachId != null) {
-      final coachRows = await database.rawQuery(
-        'SELECT subscription_active FROM users WHERE id = ?',
-        [user.coachId],
-      );
-      if (coachRows.isNotEmpty) {
-        final coachActive = (coachRows.first['subscription_active'] as int? ?? 1) == 1;
-        if (!coachActive) {
-          return LoginResult.failure(LoginError.coachSubscriptionInactive);
-        }
-      }
-    }
-
-    currentUser = user;
-    return LoginResult.success(user);
-  }
 
   /// حفظ بيانات الجلسة (تذكرني)
   static Future<void> saveSession(AppUser user, bool remember) async {
