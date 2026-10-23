@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// نظام إدارة وتوطين النصوص (Localization & Strings Dictionary)
 /// يدعم اللغة العربية (الافتراضية) والإنجليزية
@@ -6,23 +7,36 @@ class AppLanguage extends ChangeNotifier {
   static final AppLanguage instance = AppLanguage._();
   AppLanguage._();
 
+  static const String _prefKey = 'app_language_code';
+
   Locale _locale = const Locale('ar');
   Locale get locale => _locale;
   bool get isArabic => _locale.languageCode == 'ar';
 
-  void setLocale(Locale newLocale) {
+  Future<void> init() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final code = prefs.getString(_prefKey);
+      if (code != null && (code == 'ar' || code == 'en')) {
+        _locale = Locale(code);
+        notifyListeners();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> setLocale(Locale newLocale) async {
     if (_locale == newLocale) return;
     _locale = newLocale;
     notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_prefKey, newLocale.languageCode);
+    } catch (_) {}
   }
 
-  void toggleLanguage() {
-    if (_locale.languageCode == 'ar') {
-      _locale = const Locale('en');
-    } else {
-      _locale = const Locale('ar');
-    }
-    notifyListeners();
+  Future<void> toggleLanguage() async {
+    final next = _locale.languageCode == 'ar' ? const Locale('en') : const Locale('ar');
+    await setLocale(next);
   }
 }
 
@@ -37,6 +51,7 @@ class AppStrings {
   // ==================== General App ====================
   String get appTitle => isArabic ? 'تطبيق انجن روينج للتجديف' : 'Engine Rowing App';
   String get tabDashboard => isArabic ? 'Engine Rowing Dashboard' : 'Engine Rowing Dashboard';
+  String get tabHome => isArabic ? 'الرئيسية' : 'Home';
   String get tabProgram => isArabic ? 'البرنامج' : 'Program';
   String get tabWorkouts => isArabic ? 'التمارين' : 'Workouts';
   String get tabPlayers => isArabic ? 'اللاعبين' : 'Athletes';
@@ -241,4 +256,65 @@ class AppStrings {
   String get phase2Active => isArabic ? 'المرحلة الثانية: البرنامج وقوالب السيكلات، تمارين اليوم، وبوابة اللاعبين' : 'Phase 2: Program & Cycle Templates, Daily Workouts, Athletes Gateway';
   String get phase1Active => isArabic ? 'المرحلة الأولى: لوحة انجن روينج، التمارين، والإعدادات' : 'Phase 1: Engine Rowing Dashboard, Workouts & Settings';
   String get databaseStatus => isArabic ? 'حالة قاعدة البيانات: متصلة ونشطة' : 'Database Status: Connected & Active';
+
+  // ==================== Login & Authentication ====================
+  String get loginTitle => isArabic ? 'تسجيل الدخول' : 'Sign In';
+  String get loginSubtitle => isArabic ? 'مرحباً بك في منصة Engine Rowing' : 'Welcome to Engine Rowing Platform';
+  String get email => isArabic ? 'البريد الإلكتروني' : 'Email Address';
+  String get emailHint => 'coach@engine.rowing';
+  String get password => isArabic ? 'كلمة المرور' : 'Password';
+  String get passwordHint => '••••••••';
+  String get rememberMe => isArabic ? 'تذكرني' : 'Remember me';
+  String get signInButton => isArabic ? 'دخول' : 'Sign In';
+  String get signingIn => isArabic ? 'جاري التحقق...' : 'Signing in...';
+  String get forgotPasswordNote => isArabic ? 'نسيت كلمة المرور؟ تواصل مع مدربك' : 'Forgot password? Contact your coach';
+  String get invalidEmail => isArabic ? 'يرجى إدخال بريد إلكتروني صحيح' : 'Please enter a valid email address';
+  String get emptyPassword => isArabic ? 'يرجى إدخال كلمة المرور' : 'Please enter your password';
+  String get invalidCredentials => isArabic ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة' : 'Invalid email or password';
+  String get accountInactive => isArabic ? 'تم إيقاف هذا الحساب. يرجى مراجعة الإدارة' : 'This account is inactive. Please contact administration';
+  String get coachSubscriptionInactive => isArabic ? 'اشتراك المدرب متوقف حالياً. تواصل مع مدربك' : 'Coach subscription is inactive. Contact your coach';
+  String get logout => isArabic ? 'تسجيل الخروج' : 'Log Out';
+  String get logoutConfirm => isArabic ? 'هل تريد تسجيل الخروج من التطبيق؟' : 'Are you sure you want to log out?';
+
+  // ==================== Home & Greetings ====================
+  String get goodMorning => isArabic ? 'صباح الخير' : 'Good Morning';
+  String get goodAfternoon => isArabic ? 'مساء الخير' : 'Good Afternoon';
+  String get goodEvening => isArabic ? 'مساء الخير' : 'Good Evening';
+  String greetingWithName(String name, String greeting) =>
+      isArabic ? '$greeting يا $name' : '$greeting, $name';
+
+  // ==================== Coach Messages ====================
+  String get coachMessageTitle => isArabic ? 'رسالة من المدرب' : "Coach's Message";
+  String get markAsRead => isArabic ? 'تمت القراءة' : 'Mark as Read';
+  String get noMessages => isArabic ? 'لا توجد رسائل جديدة' : 'No new messages';
+
+  // ==================== Highlights ====================
+  String get highlightsTitle => isArabic ? 'أبرز المؤشرات (Highlights)' : 'Key Highlights';
+  String get dynamicZoneHighlight => isArabic ? 'آخر زون تدريبي' : 'Latest Zone';
+  String get cpHighlight => isArabic ? 'القدرة الحرجة (CP)' : 'Critical Power (CP)';
+  String get wellnessHighlight => isArabic ? 'المؤشرات اليومية' : 'Daily Wellness';
+  String get efTrendHighlight => isArabic ? 'كفاءة الأداء (EF)' : 'Efficiency Factor (EF)';
+  String get hrUnit => isArabic ? 'نبضة/د' : 'bpm';
+  String get wattsUnit => isArabic ? 'واط' : 'W';
+  String get sleepUnit => isArabic ? 'س' : 'hrs';
+
+  // ==================== Testing Dates ====================
+  String get testingDatesTitle => isArabic ? 'مواعيد الاختبارات القادمة' : 'Upcoming Testing Dates';
+  String get noUpcomingTests => isArabic ? 'لا توجد اختبارات مجدولة قريباً' : 'No upcoming tests scheduled';
+  String get addTestingDate => isArabic ? 'إضافة موعد اختبار' : 'Schedule Test';
+  String get testName => isArabic ? 'اسم الاختبار' : 'Test Name';
+  String get testNameHint => isArabic ? 'مثال: 2000m Erg Test' : 'e.g. 2000m Erg Test';
+  String get testDate => isArabic ? 'تاريخ الاختبار' : 'Test Date';
+  String get recipients => isArabic ? 'المستهدفون' : 'Recipients';
+  String get allAthletes => isArabic ? 'جميع اللاعبين' : 'All Athletes';
+  String get selectAthletes => isArabic ? 'تحديد لاعبين' : 'Select Athletes';
+  String get pastDateError => isArabic ? 'لا يمكن اختيار تاريخ في الماضي' : 'Test date cannot be in the past';
+  String get testScheduledSuccess => isArabic ? 'تمت جدولة موعد الاختبار بنجاح' : 'Testing date scheduled successfully';
+  String get testNameRequired => isArabic ? 'يرجى كتابة اسم الاختبار' : 'Test name is required';
+  String get deleteTestDate => isArabic ? 'حذف الموعد' : 'Delete Test Date';
+
+  // ==================== Admin Placeholder ====================
+  String get adminPlaceholderTitle => isArabic ? 'لوحة تحكم الأدمن' : 'Admin Dashboard';
+  String get adminPlaceholderDesc =>
+      isArabic ? 'لوحة الإدارة والمدربين قيد التطوير وستتاح قريباً.' : 'Admin & coach management is under development and coming soon.';
 }

@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
-import 'db.dart';
 import 'app_strings.dart';
+import 'auth_service.dart';
+import 'db.dart';
+import 'home_service.dart';
 
 const Color _navy = Color(0xFF0D3B66);
 const Color _sky = Color(0xFFE8F4FC);
-const Color _gold = Color(0xFFFFC93C);
-const Color _accentBlue = Color(0xFF1E88E5);
+const Color _yellow = Color(0xFFFFC93C);
 const Color _cardBg = Color(0xFFF7FAFC);
 
-/// التاب الأول: Engine Rowing Dashboard
+/// التاب الأول: الشاشة الرئيسية (Home Tab)
 class DashboardTab extends StatefulWidget {
-  const DashboardTab({super.key});
+  final AppUser? user;
+
+  const DashboardTab({
+    super.key,
+    this.user,
+  });
 
   @override
   State<DashboardTab> createState() => _DashboardTabState();
@@ -19,93 +25,47 @@ class DashboardTab extends StatefulWidget {
 class _DashboardTabState extends State<DashboardTab> {
   bool _loading = true;
 
-  // 1. نسبة الجاهزية
-  double _teamReadiness = 0;
-  int _readyCount = 0;
-  int _fatiguedCount = 0;
-  int _totalActivePlayers = 0;
-
-  // 2. السيكل الحالي
-  Map<String, Object?>? _currentCycle;
-  int _cycleDaysTotal = 0;
-  int _cycleDaysElapsed = 0;
-  int _cycleDaysLeft = 0;
-
-  // 3. الحصة القادمة
+  // الحصة القادمة
   Map<String, Object?>? _nextSession;
   String _nextSessionDate = '';
 
-  // 4. مؤشر وتنبيه اتجاه EF للفريق
-  double _currentAvgEF = 0;
-  double _baselineAvgEF = 0;
-  double _efDeltaPercentage = 0;
-  String _efStatus = 'none'; // 'improving', 'stable', 'declining', 'none'
+  // رسالة المدرب غير المقروءة
+  CoachMessageItem? _unreadMessage;
+
+  // بطاقات المؤشرات (Highlights)
+  List<HighlightItem> _highlights = [];
+
+  // مواعيد الاختبارات
+  List<TestingDateItem> _testingDates = [];
 
   @override
   void initState() {
     super.initState();
-    _loadDashboardData();
+    _loadHomeData();
   }
 
-  Future<void> _loadDashboardData() async {
+  @override
+  void didUpdateWidget(covariant DashboardTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.user?.id != widget.user?.id) {
+      _loadHomeData();
+    }
+  }
+
+  Future<void> _loadHomeData() async {
     setState(() => _loading = true);
 
     try {
-      // 1. حساب جاهزية الفريق
-      final readinessList = await DB.allPlayersReadiness();
-      _totalActivePlayers = readinessList.length;
-      if (readinessList.isNotEmpty) {
-        double totalScore = 0;
-        int ready = 0;
-        int tired = 0;
-
-        for (final p in readinessList) {
-          final score = (p['readiness'] as num?)?.toDouble() ?? 70;
-          totalScore += score;
-          if (score >= 60) {
-            ready++;
-          } else {
-            tired++;
-          }
-        }
-        _teamReadiness = totalScore / readinessList.length;
-        _readyCount = ready;
-        _fatiguedCount = tired;
-      }
-
-      // 2. جلب السيكل الحالي
+      final user = widget.user ?? AuthService.currentUser;
       final now = DateTime.now();
       final nowStr = dstr(now);
-      final cycles = await DB.q('SELECT * FROM cycles ORDER BY start DESC');
-      if (cycles.isNotEmpty) {
-        // البحث عن سيكل نشط يغطي اليوم
-        Map<String, Object?>? active;
-        for (final c in cycles) {
-          final start = c['start'] as String? ?? '';
-          final end = c['end'] as String? ?? '';
-          if (start.compareTo(nowStr) <= 0 && end.compareTo(nowStr) >= 0) {
-            active = c;
-            break;
-          }
-        }
-        active ??= cycles.first;
-        _currentCycle = active;
 
-        final startDt = DateTime.tryParse(active['start'] as String? ?? '') ?? now;
-        final endDt = DateTime.tryParse(active['end'] as String? ?? '') ?? now.add(const Duration(days: 28));
-        _cycleDaysTotal = endDt.difference(startDt).inDays;
-        if (_cycleDaysTotal <= 0) _cycleDaysTotal = 1;
-        _cycleDaysElapsed = now.difference(startDt).inDays.clamp(0, _cycleDaysTotal);
-        _cycleDaysLeft = (_cycleDaysTotal - _cycleDaysElapsed).clamp(0, _cycleDaysTotal);
-      }
-
-      // 3. جلب الحصة القادمة
+      // 1. الحصة القادمة
       final todaySessions = await DB.sessions(nowStr);
       if (todaySessions.isNotEmpty) {
         _nextSession = todaySessions.first;
         _nextSessionDate = nowStr;
       } else {
-        // البحث عن أقرب حصة قادمة
         final futureSessions = await DB.q(
           'SELECT * FROM sessions WHERE date >= ? ORDER BY date ASC, idx ASC LIMIT 1',
           [nowStr],
@@ -113,54 +73,45 @@ class _DashboardTabState extends State<DashboardTab> {
         if (futureSessions.isNotEmpty) {
           _nextSession = futureSessions.first;
           _nextSessionDate = _nextSession!['date'] as String? ?? nowStr;
+        } else {
+          _nextSession = null;
         }
       }
 
-      // 4. تحليل اتجاه EF للفريق (أهم مؤشر في المشروع)
-      final recentLogs = await DB.q('''
-        SELECT AVG(ef) as avg_ef, COUNT(ef) as count
-        FROM logs
-        WHERE ef IS NOT NULL AND ef > 0 AND date >= ?
-      ''', [dstr(now.subtract(const Duration(days: 7)))]);
-
-      final baselineLogs = await DB.q('''
-        SELECT AVG(ef) as avg_ef, COUNT(ef) as count
-        FROM logs
-        WHERE ef IS NOT NULL AND ef > 0 AND date >= ? AND date < ?
-      ''', [
-        dstr(now.subtract(const Duration(days: 30))),
-        dstr(now.subtract(const Duration(days: 7))),
-      ]);
-
-      final recentEF = (recentLogs.isNotEmpty ? (recentLogs.first['avg_ef'] as num?)?.toDouble() : null) ?? 0;
-      final baselineEF = (baselineLogs.isNotEmpty ? (baselineLogs.first['avg_ef'] as num?)?.toDouble() : null) ?? 0;
-
-      _currentAvgEF = recentEF;
-      _baselineAvgEF = baselineEF;
-
-      if (recentEF > 0 && baselineEF > 0) {
-        _efDeltaPercentage = ((recentEF - baselineEF) / baselineEF) * 100;
-        if (_efDeltaPercentage >= 2.0) {
-          _efStatus = 'improving';
-        } else if (_efDeltaPercentage <= -2.0) {
-          _efStatus = 'declining';
-        } else {
-          _efStatus = 'stable';
-        }
-      } else if (recentEF > 0) {
-        _efStatus = 'stable';
-        _efDeltaPercentage = 0;
+      // 2. رسالة المدرب (للاعب)
+      if (user != null && user.isAthlete) {
+        _unreadMessage = await HomeService.getUnreadCoachMessage(user.id);
       } else {
-        _efStatus = 'none';
+        _unreadMessage = null;
+      }
+
+      // 3. Highlights
+      _highlights = await HomeService.getHighlights(playerId: user?.playerId);
+
+      // 4. مواعيد الاختبارات القادمة
+      if (user != null && user.isCoach) {
+        _testingDates = await HomeService.getUpcomingTestingDates(coachUserId: user.id);
+      } else if (user != null && user.isAthlete) {
+        _testingDates = await HomeService.getUpcomingTestingDates(athleteUserId: user.id);
+      } else {
+        _testingDates = await HomeService.getUpcomingTestingDates();
       }
     } catch (_) {}
 
     if (mounted) setState(() => _loading = false);
   }
 
+  String _getTimeGreeting(AppStrings s) {
+    final period = AuthService.getGreetingPeriod();
+    if (period == 'morning') return s.goodMorning;
+    if (period == 'afternoon') return s.goodAfternoon;
+    return s.goodEvening;
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
+    final user = widget.user ?? AuthService.currentUser;
 
     if (_loading) {
       return const Center(
@@ -169,385 +120,119 @@ class _DashboardTabState extends State<DashboardTab> {
     }
 
     return RefreshIndicator(
-      onRefresh: _loadDashboardData,
+      onRefresh: _loadHomeData,
       color: _navy,
       child: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         children: [
-          // رأس الصفحة
-          _buildHeader(s),
+          // ── ترويسة الترحيب ──
+          _buildGreetingHeader(s, user),
           const SizedBox(height: 16),
 
-          // 1. بطاقة الجاهزية الكلية للفريق
-          _buildReadinessCard(s),
-          const SizedBox(height: 16),
+          // ── رسالة المدرب إن وجدت (فقط للاعبين) ──
+          if (_unreadMessage != null) ...[
+            _buildCoachMessageCard(s, _unreadMessage!),
+            const SizedBox(height: 16),
+          ],
 
-          // 2. بطاقة تنبيه واتجاه EF للفريق (المؤشر الأهم)
-          _buildEFTrendCard(s),
-          const SizedBox(height: 16),
-
-          // 3. بطاقة السيكل الحالي
-          _buildCurrentCycleCard(s),
-          const SizedBox(height: 16),
-
-          // 4. بطاقة الحصة التدريبية القادمة
+          // ── كارت الحصة التدريبية القادمة ──
           _buildNextSessionCard(s),
+          const SizedBox(height: 16),
+
+          // ── كروت المؤشرات Highlights (تظهر فقط إن توفرت بيانات) ──
+          if (_highlights.isNotEmpty) ...[
+            _buildHighlightsSection(s),
+            const SizedBox(height: 16),
+          ],
+
+          // ── مواعيد الاختبارات القادمة ──
+          _buildTestingDatesCard(s, user),
           const SizedBox(height: 24),
         ],
       ),
     );
   }
 
-  Widget _buildHeader(AppStrings s) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: _navy,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Icon(Icons.bolt, color: _gold, size: 28),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                s.tabDashboard,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: _navy,
-                ),
-              ),
-              Text(
-                s.teamReadinessDesc,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade700,
-                ),
-              ),
-            ],
-          ),
-        ),
-        IconButton(
-          onPressed: _loadDashboardData,
-          icon: const Icon(Icons.refresh, color: _navy),
-          tooltip: 'تحديث',
-        )
-      ],
-    );
-  }
-
-  // 1. كارت نسبة الجاهزية
-  Widget _buildReadinessCard(AppStrings s) {
-    final score = _teamReadiness.clamp(0.0, 100.0).toDouble();
-    final color = Color(readinessColor(score));
-    final statusText = readinessText(score);
+  // ── الترويسة والتحية ──
+  Widget _buildGreetingHeader(AppStrings s, AppUser? user) {
+    final greeting = _getTimeGreeting(s);
+    final userName = user?.name ?? (s.isArabic ? 'بطل' : 'Athlete');
+    final roleName = user?.isCoach == true
+        ? (s.isArabic ? 'المدرب' : 'Coach')
+        : (s.isArabic ? 'لاعب' : 'Athlete');
 
     return Container(
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _cardBg,
+        gradient: const LinearGradient(
+          colors: [_navy, Color(0xFF1B4D7E)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(10),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: _navy.withAlpha(35),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
           ),
         ],
-      ),
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.health_and_safety, color: _navy, size: 24),
-                  const SizedBox(width: 8),
-                  Text(
-                    s.teamReadiness,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: _navy,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: color.withAlpha(30),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: color, width: 1.5),
-                ),
-                child: Text(
-                  statusText,
-                  style: TextStyle(
-                    color: color,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              // دائرة النسبة
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    width: 86,
-                    height: 86,
-                    child: CircularProgressIndicator(
-                      value: score / 100,
-                      strokeWidth: 9,
-                      backgroundColor: Colors.grey.shade200,
-                      valueColor: AlwaysStoppedAnimation<Color>(color),
-                    ),
-                  ),
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '${score.round()}%',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                          color: color,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(width: 20),
-              // إحصائيات اللاعبين
-              Expanded(
-                child: Column(
-                  children: [
-                    _buildStatPill(
-                      icon: Icons.check_circle,
-                      color: Colors.green,
-                      label: '${s.readyPlayers}: $_readyCount',
-                      total: 'من أصل $_totalActivePlayers',
-                    ),
-                    const SizedBox(height: 8),
-                    _buildStatPill(
-                      icon: Icons.warning_amber_rounded,
-                      color: Colors.orange,
-                      label: '${s.tiredPlayers}: $_fatiguedCount',
-                      total: 'يحتاجون استشفاء',
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatPill({
-    required IconData icon,
-    required Color color,
-    required String label,
-    required String total,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
       ),
       child: Row(
         children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(width: 8),
+          CircleAvatar(
+            radius: 26,
+            backgroundColor: _yellow,
+            child: const Icon(
+              Icons.person_rounded,
+              size: 32,
+              color: _navy,
+            ),
+          ),
+          const SizedBox(width: 16),
           Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-            ),
-          ),
-          Text(
-            total,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 2. كارت ملخص وتنبيه اتجاه EF للفريق
-  Widget _buildEFTrendCard(AppStrings s) {
-    Color trendColor = _navy;
-    IconData trendIcon = Icons.trending_flat;
-    String trendMsg = s.efStable;
-
-    if (_efStatus == 'improving') {
-      trendColor = Colors.green.shade700;
-      trendIcon = Icons.trending_up;
-      trendMsg = s.efImproving;
-    } else if (_efStatus == 'declining') {
-      trendColor = Colors.red.shade700;
-      trendIcon = Icons.trending_down;
-      trendMsg = s.efDeclining;
-    } else if (_efStatus == 'none') {
-      trendColor = Colors.grey.shade600;
-      trendIcon = Icons.info_outline;
-      trendMsg = s.efNoData;
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            _navy,
-            _navy.withAlpha(220),
-          ],
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: _navy.withAlpha(40),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: _gold,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.speed, color: _navy, size: 20),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    s.efTrendTitle,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withAlpha(30),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Text(
-                  'EF = W / HR',
-                  style: TextStyle(
-                    color: _gold,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            s.efMetricDesc,
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
-          ),
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  backgroundColor: trendColor.withAlpha(25),
-                  radius: 22,
-                  child: Icon(trendIcon, color: trendColor, size: 26),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        s.greetingWithName(userName, greeting),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: _yellow.withAlpha(40),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        roleName,
+                        style: const TextStyle(
+                          color: _yellow,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            _currentAvgEF > 0 ? _currentAvgEF.toStringAsFixed(2) : '--',
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w900,
-                              color: _navy,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          if (_efDeltaPercentage != 0)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: trendColor.withAlpha(25),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                '${_efDeltaPercentage > 0 ? '+' : ''}${_efDeltaPercentage.toStringAsFixed(1)}%',
-                                style: TextStyle(
-                                  color: trendColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        trendMsg,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: trendColor,
-                        ),
-                      ),
-                      if (_baselineAvgEF > 0) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          '${s.baselineEF}: ${_baselineAvgEF.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      ],
-                    ],
+                const SizedBox(height: 4),
+                Text(
+                  s.isArabic
+                      ? 'جاهز لجلسة تدريب مميزة اليوم على الأرجو؟'
+                      : 'Ready for an elite rowing session today?',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: Colors.white.withAlpha(200),
                   ),
                 ),
               ],
@@ -558,90 +243,90 @@ class _DashboardTabState extends State<DashboardTab> {
     );
   }
 
-  // 3. كارت السيكل الحالي
-  Widget _buildCurrentCycleCard(AppStrings s) {
-    final cycle = _currentCycle;
-    final progress = _cycleDaysTotal > 0
-        ? (_cycleDaysElapsed / _cycleDaysTotal).clamp(0.0, 1.0)
-        : 0.0;
-
+  // ── كارت رسالة المدرب ──
+  Widget _buildCoachMessageCard(AppStrings s, CoachMessageItem msg) {
     return Container(
       decoration: BoxDecoration(
-        color: _cardBg,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade200),
+        color: const Color(0xFFFFF9E6),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _yellow.withAlpha(160), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: _yellow.withAlpha(20),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.cached_rounded, color: _navy, size: 22),
-              const SizedBox(width: 8),
-              Text(
-                s.currentCycle,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: const BoxDecoration(
+                  color: _yellow,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.mark_email_unread_rounded,
                   color: _navy,
+                  size: 18,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          if (cycle == null)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(
-                s.noActiveCycle,
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-              ),
-            )
-          else ...[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  cycle['name'] as String? ?? 'Cycle',
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '${s.coachMessageTitle} (${msg.coachName})',
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: _navy,
                   ),
                 ),
-                Text(
-                  '$_cycleDaysLeft ${s.daysRemaining}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: _accentBlue,
-                  ),
+              ),
+              Text(
+                msg.date,
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            msg.message,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF2C3E50),
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: TextButton.icon(
+              onPressed: () async {
+                await HomeService.markMessageRead(msg.id);
+                setState(() => _unreadMessage = null);
+              },
+              icon: const Icon(Icons.check_circle_outline_rounded, size: 18, color: _navy),
+              label: Text(
+                s.markAsRead,
+                style: const TextStyle(
+                  color: _navy,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
                 ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '${cycle['start']}  ➔  ${cycle['end']}',
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 10,
-                backgroundColor: _sky,
-                valueColor: const AlwaysStoppedAnimation<Color>(_navy),
               ),
             ),
-          ]
+          ),
         ],
       ),
     );
   }
 
-  // 4. كارت الحصة التدريبية القادمة
+  // ── كارت الحصة التدريبية القادمة ──
   Widget _buildNextSessionCard(AppStrings s) {
     final session = _nextSession;
 
@@ -657,7 +342,7 @@ class _DashboardTabState extends State<DashboardTab> {
         children: [
           Row(
             children: [
-              const Icon(Icons.event_available, color: _navy, size: 22),
+              const Icon(Icons.event_available_rounded, color: _navy, size: 22),
               const SizedBox(width: 8),
               Text(
                 s.nextSession,
@@ -713,7 +398,7 @@ class _DashboardTabState extends State<DashboardTab> {
                           ),
                         ),
                         Text(
-                          'التاريخ: $_nextSessionDate',
+                          '${s.isArabic ? "التاريخ" : "Date"}: $_nextSessionDate',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.grey.shade600,
@@ -743,6 +428,426 @@ class _DashboardTabState extends State<DashboardTab> {
           ]
         ],
       ),
+    );
+  }
+
+  // ── قسم بطاقات Highlights ──
+  Widget _buildHighlightsSection(AppStrings s) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.insights_rounded, color: _navy, size: 22),
+            const SizedBox(width: 8),
+            Text(
+              s.highlightsTitle,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+                color: _navy,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth > 550;
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: isWide ? 2 : 1,
+                mainAxisExtent: 88,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: _highlights.length,
+              itemBuilder: (context, index) {
+                final item = _highlights[index];
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey.shade200),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(6),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Color(item.colorHex).withAlpha(25),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          item.icon,
+                          color: Color(item.colorHex),
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              s.isArabic ? item.titleAr : item.titleEn,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              item.value,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: _navy,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  // ── كارت مواعيد الاختبارات Testing Dates ──
+  Widget _buildTestingDatesCard(AppStrings s, AppUser? user) {
+    final isCoach = user?.isCoach == true;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.timer_outlined, color: _navy, size: 22),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  s.testingDatesTitle,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: _navy,
+                  ),
+                ),
+              ),
+              if (isCoach)
+                IconButton(
+                  tooltip: s.addTestingDate,
+                  icon: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: _navy,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.add, color: Colors.white, size: 18),
+                  ),
+                  onPressed: () => _showAddTestDialog(context, s, user!),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_testingDates.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                s.noUpcomingTests,
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+              ),
+            )
+          else ...[
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _testingDates.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              itemBuilder: (context, idx) {
+                final test = _testingDates[idx];
+                return Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _sky,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(
+                          children: [
+                            const Icon(Icons.calendar_today_rounded, size: 16, color: _navy),
+                            const SizedBox(height: 4),
+                            Text(
+                              test.testDate.length >= 10 ? test.testDate.substring(5) : test.testDate,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: _navy,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              test.testName,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: _navy,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${s.testDate}: ${test.testDate}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (isCoach)
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+                          tooltip: s.deleteTestDate,
+                          onPressed: () async {
+                            await HomeService.deleteTestingDate(test.id);
+                            _loadHomeData();
+                          },
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ]
+        ],
+      ),
+    );
+  }
+
+  // ── نافذة إضافة موعد اختبار للمدرب ──
+  void _showAddTestDialog(BuildContext context, AppStrings s, AppUser coach) async {
+    final athletes = await HomeService.getCoachAthletes(coach.id);
+    final nameCtrl = TextEditingController();
+    DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
+    bool allSelected = true;
+    final selectedAthleteIds = <int>{};
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (context, setDlgState) {
+            final dateStr =
+                '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Row(
+                children: [
+                  const Icon(Icons.event_note_rounded, color: _navy),
+                  const SizedBox(width: 10),
+                  Text(s.addTestingDate, style: const TextStyle(fontWeight: FontWeight.bold, color: _navy)),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: SizedBox(
+                  width: 400,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // اسم الاختبار
+                      Text(s.testName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: nameCtrl,
+                        decoration: InputDecoration(
+                          hintText: s.testNameHint,
+                          prefixIcon: const Icon(Icons.speed_rounded, size: 20),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // تاريخ الاختبار
+                      Text(s.testDate, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                      const SizedBox(height: 6),
+                      InkWell(
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: selectedDate,
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime.now().add(const Duration(days: 365)),
+                          );
+                          if (picked != null) {
+                            setDlgState(() => selectedDate = picked);
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade400),
+                            borderRadius: BorderRadius.circular(10),
+                            color: Colors.white,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(dateStr, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                              const Icon(Icons.calendar_month_rounded, size: 20, color: _navy),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // المستهدفون
+                      Text(s.recipients, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          ChoiceChip(
+                            label: Text(s.allAthletes),
+                            selected: allSelected,
+                            onSelected: (val) {
+                              setDlgState(() {
+                                allSelected = true;
+                                selectedAthleteIds.clear();
+                              });
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          ChoiceChip(
+                            label: Text(s.selectAthletes),
+                            selected: !allSelected,
+                            onSelected: (val) {
+                              setDlgState(() => allSelected = false);
+                            },
+                          ),
+                        ],
+                      ),
+                      if (!allSelected && athletes.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Container(
+                          constraints: const BoxConstraints(maxHeight: 140),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade200),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: ListView(
+                            shrinkWrap: true,
+                            children: athletes.map((a) {
+                              final id = a['id'] as int;
+                              final name = a['name'] as String;
+                              final checked = selectedAthleteIds.contains(id);
+                              return CheckboxListTile(
+                                dense: true,
+                                title: Text(name, style: const TextStyle(fontSize: 13)),
+                                value: checked,
+                                onChanged: (val) {
+                                  setDlgState(() {
+                                    if (val == true) {
+                                      selectedAthleteIds.add(id);
+                                    } else {
+                                      selectedAthleteIds.remove(id);
+                                    }
+                                  });
+                                },
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogCtx),
+                  child: Text(s.cancel),
+                ),
+                FilledButton(
+                  onPressed: () async {
+                    final name = nameCtrl.text.trim();
+                    if (name.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(s.testNameRequired)),
+                      );
+                      return;
+                    }
+
+                    List<int> recipientIds;
+                    if (allSelected) {
+                      recipientIds = athletes.map((e) => e['id'] as int).toList();
+                    } else {
+                      recipientIds = selectedAthleteIds.toList();
+                    }
+
+                    await HomeService.addTestingDate(
+                      coachUserId: coach.id,
+                      testName: name,
+                      testDate: dateStr,
+                      athleteUserIds: recipientIds,
+                    );
+
+                    if (mounted) {
+                      Navigator.pop(dialogCtx);
+                      _loadHomeData();
+                    }
+                  },
+                  child: Text(s.add),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }

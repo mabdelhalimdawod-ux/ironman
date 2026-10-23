@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'admin_placeholder.dart';
 import 'app_strings.dart';
+import 'auth_service.dart';
 import 'dashboard_tab.dart';
+import 'login_page.dart';
 import 'program_tab.dart';
 import 'workouts_tab.dart';
 
@@ -8,10 +11,60 @@ const Color navy = Color(0xFF0D3B66);
 const Color sky = Color(0xFFE8F4FC);
 const Color yellow = Color(0xFFFFC93C);
 
-void main() => runApp(const IronmanApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AppLanguage.instance.init();
+  await AuthService.seedInitialData();
+  runApp(const IronmanApp());
+}
 
-class IronmanApp extends StatelessWidget {
+class IronmanApp extends StatefulWidget {
   const IronmanApp({super.key});
+
+  @override
+  State<IronmanApp> createState() => _IronmanAppState();
+}
+
+class _IronmanAppState extends State<IronmanApp> {
+  AppUser? _currentUser;
+  bool _checkingSession = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkSession();
+  }
+
+  Future<void> _checkSession() async {
+    try {
+      final user = await AuthService.checkSavedSession();
+      if (mounted) {
+        setState(() {
+          _currentUser = user;
+          _checkingSession = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _checkingSession = false;
+        });
+      }
+    }
+  }
+
+  void _handleLoginSuccess(AppUser user) {
+    setState(() {
+      _currentUser = user;
+    });
+  }
+
+  void _handleLogout() async {
+    await AuthService.logout();
+    setState(() {
+      _currentUser = null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +127,21 @@ class IronmanApp extends StatelessWidget {
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             ),
           ),
-          home: const MainNavigationScaffold(),
+          home: _checkingSession
+              ? const Scaffold(
+                  backgroundColor: navy,
+                  body: Center(
+                    child: CircularProgressIndicator(color: yellow),
+                  ),
+                )
+              : _currentUser == null
+                  ? LoginPage(onLoginSuccess: _handleLoginSuccess)
+                  : _currentUser!.isAdmin
+                      ? AdminPlaceholderPage(onLogout: _handleLogout)
+                      : MainNavigationScaffold(
+                          user: _currentUser,
+                          onLogout: _handleLogout,
+                        ),
         );
       },
     );
@@ -83,7 +150,14 @@ class IronmanApp extends StatelessWidget {
 
 /// الهيكل الرئيسي للتطبيق مع شريط التنقل الجانبي (Side Navigation)
 class MainNavigationScaffold extends StatefulWidget {
-  const MainNavigationScaffold({super.key});
+  final AppUser? user;
+  final VoidCallback onLogout;
+
+  const MainNavigationScaffold({
+    super.key,
+    this.user,
+    required this.onLogout,
+  });
 
   @override
   State<MainNavigationScaffold> createState() => _MainNavigationScaffoldState();
@@ -99,10 +173,10 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
   static const double _midWidth = 200.0;  // أيقونات + نصوص
   static const double _maxWidth = 280.0;  // موسّع بالكامل
 
-  final List<Widget> _tabs = const [
-    DashboardTab(),
-    ProgramTab(),
-    WorkoutsTab(),
+  List<Widget> get _tabs => [
+    DashboardTab(user: widget.user),
+    const ProgramTab(),
+    const WorkoutsTab(),
   ];
 
   /// يرجع لأقرب حجم مسبق بعد انتهاء السحب
@@ -141,13 +215,36 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
     return Icons.chevron_right_rounded;
   }
 
+  void _confirmLogout(BuildContext context, AppStrings s) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: Text(s.logout),
+        content: Text(s.logoutConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: Text(s.cancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(dialogCtx);
+              widget.onLogout();
+            },
+            child: Text(s.logout),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
     final isCollapsed = _navWidth < 120;
 
     final navItems = [
-      _SideNavItemData(Icons.dashboard_outlined, Icons.dashboard, s.tabDashboard),
+      _SideNavItemData(Icons.home_outlined, Icons.home, s.tabHome),
       _SideNavItemData(Icons.event_repeat_outlined, Icons.event_repeat, s.tabProgram),
       _SideNavItemData(Icons.fitness_center_outlined, Icons.fitness_center, s.tabWorkouts),
     ];
@@ -174,7 +271,7 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
                   ),
                   alignment: Alignment.center,
                   child: Text(
-                    [s.tabDashboard, s.tabProgram, s.tabWorkouts][_currentIndex],
+                    [s.tabHome, s.tabProgram, s.tabWorkouts][_currentIndex],
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -325,7 +422,19 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
                     height: 1,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
+
+                // ── زرار تسجيل الخروج المؤقت ──
+                _SideNavItem(
+                  icon: Icons.logout_rounded,
+                  label: s.logout,
+                  isActive: false,
+                  isCollapsed: isCollapsed,
+                  navWidth: _navWidth,
+                  onTap: () => _confirmLogout(context, s),
+                ),
+
+                const SizedBox(height: 4),
 
                 // ── زر تغيير الحجم ──
                 Padding(
