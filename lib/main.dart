@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'app_strings.dart';
 import 'dashboard_tab.dart';
+import 'program_tab.dart';
 import 'workouts_tab.dart';
-import 'settings_tab.dart';
 
 const Color navy = Color(0xFF0D3B66);
 const Color sky = Color(0xFFE8F4FC);
@@ -101,8 +101,8 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
 
   final List<Widget> _tabs = const [
     DashboardTab(),
+    ProgramTab(),
     WorkoutsTab(),
-    SettingsTab(),
   ];
 
   /// يرجع لأقرب حجم مسبق بعد انتهاء السحب
@@ -148,8 +148,8 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
 
     final navItems = [
       _SideNavItemData(Icons.dashboard_outlined, Icons.dashboard, s.tabDashboard),
+      _SideNavItemData(Icons.event_repeat_outlined, Icons.event_repeat, s.tabProgram),
       _SideNavItemData(Icons.fitness_center_outlined, Icons.fitness_center, s.tabWorkouts),
-      _SideNavItemData(Icons.settings_outlined, Icons.settings, s.tabSettings),
     ];
 
     return Scaffold(
@@ -174,11 +174,7 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
                   ),
                   alignment: Alignment.center,
                   child: Text(
-                    _currentIndex == 0
-                        ? s.tabDashboard
-                        : _currentIndex == 1
-                            ? s.tabWorkouts
-                            : s.tabSettings,
+                    [s.tabDashboard, s.tabProgram, s.tabWorkouts][_currentIndex],
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
