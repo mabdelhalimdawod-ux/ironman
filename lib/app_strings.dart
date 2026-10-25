@@ -170,9 +170,14 @@ class AppStrings {
   String get targetHRRange => isArabic ? 'نطاق النبض المستهدف (كارفونين)' : 'Target HR Range (Karvonen)';
   String get karvonenFormulaDesc => isArabic ? 'محسوب بمعادلة كارفونين وفق متوسط نبض الراحة لآخر 7 أيام' : 'Calculated via Karvonen using 7-day average resting HR';
   String get maxHRLabel => isArabic ? 'أقصى نبض (MHR)' : 'Max HR (MHR)';
+  String get mhrFieldLabel => isArabic ? 'أقصى نبض (MHR)' : 'Max HR (MHR)';
+  String get mhrFieldHint => 'bpm';
   String get preWorkoutSection => isArabic ? 'المؤشرات قبل التمرين (الصباحية)' : 'Pre-Workout Morning Metrics';
   String get rhrLabel => isArabic ? 'نبض الراحة (RHR)' : 'Resting HR (RHR)';
   String get rhrHint => isArabic ? 'متوسط آخر 7 أيام' : '7-day average';
+  String get morningRHRLabel => isArabic ? 'نبض الراحة الصباحي (RHR)' : 'Morning Resting HR (RHR)';
+  String get morningRHRHint => 'bpm';
+  String get autoZoneBadgeLabel => isArabic ? 'الزون المحسوب' : 'Calculated Zone';
   String get hrvLabel => isArabic ? 'تغير النبض (HRV)' : 'Heart Rate Var (HRV)';
   String get hrvHint => isArabic ? 'ms' : 'ms';
   String get sleepLabel => isArabic ? 'ساعات النوم' : 'Sleep Hours';

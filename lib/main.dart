@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'admin_placeholder.dart';
 import 'app_strings.dart';
 import 'auth_service.dart';
@@ -13,6 +15,10 @@ const Color yellow = Color(0xFFFFC93C);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (Platform.isWindows || Platform.isLinux) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
   await AppLanguage.instance.init();
   await AuthService.seedInitialData();
   runApp(const IronmanApp());

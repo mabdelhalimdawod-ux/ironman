@@ -3,7 +3,6 @@ import 'app_strings.dart';
 import 'db.dart';
 import 'heart_rate_zones.dart';
 import 'power_calculations.dart';
-import 'program_service.dart';
 
 const Color _navy = Color(0xFF0D3B66);
 const Color _sky = Color(0xFFE8F4FC);
@@ -79,6 +78,8 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
   final _sleepCtrl = TextEditingController();
   final _weightCtrl = TextEditingController();
   final _fatigueCtrl = TextEditingController();
+  final _mhrCtrl = TextEditingController();
+  final _rhrCtrl = TextEditingController();
 
   // قائمة الفورمات بعدد حصص اليوم
   final List<_SingleWorkoutFormState> _workoutForms = [];
@@ -87,14 +88,23 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
   int get _mhr => (widget.player['mhr'] as int?) ?? 190;
   String get _playerName => widget.player['name'] as String? ?? '';
 
+  int get _currentMHR => int.tryParse(_mhrCtrl.text) ?? _mhr;
+  int get _currentRHR => int.tryParse(_rhrCtrl.text) ?? _effectiveRHR;
+
   @override
   void initState() {
     super.initState();
+    _mhrCtrl.addListener(_onDailyHeartRatesChanged);
+    _rhrCtrl.addListener(_onDailyHeartRatesChanged);
     _initFormsAndLoadExistingData();
   }
 
   @override
   void dispose() {
+    _mhrCtrl.removeListener(_onDailyHeartRatesChanged);
+    _rhrCtrl.removeListener(_onDailyHeartRatesChanged);
+    _mhrCtrl.dispose();
+    _rhrCtrl.dispose();
     _hrvCtrl.dispose();
     _sleepCtrl.dispose();
     _weightCtrl.dispose();
@@ -105,11 +115,41 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
     super.dispose();
   }
 
+  /// إعادة حساب الزونات ونطاقات النبض فورياً لجميع تمارين اليوم عند تعديل MHR أو RHR
+  void _onDailyHeartRatesChanged() {
+    final mhr = _currentMHR;
+    final rhr = _currentRHR;
+    setState(() {
+      for (final form in _workoutForms) {
+        final hr = int.tryParse(form.hrCtrl.text);
+        final calculatedZone = HeartRateZones.determineZone(hr: hr, mhr: mhr, rhr: rhr);
+        if (calculatedZone != null) {
+          form.currentZone = calculatedZone;
+        }
+        form.targetRange = HeartRateZones.calculate(
+          mhr: mhr,
+          rhr: rhr,
+          zone: form.currentZone,
+        );
+      }
+    });
+  }
+
   Future<void> _initFormsAndLoadExistingData() async {
     setState(() => _loading = true);
 
     // 1. حساب نبض الراحة الفعال (متوسط 7 أيام أو آخر قيمة مسجلة)
     _effectiveRHR = await HeartRateZones.getEffectiveRHR(_playerId);
+
+    if (_rhrCtrl.text.isEmpty) {
+      _rhrCtrl.text = _effectiveRHR.toString();
+    }
+    if (_mhrCtrl.text.isEmpty) {
+      _mhrCtrl.text = _mhr.toString();
+    }
+
+    final initialMHR = _currentMHR;
+    final initialRHR = _currentRHR;
 
     // 2. إنشاء الفورمات لحصص اليوم
     _workoutForms.clear();
@@ -129,8 +169,8 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
 
       // حساب نطاق كارفونين الأولي لهذا الزون
       formState.targetRange = HeartRateZones.calculate(
-        mhr: _mhr,
-        rhr: _effectiveRHR,
+        mhr: initialMHR,
+        rhr: initialRHR,
         zone: zone,
       );
 
@@ -147,6 +187,12 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
       final idx = (log['idx'] as num?)?.toInt() ?? 0;
 
       // ملء المؤشرات اليومية المشتركة من أول سجل متوفر
+      if (log['rhr'] != null && (log['rhr'] as num) > 0) {
+        _rhrCtrl.text = log['rhr'].toString();
+      }
+      if (log['hr_max'] != null && (log['hr_max'] as num) > 0) {
+        _mhrCtrl.text = log['hr_max'].toString();
+      }
       if (_hrvCtrl.text.isEmpty && log['hrv'] != null) {
         _hrvCtrl.text = log['hrv'].toString();
       }
@@ -192,17 +238,41 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
       _updateEF(form);
     }
 
+    // إعادة حساب الزونات التلقائية بناءً على البيانات المحملة
+    final currentMhr = _currentMHR;
+    final currentRhr = _currentRHR;
+    for (final form in _workoutForms) {
+      final hr = int.tryParse(form.hrCtrl.text);
+      final calculatedZone = HeartRateZones.determineZone(hr: hr, mhr: currentMhr, rhr: currentRhr);
+      if (calculatedZone != null) {
+        form.currentZone = calculatedZone;
+      }
+      form.targetRange = HeartRateZones.calculate(
+        mhr: currentMhr,
+        rhr: currentRhr,
+        zone: form.currentZone,
+      );
+      _updateEF(form);
+    }
+
     if (mounted) setState(() => _loading = false);
   }
 
-  void _onZoneChanged(_SingleWorkoutFormState form, String newZone) {
+  void _onWorkoutHRChanged(_SingleWorkoutFormState form) {
+    final hr = int.tryParse(form.hrCtrl.text);
+    final mhr = _currentMHR;
+    final rhr = _currentRHR;
+    final newZone = HeartRateZones.determineZone(hr: hr, mhr: mhr, rhr: rhr);
     setState(() {
-      form.currentZone = newZone;
+      if (newZone != null) {
+        form.currentZone = newZone;
+      }
       form.targetRange = HeartRateZones.calculate(
-        mhr: _mhr,
-        rhr: _effectiveRHR,
-        zone: newZone,
+        mhr: mhr,
+        rhr: rhr,
+        zone: form.currentZone,
       );
+      _updateEF(form);
     });
   }
 
@@ -233,6 +303,8 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
       final sleepVal = double.tryParse(_sleepCtrl.text);
       final weightVal = double.tryParse(_weightCtrl.text);
       final fatigueVal = int.tryParse(_fatigueCtrl.text);
+      final mhrVal = int.tryParse(_mhrCtrl.text) ?? _mhr;
+      final rhrVal = int.tryParse(_rhrCtrl.text) ?? _effectiveRHR;
 
       for (final form in _workoutForms) {
         final avgWatts = double.tryParse(form.avgPowerCtrl.text);
@@ -241,6 +313,12 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
         final hrVal = int.tryParse(form.hrCtrl.text);
         final postHRVal = int.tryParse(form.postHRCtrl.text);
         final rec1minVal = int.tryParse(form.recovery1minCtrl.text);
+
+        // حساب الزون التلقائي قبل الحفظ
+        final autoZone = HeartRateZones.determineZone(hr: hrVal, mhr: mhrVal, rhr: rhrVal);
+        if (autoZone != null) {
+          form.currentZone = autoZone;
+        }
 
         // حساب EF تلقائي
         double? efVal = form.calculatedEF;
@@ -253,10 +331,10 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
           'player_id': _playerId,
           'date': widget.date,
           'idx': form.sessionIdx,
-          'rhr': _effectiveRHR,
+          'rhr': rhrVal,
           'hrv': hrvVal,
           'hr': hrVal,
-          'hr_max': _mhr,
+          'hr_max': mhrVal,
           'hr_post': postHRVal,
           'hr_1min': rec1minVal,
           'weight': weightVal,
@@ -268,7 +346,7 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
           'ef': efVal,
         });
 
-        // تحديث جدول sessions بالزون إن تم تعديله في الفورم
+        // تحديث جدول sessions بالزون
         await DB.put('sessions', {
           'date': widget.date,
           'idx': form.sessionIdx,
@@ -366,7 +444,7 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: _sky.withOpacity(0.6),
+        color: _sky.withValues(alpha: 0.6),
         border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
       ),
       child: Row(
@@ -389,7 +467,7 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                   style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: _navy),
                 ),
                 Text(
-                  'التاريخ: ${widget.date} • ${s.maxHRLabel}: $_mhr bpm',
+                  'التاريخ: ${widget.date} • ${s.maxHRLabel}: $_currentMHR bpm',
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade800),
                 ),
               ],
@@ -438,30 +516,33 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
               ],
             ),
             const Divider(height: 16),
+            // الصف الأول: MHR و RHR الصباحي والوزن
             Row(
               children: [
-                // HRV
+                // أقصى نبض (MHR)
                 Expanded(
                   child: TextFormField(
-                    controller: _hrvCtrl,
+                    controller: _mhrCtrl,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: s.hrvLabel,
-                      hintText: s.hrvHint,
+                      labelText: s.mhrFieldLabel,
+                      hintText: s.mhrFieldHint,
+                      suffixText: 'bpm',
                       isDense: true,
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
 
-                // ساعات النوم
+                // نبض الراحة الصباحي (RHR)
                 Expanded(
                   child: TextFormField(
-                    controller: _sleepCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    controller: _rhrCtrl,
+                    keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: s.sleepLabel,
-                      hintText: s.sleepHint,
+                      labelText: s.morningRHRLabel,
+                      hintText: s.morningRHRHint,
+                      suffixText: 'bpm',
                       isDense: true,
                     ),
                   ),
@@ -476,6 +557,25 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                     decoration: InputDecoration(
                       labelText: s.weightLabel,
                       hintText: s.weightHint,
+                      suffixText: 'كجم',
+                      isDense: true,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            // الصف الثاني: ساعات النوم ومستوى الإرهاق و HRV
+            Row(
+              children: [
+                // ساعات النوم
+                Expanded(
+                  child: TextFormField(
+                    controller: _sleepCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: s.sleepLabel,
+                      hintText: s.sleepHint,
                       isDense: true,
                     ),
                   ),
@@ -494,6 +594,21 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                     ),
                   ),
                 ),
+                const SizedBox(width: 8),
+
+                // HRV
+                Expanded(
+                  child: TextFormField(
+                    controller: _hrvCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: s.hrvLabel,
+                      hintText: s.hrvHint,
+                      suffixText: 'ms',
+                      isDense: true,
+                    ),
+                  ),
+                ),
               ],
             ),
           ],
@@ -504,6 +619,14 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
 
   Widget _buildWorkoutSessionForm(AppStrings s, int formIdx, _SingleWorkoutFormState form) {
     final rangeText = form.targetRange?.format() ?? '-';
+
+    // حساب الزون التلقائي من النبض الحالي ومعادلة كارفونين
+    final hrVal = int.tryParse(form.hrCtrl.text);
+    final autoZone = HeartRateZones.determineZone(
+      hr: hrVal,
+      mhr: _currentMHR,
+      rhr: _currentRHR,
+    );
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -545,23 +668,30 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _navy),
                   ),
                 ),
-                // قائمة منسدلة لتعديل الزون
-                SizedBox(
-                  width: 90,
-                  child: DropdownButtonFormField<String>(
-                    value: ProgramService.targetZones.contains(form.currentZone) ? form.currentZone : 'Z2',
-                    decoration: const InputDecoration(
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                // شارة الزون التلقائية بناءً على النبض ومعادلة كارفونين بدلاً من الاختيار اليدوي
+                if (autoZone != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: HeartRateZones.zoneColor(autoZone),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    items: ProgramService.targetZones.map((z) {
-                      return DropdownMenuItem(value: z, child: Text(z, style: const TextStyle(fontWeight: FontWeight.bold)));
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) _onZoneChanged(form, val);
-                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.flash_on, color: Colors.white, size: 14),
+                        const SizedBox(width: 4),
+                        Text(
+                          HeartRateZones.zoneDisplayName(autoZone, isArabic: s.isArabic),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
               ],
             ),
             const SizedBox(height: 10),
@@ -589,7 +719,7 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                     ),
                   ),
                   Text(
-                    'HRR: ${form.targetRange?.hrr ?? (_mhr - _effectiveRHR)} bpm',
+                    'HRR: ${form.targetRange?.hrr ?? (_currentMHR - _currentRHR)} bpm',
                     style: TextStyle(fontSize: 11, color: Colors.brown.shade700),
                   ),
                 ],
@@ -657,9 +787,7 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                   child: TextFormField(
                     controller: form.hrCtrl,
                     keyboardType: TextInputType.number,
-                    onChanged: (_) {
-                      setState(() => _updateEF(form));
-                    },
+                    onChanged: (_) => _onWorkoutHRChanged(form),
                     decoration: InputDecoration(
                       labelText: s.workoutHRLabel,
                       hintText: s.workoutHRHint,
@@ -792,7 +920,7 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             offset: const Offset(0, -3),
             blurRadius: 10,
           ),
