@@ -43,9 +43,9 @@ void main() {
 
   group('AuthService - Password Hashing & Security', () {
     test('hashPassword produces consistent SHA-256 hex string', () {
-      final hash1 = AuthService.hashPassword('admin123');
-      final hash2 = AuthService.hashPassword('admin123');
-      final hashDiff = AuthService.hashPassword('different_password');
+      final hash1 = AuthService.hashPassword('admin123', 'test_salt');
+      final hash2 = AuthService.hashPassword('admin123', 'test_salt');
+      final hashDiff = AuthService.hashPassword('different_password', 'test_salt');
 
       expect(hash1, equals(hash2));
       expect(hash1.length, equals(64)); // 256 bits = 64 hex characters
