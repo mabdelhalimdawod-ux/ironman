@@ -263,21 +263,55 @@ class AppStrings {
   String get databaseStatus => isArabic ? 'حالة قاعدة البيانات: متصلة ونشطة' : 'Database Status: Connected & Active';
 
   // ==================== Login & Authentication ====================
+  String get authBrandTitle => 'ENGINE ROWING';
+  String get authBrandSubtitle =>
+      isArabic ? 'منصة التدريب وتحليل الأداء الذكي' : 'Smart Training & Performance Analytics';
+  String get loginTab => isArabic ? 'تسجيل الدخول' : 'Sign In';
+  String get signUpTab => isArabic ? 'إنشاء حساب' : 'Sign Up';
   String get loginTitle => isArabic ? 'تسجيل الدخول' : 'Sign In';
   String get loginSubtitle => isArabic ? 'مرحباً بك في منصة Engine Rowing' : 'Welcome to Engine Rowing Platform';
   String get email => isArabic ? 'البريد الإلكتروني' : 'Email Address';
   String get emailHint => 'coach@engine.rowing';
   String get password => isArabic ? 'كلمة المرور' : 'Password';
   String get passwordHint => '••••••••';
+  String get firstName => isArabic ? 'الاسم الأول' : 'First Name';
+  String get lastName => isArabic ? 'اسم العائلة' : 'Last Name';
+  String get confirmPassword => isArabic ? 'تأكيد كلمة المرور' : 'Confirm Password';
+  String get accountType => isArabic ? 'نوع الحساب' : 'Account Type';
+  String get roleAthlete => isArabic ? 'لاعب' : 'Athlete';
+  String get roleCoach => isArabic ? 'مدرب' : 'Coach';
+  String get agreeToTerms => isArabic ? 'أوافق على الشروط والأحكام' : 'I agree to the Terms & Conditions';
+  String get termsAndConditionsTitle => isArabic ? 'الشروط والأحكام' : 'Terms & Conditions';
+  String get termsComingSoon => isArabic ? 'الشروط والأحكام ستتوفر قريباً.' : 'Terms and conditions coming soon.';
+  String get continueWithGoogle => isArabic ? 'المتابعة باستخدام Google' : 'Continue with Google';
+  String get googleComingSoon => isArabic ? 'ميزة تسجيل الدخول عبر Google ستتوفر قريباً.' : 'Google Sign-In is coming soon.';
+  String get forgotPasswordTitle => isArabic ? 'استعادة كلمة المرور' : 'Forgot Password';
+  String get forgotPasswordDialogText => isArabic
+      ? 'يرجى التواصل مع المدرب أو إدارة النظام لإعادة تعيين كلمة المرور الخاصة بحسابك.'
+      : 'Please contact your coach or system administrator to reset your password.';
   String get rememberMe => isArabic ? 'تذكرني' : 'Remember me';
   String get signInButton => isArabic ? 'دخول' : 'Sign In';
   String get signingIn => isArabic ? 'جاري التحقق...' : 'Signing in...';
+  String get createAccountButton => isArabic ? 'إنشاء حساب جديد' : 'Create Account';
+  String get creatingAccount => isArabic ? 'جاري إنشاء الحساب...' : 'Creating account...';
   String get forgotPasswordNote => isArabic ? 'نسيت كلمة المرور؟ تواصل مع مدربك' : 'Forgot password? Contact your coach';
   String get invalidEmail => isArabic ? 'يرجى إدخال بريد إلكتروني صحيح' : 'Please enter a valid email address';
   String get emptyPassword => isArabic ? 'يرجى إدخال كلمة المرور' : 'Please enter your password';
   String get invalidCredentials => isArabic ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة' : 'Invalid email or password';
   String get accountInactive => isArabic ? 'تم إيقاف هذا الحساب. يرجى مراجعة الإدارة' : 'This account is inactive. Please contact administration';
+  String get awaitingActivationError => isArabic ? 'حسابك بانتظار التفعيل من الإدارة' : 'Your account is awaiting admin activation';
   String get coachSubscriptionInactive => isArabic ? 'اشتراك المدرب متوقف حالياً. تواصل مع مدربك' : 'Coach subscription is inactive. Contact your coach';
+  String get signUpSuccessTitle => isArabic ? 'تم إنشاء الحساب بنجاح!' : 'Account Created Successfully!';
+  String get signUpSuccessMessage => isArabic
+      ? 'تم تسجيل حسابك بنجاح. حسابك الآن بانتظار التفعيل من إدارة النظام، وستتمكن من تسجيل الدخول فور تفعيله.'
+      : 'Your account was created successfully and is awaiting admin activation. You can sign in once activated.';
+  String get emailAlreadyExists => isArabic ? 'هذا البريد الإلكتروني مسجل بالفعل' : 'This email is already registered';
+  String get passwordMismatch => isArabic ? 'كلمتا المرور غير متطابقتين' : 'Passwords do not match';
+  String get passwordTooShort => isArabic ? 'كلمة المرور يجب ألا تقل عن 6 أحرف' : 'Password must be at least 6 characters';
+  String get mustAcceptTerms => isArabic ? 'يجب الموافقة على الشروط والأحكام للمتابعة' : 'You must accept the Terms & Conditions';
+  String get fieldRequired => isArabic ? 'هذا الحقل مطلوب' : 'This field is required';
+  String get orDivider => isArabic ? 'أو' : 'OR';
+  String get ok => isArabic ? 'حسناً' : 'OK';
   String get logout => isArabic ? 'تسجيل الخروج' : 'Log Out';
   String get logoutConfirm => isArabic ? 'هل تريد تسجيل الخروج من التطبيق؟' : 'Are you sure you want to log out?';
 
@@ -322,4 +356,29 @@ class AppStrings {
   String get adminPlaceholderTitle => isArabic ? 'لوحة تحكم الأدمن' : 'Admin Dashboard';
   String get adminPlaceholderDesc =>
       isArabic ? 'لوحة الإدارة والمدربين قيد التطوير وستتاح قريباً.' : 'Admin & coach management is under development and coming soon.';
+
+  // ==================== Metrics Curves Strings (المنحنيات الخمسة) ====================
+  String get metricsCurvesTitle => isArabic ? 'منحنيات مؤشرات التدريب' : 'Training Metrics Curves';
+  String get metricsCurvesSubtitle => isArabic ? 'تحليل بياني ذكي وتطور الأداء الفسيولوجي' : 'Smart analytics & physiological performance curves';
+  String get curveEF => isArabic ? 'معامل الكفاءة (EF)' : 'Efficiency Factor (EF)';
+  String get curveWatts => isArabic ? 'القدرة (الواط)' : 'Power (Watts)';
+  String get curveDecoupling => isArabic ? 'التفكك القلبي (Decoupling)' : 'Cardiac Decoupling';
+  String get curveHR => isArabic ? 'النبض (Heart Rate)' : 'Heart Rate';
+  String get curveZone => isArabic ? 'زون كيرف (Zone Curve)' : 'Zone Curve';
+  String get zoneCurvePurpose => isArabic ? 'مراقبة تحسن الواط في كل زون تدريبي على مدار الفترة' : 'Track watts progression across training zones over time';
+  String get zoneCurveSubtitle => isArabic ? 'منحنى الزونات الخمسة بمعادلة كارفونين التلقائية' : '5-zone curve with auto Karvonen calculation';
+  String get selectZonesPrompt => isArabic ? 'علّم الزونات لعرض خطوطها في المنحنى:' : 'Select zones to plot on the curve:';
+  String get zoneNoData => isArabic ? 'لا توجد بيانات' : 'No data';
+  String get exportExcel => isArabic ? 'تصدير Excel' : 'Export Excel';
+  String get exportExcelDone => isArabic ? 'تم تصدير الزونات المعلّمة بنجاح' : 'Checked zones exported successfully';
+  String get selectAtLeastOneZone => isArabic ? 'يرجى تعليم زون واحد على الأقل للعرض والتصدير' : 'Please check at least one zone to display & export';
+  String get periodLast7Days => isArabic ? '7 أيام' : '7 Days';
+  String get periodLast30Days => isArabic ? '30 يوم' : '30 Days';
+  String get periodLast90Days => isArabic ? '90 يوم' : '90 Days';
+  String get periodAllTime => isArabic ? 'الكل' : 'All Time';
+  String get periodCustomRange => isArabic ? 'تحديد فترة' : 'Custom';
+  String get avgWattsLabel => isArabic ? 'متوسط الواط' : 'Avg Watts';
+  String get maxWattsLabel => isArabic ? 'أقصى واط' : 'Max Watts';
+  String get autoKarvonenNote => isArabic ? 'الزون محسوب تلقائياً من النبض بمعادلة كارفونين' : 'Zone is automatically calculated from HR via Karvonen';
+  String get dailyAggregationNote => isArabic ? 'كل نقطة تمثل متوسط الواط لورك أوت اليوم لنفس الزون' : 'Each point represents daily average watts for the zone';
 }

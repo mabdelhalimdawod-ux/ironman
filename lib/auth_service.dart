@@ -95,6 +95,30 @@ class AuthService {
     return sha256.convert(bytes).toString();
   }
 
+  /// التحقق مما إذا كان البريد الإلكتروني مسجلاً مسبقاً
+  static Future<bool> isEmailRegistered(String email) async {
+    await ensureTables();
+    final database = await DB.db;
+    final rows = await database.rawQuery(
+      'SELECT id FROM users WHERE LOWER(email) = ?',
+      [email.trim().toLowerCase()],
+    );
+    return rows.isNotEmpty;
+  }
+
+  /// تفعيل حساب مستخدم (للأدمن أو بعد تأكيد الدفع الكاش)
+  static Future<bool> activateUser(int userId) async {
+    await ensureTables();
+    final database = await DB.db;
+    final count = await database.update(
+      'users',
+      {'subscription_active': 1},
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+    return count > 0;
+  }
+
   /// إنشاء مستخدم جديد مع توليد Salt عشوائي وتشفير كلمة السر
   static Future<int> registerUser({
     required String email,
@@ -103,7 +127,7 @@ class AuthService {
     required String role,
     int? coachId,
     int? playerId,
-    bool subscriptionActive = true,
+    bool subscriptionActive = false,
   }) async {
     await ensureTables();
     final database = await DB.db;
@@ -338,23 +362,9 @@ class AuthService {
 
     final user = AppUser.fromMap(userMap);
 
-    // فحص اشتراك المستخدم نفسه
+    // فحص اشتراك وتفعيل المستخدم نفسه
     if (!user.subscriptionActive) {
-      return const LoginResult.failure(LoginError.accountInactive);
-    }
-
-    // إذا كان لاعباً تابعاً لمدرب، يتم فحص اشتراك المدرب
-    if (user.isAthlete && user.coachId != null) {
-      final coachRows = await database.rawQuery(
-        'SELECT subscription_active FROM users WHERE id = ?',
-        [user.coachId],
-      );
-      if (coachRows.isNotEmpty) {
-        final coachActive = (coachRows.first['subscription_active'] as int? ?? 1) == 1;
-        if (!coachActive) {
-          return const LoginResult.failure(LoginError.coachSubscriptionInactive);
-        }
-      }
+      return const LoginResult.failure(LoginError.awaitingActivation);
     }
 
     currentUser = user;
@@ -391,17 +401,6 @@ class AuthService {
 
     final user = AppUser.fromMap(rows.first);
     if (!user.subscriptionActive) return null;
-
-    if (user.isAthlete && user.coachId != null) {
-      final coachRows = await database.rawQuery(
-        'SELECT subscription_active FROM users WHERE id = ?',
-        [user.coachId],
-      );
-      if (coachRows.isNotEmpty) {
-        final coachActive = (coachRows.first['subscription_active'] as int? ?? 1) == 1;
-        if (!coachActive) return null;
-      }
-    }
 
     currentUser = user;
     return user;
@@ -442,6 +441,7 @@ enum LoginError {
   invalidCredentials,
   accountInactive,
   coachSubscriptionInactive,
+  awaitingActivation,
 }
 
 /// نتيجة محاولة تسجيل الدخول

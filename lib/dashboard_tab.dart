@@ -3,6 +3,7 @@ import 'app_strings.dart';
 import 'auth_service.dart';
 import 'db.dart';
 import 'home_service.dart';
+import 'metrics_curve_page.dart';
 
 const Color _navy = Color(0xFF0D3B66);
 const Color _sky = Color(0xFFE8F4FC);
@@ -137,6 +138,10 @@ class _DashboardTabState extends State<DashboardTab> {
 
           // ── كارت الحصة التدريبية القادمة ──
           _buildNextSessionCard(s),
+          const SizedBox(height: 16),
+
+          // ── كارت منحنيات مؤشرات التدريب (خمسة منحنيات) ──
+          _buildMetricsCurvesBanner(s),
           const SizedBox(height: 16),
 
           // ── كروت المؤشرات Highlights (تظهر فقط إن توفرت بيانات) ──
@@ -848,6 +853,107 @@ class _DashboardTabState extends State<DashboardTab> {
           },
         );
       },
+    );
+  }
+
+  // ── كارت منحنيات مؤشرات التدريب المتطورة ──
+  Widget _buildMetricsCurvesBanner(AppStrings s) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF07192C), _navy],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _yellow.withAlpha(90)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(40),
+            blurRadius: 16,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(18),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: _yellow.withAlpha(30),
+              shape: BoxShape.circle,
+              border: Border.all(color: _yellow.withAlpha(120)),
+            ),
+            child: const Icon(Icons.auto_graph_rounded, color: _yellow, size: 26),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      s.metricsCurvesTitle,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: _yellow,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        s.isArabic ? '5 منحنيات' : '5 Curves',
+                        style: const TextStyle(
+                          color: _navy,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  s.isArabic
+                      ? 'تحليل ذكي لـ EF، الواط، Decoupling، النبض، وزون كيرف (كارفونين)'
+                      : 'Smart curves for EF, Watts, Decoupling, HR & Zone Curve',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white.withAlpha(190),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: _yellow,
+              foregroundColor: _navy,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const MetricsCurvePage()),
+              );
+            },
+            child: Text(
+              s.isArabic ? 'فتح التحليل' : 'Open',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

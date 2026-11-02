@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'db.dart';
 import 'app_strings.dart';
 import 'dart:math';
+import 'metrics_curve_page.dart';
 
 // ==================== ألوان التصميم ====================
 const _navy = Color(0xFF0D3B66);
@@ -173,6 +174,31 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                 if (baseline.isNotEmpty && baseline['avg_rhr'] != null)
                   _statChip(s.isArabic ? 'متوسط RHR' : 'Avg RHR', '${baseline['avg_rhr']?.round()}'),
               ],
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: _yellow,
+                  foregroundColor: _navy,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => MetricsCurvePage(initialPlayer: widget.player),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.auto_graph_rounded),
+                label: Text(
+                  s.isArabic ? 'منحنيات مؤشرات التدريب (خمسة منحنيات)' : 'View Metrics Curves (5 Curves)',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
             ),
           ],
         ),

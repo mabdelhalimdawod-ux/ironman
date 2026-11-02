@@ -3,6 +3,7 @@ import 'db.dart';
 import 'app_strings.dart';
 import 'program_service.dart';
 import 'athlete_day_entry_page.dart';
+import 'metrics_curve_page.dart';
 
 const Color _navy = Color(0xFF0D3B66);
 const Color _sky = Color(0xFFE8F4FC);
@@ -209,6 +210,39 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const MetricsCurvePage()),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: _gold.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: _gold),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.auto_graph_rounded, color: _gold, size: 16),
+                        const SizedBox(width: 6),
+                        Text(
+                          s.curveZone,
+                          style: const TextStyle(
+                            color: _gold,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
                           ),
                         ),
                       ],

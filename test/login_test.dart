@@ -117,5 +117,62 @@ void main() {
       expect(restored.playerId, equals(original.playerId));
       expect(restored.createdAt, equals(original.createdAt));
     });
+
+    test('AppUser handles inactive/awaiting activation subscription state', () {
+      final awaitingUser = AppUser(
+        id: 99,
+        email: 'newuser@engine.rowing',
+        name: 'New Athlete',
+        role: 'athlete',
+        subscriptionActive: false,
+      );
+      expect(awaitingUser.subscriptionActive, isFalse);
+      final map = awaitingUser.toMap();
+      expect(map['subscription_active'], equals(0));
+
+      final restored = AppUser.fromMap(map);
+      expect(restored.subscriptionActive, isFalse);
+    });
+  });
+
+  group('Login & Sign Up Localization Strings', () {
+    test('Arabic and English strings for Login & Sign Up tabs are present and distinct', () {
+      const ar = AppStrings(true);
+      const en = AppStrings(false);
+
+      expect(ar.loginTab, equals('تسجيل الدخول'));
+      expect(en.loginTab, equals('Sign In'));
+
+      expect(ar.signUpTab, equals('إنشاء حساب'));
+      expect(en.signUpTab, equals('Sign Up'));
+
+      expect(ar.awaitingActivationError, contains('بانتظار التفعيل'));
+      expect(en.awaitingActivationError, contains('awaiting admin activation'));
+
+      expect(ar.continueWithGoogle, contains('Google'));
+      expect(en.continueWithGoogle, contains('Google'));
+
+      expect(ar.googleComingSoon, contains('قريباً'));
+      expect(en.googleComingSoon, contains('coming soon'));
+
+      expect(ar.termsAndConditionsTitle, equals('الشروط والأحكام'));
+      expect(en.termsAndConditionsTitle, equals('Terms & Conditions'));
+
+      expect(ar.termsComingSoon, contains('قريباً'));
+      expect(en.termsComingSoon, contains('coming soon'));
+
+      expect(ar.roleAthlete, equals('لاعب'));
+      expect(en.roleAthlete, equals('Athlete'));
+      expect(ar.roleCoach, equals('مدرب'));
+      expect(en.roleCoach, equals('Coach'));
+    });
+  });
+
+  group('LoginError Enum Verification', () {
+    test('LoginError contains awaitingActivation error case', () {
+      expect(LoginError.values, contains(LoginError.awaitingActivation));
+      expect(LoginError.values, contains(LoginError.invalidCredentials));
+      expect(LoginError.values, contains(LoginError.accountInactive));
+    });
   });
 }
