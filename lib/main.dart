@@ -6,6 +6,7 @@ import 'app_strings.dart';
 import 'auth_service.dart';
 import 'dashboard_tab.dart';
 import 'login_page.dart';
+import 'metrics_curve_page.dart';
 import 'program_tab.dart';
 import 'workouts_tab.dart';
 
@@ -244,38 +245,75 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
     );
   }
 
+  /// فتح لوحة التحكم والعمليات من علامة الهمبرجر (☰)
+  void _openHamburgerHub(BuildContext context, AppStrings s) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _HamburgerHubSheet(
+        user: widget.user,
+        onOpenMetricsCurves: () {
+          Navigator.pop(ctx);
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => MetricsCurvePage(
+                initialPlayer: widget.user != null
+                    ? {'id': widget.user!.id, 'name': widget.user!.name}
+                    : null,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
+    final isArabic = AppLanguage.instance.isArabic;
     final isCollapsed = _navWidth < 120;
 
     final navItems = [
       _SideNavItemData(Icons.home_outlined, Icons.home, s.tabHome),
-      _SideNavItemData(Icons.event_repeat_outlined, Icons.event_repeat, s.tabProgram),
-      _SideNavItemData(Icons.fitness_center_outlined, Icons.fitness_center, s.tabWorkouts),
+      _SideNavItemData(
+        Icons.event_repeat_outlined,
+        Icons.event_repeat,
+        s.tabProgram,
+        imageAsset: 'assets/images/program_tab_icon.png',
+      ),
+      _SideNavItemData(
+          Icons.fitness_center_outlined, Icons.fitness_center, s.tabWorkouts),
     ];
 
-    return Scaffold(
-      body: Row(
-        textDirection: TextDirection.ltr, // النافيجيشن دائماً على اليمين
+    // ════════════════════════════════════════
+    // ██  المحتوى الرئيسي
+    // ════════════════════════════════════════
+    final mainContent = Expanded(
+      child: Column(
         children: [
-          // ════════════════════════════════════════
-          // ██  المحتوى الرئيسي
-          // ════════════════════════════════════════
-          Expanded(
-            child: Column(
+          // ── AppBar ──
+          Container(
+            height: 60,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [navy, Color(0xFF164B7A)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
               children: [
-                // ── AppBar ──
-                Container(
-                  height: 60,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [navy, Color(0xFF164B7A)],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
-                  ),
-                  alignment: Alignment.center,
+                IconButton(
+                  icon: const Icon(Icons.menu_rounded, color: yellow, size: 28),
+                  tooltip: s.hamburgerTitle,
+                  onPressed: () => _openHamburgerHub(context, s),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
                   child: Text(
                     [s.tabHome, s.tabProgram, s.tabWorkouts][_currentIndex],
                     style: const TextStyle(
@@ -284,217 +322,233 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
                       color: Colors.white,
                       letterSpacing: 0.5,
                     ),
-                  ),
-                ),
-                // ── Body ──
-                Expanded(
-                  child: IndexedStack(
-                    index: _currentIndex,
-                    children: _tabs,
+                    textAlign: isArabic ? TextAlign.right : TextAlign.left,
                   ),
                 ),
               ],
             ),
           ),
-
-          // ════════════════════════════════════════
-          // ██  مقبض السحب (Drag Handle)
-          // ════════════════════════════════════════
-          GestureDetector(
-            onHorizontalDragStart: (_) =>
-                setState(() => _isResizing = true),
-            onHorizontalDragUpdate: (details) {
-              setState(() {
-                _navWidth = (_navWidth - details.delta.dx)
-                    .clamp(_minWidth, _maxWidth);
-              });
-            },
-            onHorizontalDragEnd: (_) => _snapToNearest(),
-            onDoubleTap: _cycleSize,
-            child: MouseRegion(
-              cursor: SystemMouseCursors.resizeColumn,
-              child: Container(
-                width: 8,
-                color: Colors.transparent,
-                child: Center(
-                  child: Container(
-                    width: 3,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // ════════════════════════════════════════
-          // ██  الشريط الجانبي (Side Navigation)
-          // ════════════════════════════════════════
-          AnimatedContainer(
-            duration: _isResizing
-                ? Duration.zero
-                : const Duration(milliseconds: 300),
-            curve: Curves.easeOutCubic,
-            width: _navWidth,
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF0F4070), navy],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(40),
-                  blurRadius: 24,
-                  offset: const Offset(-4, 0),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                // ── منطقة الشعار ──
-                Container(
-                  height: 60,
-                  alignment: Alignment.center,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 250),
-                    switchInCurve: Curves.easeOut,
-                    switchOutCurve: Curves.easeIn,
-                    child: isCollapsed
-                        ? const Icon(
-                            Icons.rowing_rounded,
-                            key: ValueKey('icon'),
-                            color: yellow,
-                            size: 30,
-                          )
-                        : Row(
-                            key: const ValueKey('brand'),
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.rowing_rounded,
-                                  color: yellow, size: 26),
-                              const SizedBox(width: 10),
-                              Text(
-                                'ENGINE ROWING',
-                                style: TextStyle(
-                                  color: yellow,
-                                  fontSize: _navWidth > 240 ? 18 : 14,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                  ),
-                ),
-                // ── فاصل ──
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: isCollapsed ? 14 : 20),
-                  child: Divider(
-                    color: Colors.white.withAlpha(30),
-                    height: 1,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // ── عناصر التنقل ──
-                ...List.generate(navItems.length, (i) {
-                  final item = navItems[i];
-                  final isActive = _currentIndex == i;
-                  return _SideNavItem(
-                    icon: isActive ? item.activeIcon : item.icon,
-                    label: item.label,
-                    isActive: isActive,
-                    isCollapsed: isCollapsed,
-                    navWidth: _navWidth,
-                    onTap: () => setState(() => _currentIndex = i),
-                  );
-                }),
-
-                const Spacer(),
-
-                // ── فاصل سفلي ──
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: isCollapsed ? 14 : 20),
-                  child: Divider(
-                    color: Colors.white.withAlpha(30),
-                    height: 1,
-                  ),
-                ),
-                const SizedBox(height: 6),
-
-                // ── زرار تسجيل الخروج المؤقت ──
-                _SideNavItem(
-                  icon: Icons.logout_rounded,
-                  label: s.logout,
-                  isActive: false,
-                  isCollapsed: isCollapsed,
-                  navWidth: _navWidth,
-                  onTap: () => _confirmLogout(context, s),
-                ),
-
-                const SizedBox(height: 4),
-
-                // ── زر تغيير الحجم ──
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
-                  child: Material(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: _cycleSize,
-                      hoverColor: Colors.white.withAlpha(20),
-                      splashColor: yellow.withAlpha(40),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isCollapsed ? 0 : 14,
-                          vertical: 12,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: isCollapsed
-                              ? MainAxisAlignment.center
-                              : MainAxisAlignment.start,
-                          children: [
-                            Icon(
-                              _cycleIcon(),
-                              color: Colors.white54,
-                              size: 22,
-                            ),
-                            if (!isCollapsed) ...[
-                              const SizedBox(width: 12),
-                              Flexible(
-                                child: Text(
-                                  _sizeLabel(s),
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: Colors.white54,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
+          // ── Body ──
+          Expanded(
+            child: IndexedStack(
+              index: _currentIndex,
+              children: _tabs,
             ),
           ),
         ],
+      ),
+    );
+
+    // ════════════════════════════════════════
+    // ██  مقبض السحب (Drag Handle)
+    // ════════════════════════════════════════
+    final dragHandle = GestureDetector(
+      onHorizontalDragStart: (_) => setState(() => _isResizing = true),
+      onHorizontalDragUpdate: (details) {
+        setState(() {
+          final delta = isArabic ? -details.delta.dx : details.delta.dx;
+          _navWidth = (_navWidth + delta).clamp(_minWidth, _maxWidth);
+        });
+      },
+      onHorizontalDragEnd: (_) => _snapToNearest(),
+      onDoubleTap: _cycleSize,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.resizeColumn,
+        child: Container(
+          width: 8,
+          color: Colors.transparent,
+          child: Center(
+            child: Container(
+              width: 3,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // ════════════════════════════════════════
+    // ██  الشريط الجانبي (Side Navigation)
+    // ════════════════════════════════════════
+    final sideNav = AnimatedContainer(
+      duration: _isResizing ? Duration.zero : const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+      width: _navWidth,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0F4070), navy],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(40),
+            blurRadius: 24,
+            offset: Offset(isArabic ? -4 : 4, 0),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // ── منطقة الشعار وزر الهمبرجر ──
+          Container(
+            height: 60,
+            padding: EdgeInsets.symmetric(horizontal: isCollapsed ? 4 : 10),
+            alignment: Alignment.center,
+            child: isCollapsed
+                ? IconButton(
+                    icon: const Icon(Icons.menu_rounded,
+                        color: yellow, size: 28),
+                    tooltip: s.hamburgerTitle,
+                    onPressed: () => _openHamburgerHub(context, s),
+                  )
+                : Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.menu_rounded,
+                            color: yellow, size: 24),
+                        tooltip: s.hamburgerTitle,
+                        onPressed: () => _openHamburgerHub(context, s),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.rowing_rounded,
+                                color: yellow, size: 24),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                'ENGINE ROWING',
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: yellow,
+                                  fontSize: _navWidth > 240 ? 16 : 13,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+          // ── فاصل ──
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: isCollapsed ? 14 : 20),
+            child: Divider(
+              color: Colors.white.withAlpha(30),
+              height: 1,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // ── عناصر التنقل ──
+          ...List.generate(navItems.length, (i) {
+            final item = navItems[i];
+            final isActive = _currentIndex == i;
+            return _SideNavItem(
+              icon: isActive ? item.activeIcon : item.icon,
+              label: item.label,
+              imageAsset: item.imageAsset,
+              isActive: isActive,
+              isCollapsed: isCollapsed,
+              navWidth: _navWidth,
+              onTap: () => setState(() => _currentIndex = i),
+            );
+          }),
+
+          const Spacer(),
+
+          // ── فاصل سفلي ──
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: isCollapsed ? 14 : 20),
+            child: Divider(
+              color: Colors.white.withAlpha(30),
+              height: 1,
+            ),
+          ),
+          const SizedBox(height: 6),
+
+          // ── زرار تسجيل الخروج ──
+          _SideNavItem(
+            icon: Icons.logout_rounded,
+            label: s.logout,
+            isActive: false,
+            isCollapsed: isCollapsed,
+            navWidth: _navWidth,
+            onTap: () => _confirmLogout(context, s),
+          ),
+
+          const SizedBox(height: 4),
+
+          // ── زر تغيير الحجم ──
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: _cycleSize,
+                hoverColor: Colors.white.withAlpha(20),
+                splashColor: yellow.withAlpha(40),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isCollapsed ? 0 : 14,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: isCollapsed
+                        ? MainAxisAlignment.center
+                        : MainAxisAlignment.start,
+                    children: [
+                      Icon(
+                        _cycleIcon(),
+                        color: Colors.white54,
+                        size: 22,
+                      ),
+                      if (!isCollapsed) ...[
+                        const SizedBox(width: 12),
+                        Flexible(
+                          child: Text(
+                            _sizeLabel(s),
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white54,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+      ),
+    );
+
+    // الشريط الجانبي على اليمين في العربية، وعلى اليسار في الإنجليزية
+    return Scaffold(
+      body: Row(
+        textDirection: TextDirection.ltr,
+        children: isArabic
+            ? [mainContent, dragHandle, sideNav]
+            : [sideNav, dragHandle, mainContent],
       ),
     );
   }
@@ -507,7 +561,9 @@ class _SideNavItemData {
   final IconData icon;
   final IconData activeIcon;
   final String label;
-  const _SideNavItemData(this.icon, this.activeIcon, this.label);
+  final String? imageAsset;
+  const _SideNavItemData(this.icon, this.activeIcon, this.label,
+      {this.imageAsset});
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -516,6 +572,7 @@ class _SideNavItemData {
 class _SideNavItem extends StatefulWidget {
   final IconData icon;
   final String label;
+  final String? imageAsset;
   final bool isActive;
   final bool isCollapsed;
   final double navWidth;
@@ -524,6 +581,7 @@ class _SideNavItem extends StatefulWidget {
   const _SideNavItem({
     required this.icon,
     required this.label,
+    this.imageAsset,
     required this.isActive,
     required this.isCollapsed,
     required this.navWidth,
@@ -568,9 +626,7 @@ class _SideNavItemState extends State<_SideNavItem> {
                         ? Colors.white.withAlpha(18)
                         : Colors.transparent,
                 border: Border.all(
-                  color: isActive
-                      ? yellow.withAlpha(70)
-                      : Colors.transparent,
+                  color: isActive ? yellow.withAlpha(70) : Colors.transparent,
                   width: 1.2,
                 ),
               ),
@@ -591,19 +647,38 @@ class _SideNavItemState extends State<_SideNavItem> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
-                  // ── الأيقونة ──
+                  // ── الأيقونة أو الشعار المخصص ──
                   AnimatedScale(
                     scale: _isHovered && !isActive ? 1.15 : 1.0,
                     duration: const Duration(milliseconds: 180),
-                    child: Icon(
-                      widget.icon,
-                      color: isActive
-                          ? yellow
-                          : _isHovered
-                              ? Colors.white
-                              : Colors.white70,
-                      size: isCollapsed ? 26 : 24,
-                    ),
+                    child: widget.imageAsset != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.asset(
+                              widget.imageAsset!,
+                              width: isCollapsed ? 26 : 24,
+                              height: isCollapsed ? 26 : 24,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => Icon(
+                                widget.icon,
+                                color: isActive
+                                    ? yellow
+                                    : _isHovered
+                                        ? Colors.white
+                                        : Colors.white70,
+                                size: isCollapsed ? 26 : 24,
+                              ),
+                            ),
+                          )
+                        : Icon(
+                            widget.icon,
+                            color: isActive
+                                ? yellow
+                                : _isHovered
+                                    ? Colors.white
+                                    : Colors.white70,
+                            size: isCollapsed ? 26 : 24,
+                          ),
                   ),
                   // ── النص ──
                   if (!isCollapsed) ...[
@@ -646,6 +721,450 @@ class _SideNavItemState extends State<_SideNavItem> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// نافذة لوحة التحكم والعمليات (قائمة الهمبرجر ☰)
+// ════════════════════════════════════════════════════════════════
+class _HamburgerHubSheet extends StatelessWidget {
+  final AppUser? user;
+  final VoidCallback onOpenMetricsCurves;
+
+  const _HamburgerHubSheet({
+    required this.user,
+    required this.onOpenMetricsCurves,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFFF9FBFC),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 20,
+                offset: Offset(0, -4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // ── مقبض السحب العلوي ──
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 10, bottom: 8),
+                  width: 48,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+
+              // ── شريط رأس قائمة الهمبرجر ──
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [navy, Color(0xFF164B7A)],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: yellow.withAlpha(40),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.menu_rounded,
+                          color: yellow, size: 26),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            s.hamburgerTitle,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            s.hamburgerSubtitle,
+                            style: TextStyle(
+                              color: Colors.white.withAlpha(200),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded,
+                          color: Colors.white70),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── محتوى المحاور الخمسة ──
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(18),
+                  children: [
+                    // 1. الانتقال بين شاشات التحليل المعقدة (Multi-Dashboard Navigation)
+                    _buildHubCard(
+                      context: context,
+                      title: s.multiDashboardNav,
+                      icon: Icons.dashboard_customize_rounded,
+                      iconColor: const Color(0xFF1976D2),
+                      children: [
+                        _buildActionTile(
+                          icon: Icons.speed_rounded,
+                          title: s.physicalPerformance,
+                          subtitle:
+                              'معدل ضربات القلب: 148 bpm • السرعة: 1:45.2 • المسافة: 8,450m',
+                          trailingText: 'عرض مباشر',
+                          onTap: () {
+                            _showSimpleNotice(context, s.physicalPerformance,
+                                'يتم عرض مؤشرات النبض والسرعة والمسافة الآن لحظياً من المستشعرات.');
+                          },
+                        ),
+                        const Divider(height: 1),
+                        _buildActionTile(
+                          icon: Icons.analytics_outlined,
+                          title: s.analyticsDashboard,
+                          subtitle:
+                              'توزيع الزونات، مؤشرات الحمل التراكمي، وكفاءة القوة',
+                          trailingText: 'دخول',
+                          onTap: () {
+                            _showSimpleNotice(context, s.analyticsDashboard,
+                                'لوحة التحليلات المتقدمة جاهزة لمتابعة إحصائيات الفريق.');
+                          },
+                        ),
+                        const Divider(height: 1),
+                        _buildActionTile(
+                          icon: Icons.healing_rounded,
+                          title: s.medicalReport,
+                          subtitle:
+                              'جاهزية: 88% • إجهاد: منخفض • لا توجد إصابات نشطة',
+                          trailingText: 'التقرير',
+                          onTap: () {
+                            _showSimpleNotice(context, s.medicalReport,
+                                'تقرير الاستشفاء الطبي: جميع مؤشرات اللاعبين ضمن النطاق الآمن.');
+                          },
+                        ),
+                        const Divider(height: 1),
+                        _buildActionTile(
+                          icon: Icons.compare_arrows_rounded,
+                          title: s.peerDataComparison,
+                          subtitle:
+                              'مقارنة ومزامنة الأرقام الفسيولوجية بموافقة اللاعبين',
+                          trailingText: 'مقارنة',
+                          onTap: () {
+                            _showSimpleNotice(context, s.peerDataComparison,
+                                'تم تفعيل الاتصال ومقارنة الأداء بين لاعبي الفريق.');
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 2. إدارة وتبديل الحسابات (Profiles & Team Roster Management)
+                    _buildHubCard(
+                      context: context,
+                      title: s.rosterManagement,
+                      icon: Icons.manage_accounts_rounded,
+                      iconColor: const Color(0xFFE65100),
+                      children: [
+                        _buildActionTile(
+                          icon: Icons.switch_account_rounded,
+                          title: s.switchAthlete,
+                          subtitle:
+                              'الانتقال بلمسة واحدة من ملف اللاعب (أ) إلى ملف اللاعب (ب)',
+                          trailingText: 'تبديل',
+                          onTap: () {
+                            _showSimpleNotice(context, s.switchAthlete,
+                                'تم التبديل بنجاح إلى ملف اللاعب التالي.');
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 3. التحكم في أدوات التتبع وأجهزة الاستشعار (Hardware & Sensor Integration)
+                    _buildHubCard(
+                      context: context,
+                      title: s.hardwareIntegration,
+                      icon: Icons.sensors_rounded,
+                      iconColor: const Color(0xFF00897B),
+                      children: [
+                        _buildActionTile(
+                          icon: Icons.wifi_tethering_rounded,
+                          title: s.coachConnection,
+                          subtitle: 'الاتصال بين المدرب واللاعب: متصل ومباشر (42ms)',
+                          trailingText: 'فحص',
+                          onTap: () {
+                            _showSimpleNotice(context, s.coachConnection,
+                                'الاتصال سليم ومستقر بين أجهزة اللاعبين والمدرب.');
+                          },
+                        ),
+                        const Divider(height: 1),
+                        _buildActionTile(
+                          icon: Icons.bluetooth_connected_rounded,
+                          title: s.sensorCalibration,
+                          subtitle:
+                              'الأجهزة: ارجوميتر Concept2 PM5 • ساعة استروك كوتش • حزام نبض',
+                          trailingText: 'معايرة',
+                          onTap: () {
+                            _showSimpleNotice(context, s.sensorCalibration,
+                                'تمت معايرة جميع المستشعرات وبلوتوث التجديف بدقة 100%.');
+                          },
+                        ),
+                        const Divider(height: 1),
+                        _buildActionTile(
+                          icon: Icons.cloud_sync_rounded,
+                          title: s.cloudSync,
+                          subtitle:
+                              'مزامنة البيانات ونقل قراءات الأدوات إلى التخزين السحابي',
+                          trailingText: 'مزامنة',
+                          onTap: () {
+                            _showSimpleNotice(context, s.cloudSync,
+                                'تمت مزامنة بيانات التجديف مع الخادم السحابي بنجاح.');
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 4. لوحة المنحنيات (Metrics Curves Shortcut)
+                    _buildHubCard(
+                      context: context,
+                      title: s.metricsCurvesShortcut,
+                      icon: Icons.show_chart_rounded,
+                      iconColor: const Color(0xFF6A1B9A),
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'الوصول المباشر إلى المنحنيات الخمسة في البرنامج (كفاءة EF، الواط، التفكك القلبي، النبض، وزونات كارفونين الذكية).',
+                                style: TextStyle(
+                                    fontSize: 13, color: Colors.grey.shade700),
+                              ),
+                              const SizedBox(height: 12),
+                              ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: navy,
+                                  foregroundColor: yellow,
+                                  minimumSize: const Size(double.infinity, 48),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10)),
+                                ),
+                                icon: const Icon(Icons.insights_rounded),
+                                label: const Text('فتح لوحة المنحنيات الكاملة',
+                                    style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold)),
+                                onPressed: onOpenMetricsCurves,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 5. تصدير التقارير المتقدمة (Advanced Data Export)
+                    _buildHubCard(
+                      context: context,
+                      title: s.advancedDataExport,
+                      icon: Icons.file_download_outlined,
+                      iconColor: const Color(0xFF2E7D32),
+                      children: [
+                        _buildActionTile(
+                          icon: Icons.table_chart_rounded,
+                          title: s.exportToExcel,
+                          subtitle:
+                              'تحويل جميع بيانات السيكل والورك أوت إلى ملف Excel',
+                          trailingText: 'تصدير',
+                          onTap: () {
+                            _showSimpleNotice(context, s.exportToExcel,
+                                'تم تصدير ملف Excel بنجاح وحفظه في مجلد المستندات.');
+                          },
+                        ),
+                        const Divider(height: 1),
+                        _buildActionTile(
+                          icon: Icons.picture_as_pdf_rounded,
+                          title: s.exportToPdf,
+                          subtitle:
+                              'توليد تقرير طبي وفني جاهز للطباعة أو الإرسال',
+                          trailingText: 'طباعة/PDF',
+                          onTap: () {
+                            _showSimpleNotice(context, s.exportToPdf,
+                                'تم إنشاء تقرير PDF الطبي والفني بنجاح.');
+                          },
+                        ),
+                        const Divider(height: 1),
+                        _buildActionTile(
+                          icon: Icons.share_rounded,
+                          title: s.shareReportAction,
+                          subtitle:
+                              'مشاركة التقارير مباشرة عبر البريد أو تطبيقات الفريق',
+                          trailingText: 'مشاركة',
+                          onTap: () {
+                            _showSimpleNotice(context, s.shareReportAction,
+                                'تم فتح نافذة المشاركة لإرسال التقرير للإدارة الفنية.');
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHubCard({
+    required BuildContext context,
+    required String title,
+    required IconData icon,
+    required Color iconColor,
+    required List<Widget> children,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(8),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // رأس الكارت
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: iconColor.withAlpha(15),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(15)),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, color: iconColor, size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.bold,
+                      color: navy,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required String trailingText,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: navy, size: 22),
+      title: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 13.5,
+          fontWeight: FontWeight.w700,
+          color: navy,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(fontSize: 11.5, color: Colors.grey.shade700),
+      ),
+      trailing: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: sky,
+          foregroundColor: navy,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        onPressed: onTap,
+        child: Text(
+          trailingText,
+          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
+        ),
+      ),
+      onTap: onTap,
+    );
+  }
+
+  void _showSimpleNotice(BuildContext context, String title, String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle_rounded, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '$title: $msg',
+                style: const TextStyle(fontSize: 12.5),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: navy,
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }

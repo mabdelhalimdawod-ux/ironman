@@ -97,9 +97,14 @@ class AppStrings {
 
   // ==================== Program & Cycles Strings (المرحلة الثانية) ====================
   String get trainingCycles => isArabic ? 'سيكلات التدريب' : 'Training Cycles';
-  String get cyclesSubtitle => isArabic ? 'سيكلات مرقمة (1 - 12) مع قوالب تدريب أسبوعية متكررة' : 'Cycles (1-12) with recurring weekly training templates';
+  String get cyclesSubtitle => isArabic ? 'نظام السيكلات التدريبية والدورات الأسبوعية' : 'Training Cycles & Weekly Microcycles';
   String get cycleNumber => isArabic ? 'السيكل' : 'Cycle';
   String cycleTitle(int num) => isArabic ? 'السيكل $num' : 'Cycle $num';
+  String get addCycle => isArabic ? 'إضافة سيكل جديد' : 'Add New Cycle';
+  String get deleteCycle => isArabic ? 'حذف السيكل' : 'Delete Cycle';
+  String get deleteCycleConfirm => isArabic ? 'هل أنت متأكد من حذف هذا السيكل؟' : 'Are you sure you want to delete this cycle?';
+  String get cannotDeleteLastCycle => isArabic ? 'لا يمكن حذف السيكل الوحيد المتبقي' : 'Cannot delete the only remaining cycle';
+  String get cycleAddedSuccess => isArabic ? 'تم إضافة سيكل جديد بنجاح' : 'New cycle added successfully';
   String get activeCycleBadge => isArabic ? 'السيكل الشغال حالياً' : 'Currently Active Cycle';
   String get cycleDuration => isArabic ? 'المدة' : 'Duration';
   String weeksCount(int count) => isArabic ? '$count أسابيع' : '$count weeks';
@@ -107,8 +112,75 @@ class AppStrings {
   String get endDate => isArabic ? 'تاريخ النهاية' : 'End Date';
   String get editCycleDates => isArabic ? 'تعديل تواريخ السيكل' : 'Edit Cycle Dates';
   String get cycleDateConstraint => isArabic ? 'مدة السيكل المرنة من 2 إلى 6 أسابيع' : 'Flexible cycle duration: 2 to 6 weeks';
-  String get weeklyTemplateTitle => isArabic ? 'القالب الأسبوعي المتكرر' : 'Recurring Weekly Template';
-  String get weeklyTemplateSubtitle => isArabic ? 'تحديد حتى 6 خانات تمرين يومية تغذي جدول التمارين تلقائياً' : 'Up to 6 slots per day feeding daily sessions automatically';
+  String get trainingLocation => isArabic ? 'منطقة أو مكان التدريب' : 'Training Location';
+  String get trainingLocationHint => isArabic ? 'مثال: مجرى التجديف الدولي' : 'e.g. International Rowing Course';
+  String get creationDate => isArabic ? 'تاريخ الإنشاء' : 'Created Date';
+  String get lastEditDate => isArabic ? 'آخر تعديل' : 'Last Edit';
+  String get weeksCountCalculated => isArabic ? 'عدد الدورات الأسبوعية بالسيكل' : 'Total Weeks in Cycle';
+  String get enterCycle => isArabic ? 'دخول' : 'Enter';
+  String get comment => isArabic ? 'تعليق' : 'Comment';
+  String get addComment => isArabic ? 'إضافة تعليق' : 'Add Comment';
+  String get physiologicalNote => isArabic ? 'ملاحظة فسيولوجية' : 'Physiological Note';
+  String get technicalNote => isArabic ? 'ملاحظة فنية' : 'Technical Note';
+  String get addNote => isArabic ? 'إضافة ملاحظة' : 'Add Note';
+  String get testDatesTitle => isArabic ? 'تواريخ التستات المقررة للسيكل' : 'Scheduled Cycle Tests';
+  String get zoneParticipationTitle => isArabic ? 'نسب مشاركة الزونات بالسيكل' : 'Zone Distribution';
+
+  // المستوى 2: الدورات الأسبوعية الأساسية والفرعية
+  String get basicWeeklyCycleTitle => isArabic ? 'الدورة التدريبية الأسبوعية الأساسية' : 'Basic Weekly Training Cycle';
+  String get secondaryWeeklyCycleTitle => isArabic ? 'الدورة التدريبية الأسبوعية الفرعية (تستات وتهدئة)' : 'Secondary Weekly Training Cycle (Taper & Tests)';
+  String get basicRepsCount => isArabic ? 'عدد تكرارات الدورة الأساسية' : 'Basic Cycle Repetitions';
+  String get secondaryRepsCount => isArabic ? 'عدد تكرارات الدورة الفرعية' : 'Secondary Cycle Repetitions';
+  String get repsMismatchWarning => isArabic
+      ? 'تنبيه: مجموع تكرارات الدورة الأساسية والفرعية لا يساوي أسابيع السيكل الكلية!'
+      : 'Alert: Sum of basic and secondary cycle repetitions does not equal total cycle weeks!';
+  String get dispatchScheduleTitle => isArabic ? 'موعد إرسال مضمون اليوم التدريبي للاعبين' : 'Weekly Schedule Dispatch';
+  String get dispatchTime => isArabic ? 'وقت الإرسال' : 'Dispatch Time';
+  String get dispatchDate => isArabic ? 'تاريخ الإرسال' : 'Dispatch Date';
+  String get dayDatesInCycle => isArabic ? 'تواريخ هذا اليوم داخل السيكل' : 'Dates in Cycle';
+  String get pastDateBadge => isArabic ? 'منقضي' : 'Past';
+  String get sessionsCountLabel => isArabic ? 'عدد الحصص' : 'Sessions';
+
+  // المستوى 3: الحصص التدريبية
+  String get daySessionsPageTitle => isArabic ? 'الحصص التدريبية لليوم' : 'Daily Training Sessions';
+  String get addSession => isArabic ? 'إضافة حصة تدريبية' : 'Add Training Session';
+  String get removeSession => isArabic ? 'حذف الحصة' : 'Delete Session';
+  String get removeSessionConfirm => isArabic ? 'هل تريد حذف هذه الحصة وجميع تمارينها؟' : 'Delete this session and all its workouts?';
+  String sessionNumberTitle(int index) => isArabic ? 'الحصة ${index + 1}' : 'Session ${index + 1}';
+  String get sessionTime => isArabic ? 'وقت الحصة' : 'Session Time';
+  String get noSessionsForDay => isArabic ? 'لا توجد حصص تدريبية مجدولة لهذا اليوم (يوم راحة)' : 'No sessions scheduled for this day (Rest day)';
+
+  // المستوى 4: تفاصيل التمارين
+  String get workoutsPageTitle => isArabic ? 'تمارين الحصة التدريبية' : 'Session Workouts';
+  String get warmupSection => isArabic ? '1. الإحماء' : '1. Warm-up';
+  String get mainWorkoutSection => isArabic ? '2. التمرين الرئيسي' : '2. Main Workout';
+  String get cooldownSection => isArabic ? '3. التهدئة' : '3. Cool-down';
+  String get warmupTime => isArabic ? 'وقت الإحماء' : 'Time';
+  String get warmupDuration => isArabic ? 'مدة زمن الإحماء' : 'Duration';
+  String get warmupHR => isArabic ? 'نسبة نبض الإحماء' : 'HR %';
+  String get warmupDistance => isArabic ? 'مسافة الإحماء (متر)' : 'Distance (m)';
+  String get warmupKind => isArabic ? 'نوع الإحماء' : 'Type';
+  String get addWarmup => isArabic ? 'إضافة إحماء جديد' : 'Add Warm-up';
+
+  String get mainTime => isArabic ? 'وقت التمرين الرئيسي' : 'Time';
+  String get mainDuration => isArabic ? 'مدة زمن التمرين' : 'Duration';
+  String get mainDistance => isArabic ? 'مسافة التمرين (متر)' : 'Distance (m)';
+  String get mainReps => isArabic ? 'عدد تكرارات التمرين' : 'Reps';
+  String get mainHR => isArabic ? 'نسبة النبض للتمرين الرئيسي' : 'HR %';
+  String get mainKind => isArabic ? 'نوع التمرين الرئيسي' : 'Type';
+  String get addMainWorkout => isArabic ? 'إضافة تمرين رئيسي جديد' : 'Add Main Workout';
+
+  String get cooldownTime => isArabic ? 'وقت التهدئة' : 'Time';
+  String get cooldownDuration => isArabic ? 'مدة زمن التهدئة' : 'Duration';
+  String get cooldownHR => isArabic ? 'نسبة نبض التهدئة' : 'HR %';
+  String get cooldownDistance => isArabic ? 'مسافة التهدئة (متر)' : 'Distance (m)';
+  String get cooldownKind => isArabic ? 'نوع التهدئة' : 'Type';
+  String get addCooldown => isArabic ? 'إضافة تهدئة جديدة' : 'Add Cool-down';
+
+  String get workoutDetails => isArabic ? 'ملاحظات / تفاصيل' : 'Details / Notes';
+  String get weeklyTemplateTitle => isArabic ? 'القالب الأسبوعي للحصص والتمارين' : 'Weekly Sessions & Workouts Template';
+  String get weeklyTemplateSubtitle => isArabic ? 'تنظيم الحصص اليومية والتمارين التابعة لكل حصة' : 'Organize daily sessions and workouts within each session';
+  String get addWorkoutToSession => isArabic ? 'إضافة تمرين للحصة' : 'Add Workout to Session';
   String get daySaturday => isArabic ? 'السبت' : 'Saturday';
   String get daySunday => isArabic ? 'الأحد' : 'Sunday';
   String get dayMonday => isArabic ? 'الإثنين' : 'Monday';
@@ -116,17 +188,8 @@ class AppStrings {
   String get dayWednesday => isArabic ? 'الأربعاء' : 'Wednesday';
   String get dayThursday => isArabic ? 'الخميس' : 'Thursday';
   String get dayFriday => isArabic ? 'الجمعة' : 'Friday';
-  String get addSlot => isArabic ? 'إضافة خانة تمرين' : 'Add Workout Slot';
-  String get maxSlotsReached => isArabic ? 'الحد الأقصى هو 6 خانات تمرين في اليوم' : 'Maximum 6 workout slots reached for this day';
-  String get slotNumber => isArabic ? 'تمرين' : 'Workout';
-  String slotTitle(int index) => isArabic ? 'تمرين ${index + 1}' : 'Workout ${index + 1}';
-  String get workoutTime => isArabic ? 'ميعاد التمرين بالساعة' : 'Workout Time (Hour)';
-  String get selectTime => isArabic ? 'اختر الساعة' : 'Select Time';
-  String get selectWorkoutType => isArabic ? 'اختر نوع التمرين' : 'Select Workout Type';
-  String get selectZone => isArabic ? 'الزون المستهدف' : 'Target Zone';
-  String get removeSlot => isArabic ? 'حذف الخانة' : 'Remove Slot';
   String get copyTemplateToDay => isArabic ? 'نسخ القالب ليوم آخر' : 'Copy Template to Another Day';
-  String get templateSaved => isArabic ? 'تم حفظ القالب الأسبوعي وتحديث جدول التمارين' : 'Weekly template saved and schedule updated';
+  String get templateSaved => isArabic ? 'تم حفظ القالب وتحديث جدول التمارين' : 'Template saved successfully';
 
   // أنواع التمارين المحددة بدقة
   String get typeErg => isArabic ? 'إرج' : 'Erg';
@@ -153,6 +216,12 @@ class AppStrings {
   String get playerCompletedBanner => isArabic ? 'تم إنهاء وتسجيل كل تمارين اليوم بنجاح' : "All workouts completed and logged for today";
 
   // القديم للتوافق
+  String get maxSlotsReached => isArabic ? 'تم الوصول للحد الأقصى للخانة (6 خانات)' : 'Max slots reached (6 slots)';
+  String get addSlot => isArabic ? 'إضافة خانة' : 'Add Slot';
+  String slotTitle(int idx) => isArabic ? 'تمرين ${idx + 1}' : 'Workout ${idx + 1}';
+  String get removeSlot => isArabic ? 'حذف الخانة' : 'Remove Slot';
+  String get workoutTime => isArabic ? 'وقت التمرين' : 'Workout Time';
+  String get selectZone => isArabic ? 'اختر الزون' : 'Select Zone';
   String get todaySession => isArabic ? 'حصة اليوم' : "Today's Session";
   String get sessionNumber => isArabic ? 'الحصة' : 'Session';
   String get selectDate => isArabic ? 'تحديد التاريخ' : 'Select Date';
@@ -381,4 +450,24 @@ class AppStrings {
   String get maxWattsLabel => isArabic ? 'أقصى واط' : 'Max Watts';
   String get autoKarvonenNote => isArabic ? 'الزون محسوب تلقائياً من النبض بمعادلة كارفونين' : 'Zone is automatically calculated from HR via Karvonen';
   String get dailyAggregationNote => isArabic ? 'كل نقطة تمثل متوسط الواط لورك أوت اليوم لنفس الزون' : 'Each point represents daily average watts for the zone';
+
+  // ==================== Hamburger Menu Hub Strings ====================
+  String get hamburgerTitle => isArabic ? 'لوحة التحكم والعمليات' : 'Command & Operations Hub';
+  String get hamburgerSubtitle => isArabic ? 'إدارة التحليلات، الحسابات، الأجهزة، والتقارير' : 'Analytics, profiles, hardware & reports management';
+  String get multiDashboardNav => isArabic ? 'الانتقال بين شاشات التحليل المعقدة' : 'Multi-Dashboard Navigation';
+  String get physicalPerformance => isArabic ? 'شاشة الأداء البدني (النبض، السرعة، المسافة)' : 'Physical Performance (HR, Speed, Distance)';
+  String get analyticsDashboard => isArabic ? 'شاشة التحليلات المتقدمة' : 'Advanced Analytics Dashboard';
+  String get medicalReport => isArabic ? 'التقرير الطبي (مستويات الإرهاق والاستشفاء والإصابات)' : 'Medical Report (Fatigue, Recovery & Injuries)';
+  String get peerDataComparison => isArabic ? 'مقارنة بيانات وأداء اللاعبين' : 'Athlete Peer Comparison';
+  String get rosterManagement => isArabic ? 'إدارة وتبديل الحسابات (Profiles & Roster)' : 'Profiles & Team Roster Management';
+  String get switchAthlete => isArabic ? 'تبديل اللاعب السريع' : 'Quick Athlete Switch';
+  String get hardwareIntegration => isArabic ? 'التحكم في أدوات التتبع وأجهزة الاستشعار' : 'Hardware & Sensor Integration';
+  String get coachConnection => isArabic ? 'فحص اتصال اللاعب بالمدرب' : 'Coach-Athlete Connection Status';
+  String get sensorCalibration => isArabic ? 'معايرة المستشعرات والاتصال بالبلوتوث' : 'Sensor Calibration & Bluetooth Pairing';
+  String get cloudSync => isArabic ? 'مزامنة البيانات السحابية' : 'Cloud Data Sync';
+  String get metricsCurvesShortcut => isArabic ? 'لوحة المنحنيات (اختصارات جميع المنحنيات)' : 'Metrics Curves Hub (All Curves)';
+  String get advancedDataExport => isArabic ? 'تصدير التقارير المتقدمة' : 'Advanced Data Export';
+  String get exportToExcel => isArabic ? 'تحويل البيانات إلى ملف Excel' : 'Export Data to Excel (.xlsx)';
+  String get exportToPdf => isArabic ? 'تحويل البيانات إلى تقرير PDF' : 'Export Report to PDF';
+  String get shareReportAction => isArabic ? 'مشاركة التقرير عبر البريد أو الفريق' : 'Share Report via Email / Chat';
 }
