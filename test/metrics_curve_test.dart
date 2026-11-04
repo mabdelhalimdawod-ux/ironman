@@ -55,11 +55,11 @@ void main() {
     });
 
     test('Zone colors and display names mapping', () {
-      expect(HeartRateZones.zoneColor('Z1').value, equals(0xFF1976D2));
-      expect(HeartRateZones.zoneColor('Z2').value, equals(0xFF388E3C));
-      expect(HeartRateZones.zoneColor('Z3').value, equals(0xFFFBC02D));
-      expect(HeartRateZones.zoneColor('Z4').value, equals(0xFFF57C00));
-      expect(HeartRateZones.zoneColor('Z5').value, equals(0xFFD32F2F));
+      expect(HeartRateZones.zoneColor('Z1').value, equals(0xFFB8F229));
+      expect(HeartRateZones.zoneColor('Z2').value, equals(0xFF2979FF));
+      expect(HeartRateZones.zoneColor('Z3').value, equals(0xFFFF9100));
+      expect(HeartRateZones.zoneColor('Z4').value, equals(0xFFE65100));
+      expect(HeartRateZones.zoneColor('Z5').value, equals(0xFFFF5252));
     });
   });
 }

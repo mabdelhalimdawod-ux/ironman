@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_strings.dart';
+import 'engine_rowing_ui.dart';
 import 'program_service.dart';
-
-const Color _navy = Color(0xFF0D3B66);
-const Color _sky = Color(0xFFE8F4FC);
-const Color _gold = Color(0xFFFFC93C);
 
 /// الصفحة الفرعية للقالب الأسبوعي المتكرر لسيكل معين
 class CycleTemplatePage extends StatefulWidget {
@@ -54,7 +51,10 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
     if (current.length >= 6) {
       final s = AppStrings.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(s.maxSlotsReached), backgroundColor: Colors.red.shade700),
+        SnackBar(
+          content: Text(s.maxSlotsReached),
+          backgroundColor: Colors.redAccent,
+        ),
       );
       return;
     }
@@ -66,7 +66,7 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
     setState(() {
       current.add(WorkoutSlot(
         slotIdx: current.length,
-        kind: 'إرج',
+        kind: 'Erg',
         time: time,
         zone: 'Z2',
       ));
@@ -116,11 +116,12 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
       initialTime: initialTime,
       builder: (context, child) {
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: _navy,
-              onPrimary: Colors.white,
-              secondary: _gold,
+          data: ThemeData.dark().copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: EngineRowingUI.neonLime,
+              onPrimary: EngineRowingUI.bgNavy,
+              surface: EngineRowingUI.cardFill,
+              onSurface: EngineRowingUI.textWhite,
             ),
           ),
           child: child!,
@@ -164,12 +165,18 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle, color: Colors.white),
+                const Icon(Icons.check_circle, color: EngineRowingUI.bgNavy),
                 const SizedBox(width: 8),
-                Text(s.templateSaved),
+                Text(
+                  s.templateSaved,
+                  style: const TextStyle(
+                    color: EngineRowingUI.bgNavy,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
-            backgroundColor: Colors.green.shade700,
+            backgroundColor: EngineRowingUI.neonLime,
           ),
         );
       }
@@ -183,7 +190,15 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(s.copyTemplateToDay),
+        backgroundColor: EngineRowingUI.cardFill,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: EngineRowingUI.bgGridLine),
+        ),
+        title: Text(
+          s.copyTemplateToDay,
+          style: const TextStyle(color: EngineRowingUI.textWhite, fontWeight: FontWeight.bold),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: List.generate(7, (i) {
@@ -192,8 +207,8 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                 ? ProgramService.weekDayNamesAr[i]
                 : ProgramService.weekDayNamesEn[i];
             return ListTile(
-              title: Text(dayName),
-              trailing: const Icon(Icons.copy, size: 20),
+              title: Text(dayName, style: const TextStyle(color: EngineRowingUI.textWhite)),
+              trailing: const Icon(Icons.copy, size: 20, color: EngineRowingUI.neonLime),
               onTap: () {
                 setState(() {
                   _weekSlots[i] = _currentDaySlots.map((slot) => WorkoutSlot(
@@ -205,7 +220,10 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                 });
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('تم نسخ القالب إلى $dayName بنجاح')),
+                  SnackBar(
+                    content: Text('تم نسخ القالب إلى $dayName بنجاح'),
+                    backgroundColor: EngineRowingUI.neonLime,
+                  ),
                 );
               },
             );
@@ -214,7 +232,7 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(s.close),
+            child: Text(s.close, style: const TextStyle(color: EngineRowingUI.labelSlate)),
           ),
         ],
       ),
@@ -227,42 +245,60 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
     final currentDaySlots = _currentDaySlots;
 
     return Scaffold(
+      backgroundColor: EngineRowingUI.bgNavy,
       appBar: AppBar(
-        title: Text('$_cycleName - ${s.weeklyTemplateTitle}'),
+        backgroundColor: EngineRowingUI.bgNavy,
+        foregroundColor: EngineRowingUI.textWhite,
+        elevation: 0,
+        title: Text(
+          '$_cycleName - ${s.weeklyTemplateTitle}',
+          style: const TextStyle(
+            color: EngineRowingUI.textWhite,
+            fontWeight: FontWeight.bold,
+            fontSize: 17,
+          ),
+        ),
         actions: [
           IconButton(
             tooltip: s.copyTemplateToDay,
-            icon: const Icon(Icons.copy_all_rounded),
+            icon: const Icon(Icons.copy_all_rounded, color: EngineRowingUI.neonLime),
             onPressed: _copyToOtherDays,
           ),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: _navy))
-          : Column(
-              children: [
-                // رأس تعريفي بالسيكل
-                _buildCycleSummaryHeader(s),
+      body: RowingGridBackground(
+        child: _loading
+            ? const Center(child: CircularProgressIndicator(color: EngineRowingUI.neonLime))
+            : Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 850),
+                  child: Column(
+                    children: [
+                      // رأس تعريفي بالسيكل
+                      _buildCycleSummaryHeader(s),
 
-                // شريط اختيار أيام الأسبوع (السبت - الجمعة)
-                _buildDaySelector(s),
+                      // شريط اختيار أيام الأسبوع (السبت - الجمعة)
+                      _buildDaySelector(s),
 
-                // قائمة خانات التمرين لهذا اليوم (حتى 6 خانات)
-                Expanded(
-                  child: currentDaySlots.isEmpty
-                      ? _buildEmptyDayState(s)
-                      : ListView.separated(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          itemCount: currentDaySlots.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 12),
-                          itemBuilder: (ctx, idx) => _buildSlotCard(s, idx, currentDaySlots[idx]),
-                        ),
+                      // قائمة خانات التمرين لهذا اليوم (حتى 6 خانات)
+                      Expanded(
+                        child: currentDaySlots.isEmpty
+                            ? _buildEmptyDayState(s)
+                            : ListView.separated(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                itemCount: currentDaySlots.length,
+                                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                                itemBuilder: (ctx, idx) => _buildSlotCard(s, idx, currentDaySlots[idx]),
+                              ),
+                      ),
+
+                      // شريط الإجراءات السفلي (إضافة خانة + حفظ)
+                      _buildBottomActionBar(s, currentDaySlots.length),
+                    ],
+                  ),
                 ),
-
-                // شريط الإجراءات السفلي (إضافة خانة + حفظ)
-                _buildBottomActionBar(s, currentDaySlots.length),
-              ],
-            ),
+              ),
+      ),
     );
   }
 
@@ -273,19 +309,20 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: _sky.withOpacity(0.5),
-        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+      decoration: const BoxDecoration(
+        color: EngineRowingUI.cardFill,
+        border: Border(bottom: BorderSide(color: EngineRowingUI.bgGridLine)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: _navy,
+              color: EngineRowingUI.equationCardFill,
               borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: EngineRowingUI.bgGridLine),
             ),
-            child: const Icon(Icons.calendar_month, color: _gold, size: 22),
+            child: const Icon(Icons.calendar_month, color: EngineRowingUI.neonLime, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -294,11 +331,18 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
               children: [
                 Text(
                   _cycleName,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: _navy),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: EngineRowingUI.textWhite,
+                  ),
                 ),
-                Text(
-                  '$start ➔ $end • ${s.weeklyTemplateSubtitle}',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Text(
+                    '${RowingNumberFormatter.toEnglishDigits(start)} ➔ ${RowingNumberFormatter.toEnglishDigits(end)} • ${s.weeklyTemplateSubtitle}',
+                    style: const TextStyle(fontSize: 12, color: EngineRowingUI.labelSlate),
+                  ),
                 ),
               ],
             ),
@@ -335,7 +379,7 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                       decoration: BoxDecoration(
-                        color: isSelected ? _gold : Colors.grey.shade300,
+                        color: isSelected ? EngineRowingUI.bgNavy : EngineRowingUI.equationCardFill,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
@@ -343,7 +387,8 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: isSelected ? _navy : Colors.black87,
+                          color: isSelected ? EngineRowingUI.neonLime : EngineRowingUI.labelSlate,
+                          fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),
                     ),
@@ -351,10 +396,10 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                 ],
               ),
               selected: isSelected,
-              selectedColor: _navy,
-              backgroundColor: Colors.white,
+              selectedColor: EngineRowingUI.neonLime,
+              backgroundColor: EngineRowingUI.cardFill,
               labelStyle: TextStyle(
-                color: isSelected ? Colors.white : _navy,
+                color: isSelected ? EngineRowingUI.bgNavy : EngineRowingUI.textWhite,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
               onSelected: (val) {
@@ -376,22 +421,28 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.event_available_outlined, size: 64, color: Colors.grey.shade400),
+          const Icon(Icons.event_available_outlined, size: 64, color: EngineRowingUI.labelSlate),
           const SizedBox(height: 12),
           Text(
             'لا توجد تمارين مجدولة ليوم $dayName (يوم راحة)',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey.shade700),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: EngineRowingUI.textWhite),
           ),
           const SizedBox(height: 6),
-          Text(
+          const Text(
             'يمكنك إضافة حتى 6 خانات تمرين لهذا اليوم',
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+            style: TextStyle(fontSize: 13, color: EngineRowingUI.labelSlate),
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(backgroundColor: _navy, foregroundColor: Colors.white),
-            icon: const Icon(Icons.add),
-            label: Text(s.addSlot),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: EngineRowingUI.neonLime,
+              foregroundColor: EngineRowingUI.bgNavy,
+            ),
+            icon: const Icon(Icons.add, color: EngineRowingUI.bgNavy),
+            label: Text(
+              s.addSlot,
+              style: const TextStyle(color: EngineRowingUI.bgNavy, fontWeight: FontWeight.bold),
+            ),
             onPressed: _addSlot,
           ),
         ],
@@ -401,10 +452,11 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
 
   Widget _buildSlotCard(AppStrings s, int index, WorkoutSlot slot) {
     return Card(
-      elevation: 1,
+      elevation: 0,
+      color: EngineRowingUI.cardFill,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Colors.grey.shade200),
+        side: const BorderSide(color: EngineRowingUI.bgGridLine),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -416,16 +468,25 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
               children: [
                 CircleAvatar(
                   radius: 14,
-                  backgroundColor: _navy,
+                  backgroundColor: EngineRowingUI.equationCardFill,
                   child: Text(
                     '${index + 1}',
-                    style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: EngineRowingUI.neonLime,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      fontFeatures: [FontFeature.tabularFigures()],
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Text(
                   s.slotTitle(index),
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: _navy),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: EngineRowingUI.textWhite,
+                  ),
                 ),
                 const Spacer(),
                 IconButton(
@@ -435,7 +496,7 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                 ),
               ],
             ),
-            const Divider(height: 16),
+            const Divider(height: 16, color: EngineRowingUI.bgGridLine),
 
             // الحقول الثلاثة الإلزامية: نوع التمرين، ميعاد التمرين بالساعة، والزون المستهدف
             Row(
@@ -446,17 +507,35 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(s.workoutType, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54)),
+                      Text(
+                        s.workoutType,
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: EngineRowingUI.labelSlate),
+                      ),
                       const SizedBox(height: 4),
                       DropdownButtonFormField<String>(
-                        value: ProgramService.workoutKinds.contains(slot.kind) ? slot.kind : 'إرج',
+                        initialValue: ProgramService.workoutKinds.contains(slot.kind) ? slot.kind : 'إرج',
+                        dropdownColor: EngineRowingUI.equationCardFill,
+                        style: const TextStyle(color: EngineRowingUI.textWhite, fontSize: 14),
                         decoration: InputDecoration(
                           isDense: true,
+                          filled: true,
+                          fillColor: EngineRowingUI.equationCardFill,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: EngineRowingUI.neonLime),
+                          ),
                         ),
                         items: ProgramService.workoutKinds.map((k) {
-                          return DropdownMenuItem(value: k, child: Text(k, style: const TextStyle(fontSize: 14)));
+                          return DropdownMenuItem(value: k, child: Text(k));
                         }).toList(),
                         onChanged: (val) {
                           if (val != null) _updateSlotKind(index, val);
@@ -473,7 +552,10 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(s.workoutTime, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54)),
+                      Text(
+                        s.workoutTime,
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: EngineRowingUI.labelSlate),
+                      ),
                       const SizedBox(height: 4),
                       InkWell(
                         onTap: () => _pickTime(index),
@@ -481,19 +563,27 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade400),
+                            border: Border.all(color: EngineRowingUI.bgGridLine),
                             borderRadius: BorderRadius.circular(8),
-                            color: Colors.grey.shade50,
+                            color: EngineRowingUI.equationCardFill,
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                slot.time,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _navy),
-                              ),
-                              const Icon(Icons.access_time, size: 18, color: _navy),
-                            ],
+                          child: Directionality(
+                            textDirection: TextDirection.ltr,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  RowingNumberFormatter.toEnglishDigits(slot.time),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: EngineRowingUI.textWhite,
+                                    fontFeatures: [FontFeature.tabularFigures()],
+                                  ),
+                                ),
+                                const Icon(Icons.access_time, size: 18, color: EngineRowingUI.neonLime),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -508,19 +598,52 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(s.selectZone, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54)),
+                      Text(
+                        s.selectZone,
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: EngineRowingUI.labelSlate),
+                      ),
                       const SizedBox(height: 4),
                       DropdownButtonFormField<String>(
-                        value: ProgramService.targetZones.contains(slot.zone) ? slot.zone : 'Z2',
+                        initialValue: ProgramService.targetZones.contains(slot.zone) ? slot.zone : 'Z2',
+                        dropdownColor: EngineRowingUI.equationCardFill,
+                        style: const TextStyle(
+                          color: EngineRowingUI.textWhite,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
                         decoration: InputDecoration(
                           isDense: true,
+                          filled: true,
+                          fillColor: EngineRowingUI.equationCardFill,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: EngineRowingUI.neonLime),
+                          ),
                         ),
                         items: ProgramService.targetZones.map((z) {
+                          final color = EngineRowingUI.zoneColors[z] ?? EngineRowingUI.neonLime;
                           return DropdownMenuItem(
                             value: z,
-                            child: Text(z, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(z),
+                              ],
+                            ),
                           );
                         }).toList(),
                         onChanged: (val) {
@@ -541,15 +664,9 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
   Widget _buildBottomActionBar(AppStrings s, int currentCount) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            offset: const Offset(0, -2),
-            blurRadius: 8,
-          ),
-        ],
+      decoration: const BoxDecoration(
+        color: EngineRowingUI.bgNavy,
+        border: Border(top: BorderSide(color: EngineRowingUI.bgGridLine)),
       ),
       child: SafeArea(
         child: Row(
@@ -559,11 +676,14 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
               child: OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(0, 48),
-                  side: const BorderSide(color: _navy),
+                  side: const BorderSide(color: EngineRowingUI.neonLime),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                icon: const Icon(Icons.add, color: _navy),
-                label: Text(s.addSlot, style: const TextStyle(color: _navy, fontWeight: FontWeight.bold)),
+                icon: const Icon(Icons.add, color: EngineRowingUI.neonLime),
+                label: Text(
+                  s.addSlot,
+                  style: const TextStyle(color: EngineRowingUI.neonLime, fontWeight: FontWeight.bold),
+                ),
                 onPressed: currentCount < 6 ? _addSlot : null,
               ),
             ),
@@ -573,18 +693,25 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(0, 48),
-                  backgroundColor: _navy,
-                  foregroundColor: Colors.white,
+                  backgroundColor: EngineRowingUI.neonLime,
+                  foregroundColor: EngineRowingUI.bgNavy,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 icon: _isSaving
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: EngineRowingUI.bgNavy),
                       )
-                    : const Icon(Icons.save),
-                label: Text(s.save, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    : const Icon(Icons.save, color: EngineRowingUI.bgNavy),
+                label: Text(
+                  s.save,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: EngineRowingUI.bgNavy,
+                  ),
+                ),
                 onPressed: _isSaving ? null : _saveCurrentTemplate,
               ),
             ),

@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
 import 'app_strings.dart';
 import 'db.dart';
+import 'engine_rowing_ui.dart';
 import 'heart_rate_zones.dart';
 import 'power_calculations.dart';
-
-const Color _navy = Color(0xFF0D3B66);
-const Color _sky = Color(0xFFE8F4FC);
-const Color _gold = Color(0xFFFFC93C);
-const Color _green = Color(0xFF2E7D32);
 
 /// نموذج إدارة حالة فورم تمرين واحد من تمارين اليوم
 class _SingleWorkoutFormState {
@@ -209,7 +205,9 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
       // البحث عن الفورم المطابق للحصة
       final form = _workoutForms.firstWhere(
         (f) => f.sessionIdx == idx,
-        orElse: () => _workoutForms.isNotEmpty ? _workoutForms.first : _SingleWorkoutFormState(sessionIdx: 0, kind: 'Erg', time: '07:00', initialZone: 'Z2'),
+        orElse: () => _workoutForms.isNotEmpty
+            ? _workoutForms.first
+            : _SingleWorkoutFormState(sessionIdx: 0, kind: 'Erg', time: '07:00', initialZone: 'Z2'),
       );
 
       if (log['avg_power'] != null && (log['avg_power'] as num) > 0) {
@@ -361,12 +359,20 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle, color: Colors.white),
+                const Icon(Icons.check_circle, color: EngineRowingUI.bgNavy),
                 const SizedBox(width: 8),
-                Text('${s.savedSuccessfully} - تم تسجيل كل تمارين اليوم للاعب $_playerName'),
+                Expanded(
+                  child: Text(
+                    '${s.savedSuccessfully} - تم تسجيل كل تمارين اليوم للاعب $_playerName',
+                    style: const TextStyle(
+                      color: EngineRowingUI.bgNavy,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ],
             ),
-            backgroundColor: _green,
+            backgroundColor: EngineRowingUI.neonLime,
             duration: const Duration(seconds: 2),
           ),
         );
@@ -377,7 +383,10 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${s.error}: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('${s.error}: $e', style: const TextStyle(color: Colors.white)),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     } finally {
@@ -385,57 +394,129 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
     }
   }
 
+  InputDecoration _fieldDeco({
+    required String label,
+    String? hint,
+    String? suffix,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: EngineRowingUI.labelSlate, fontSize: 13),
+      hintText: hint,
+      hintStyle: const TextStyle(color: EngineRowingUI.captionGrey, fontSize: 12),
+      suffixText: suffix,
+      suffixStyle: const TextStyle(
+        color: EngineRowingUI.neonLime,
+        fontWeight: FontWeight.bold,
+        fontSize: 12,
+      ),
+      isDense: true,
+      filled: true,
+      fillColor: EngineRowingUI.equationCardFill,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: EngineRowingUI.neonLime, width: 1.5),
+      ),
+    );
+  }
+
+  TextStyle _monoInputStyle() {
+    return const TextStyle(
+      fontFamily: EngineRowingUI.fontFamily,
+      color: EngineRowingUI.textWhite,
+      fontSize: 14,
+      fontFeatures: [FontFeature.tabularFigures()],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
 
     return Scaffold(
+      backgroundColor: EngineRowingUI.bgNavy,
       appBar: AppBar(
-        title: Text('${s.multiEntryTitle}: $_playerName'),
+        backgroundColor: EngineRowingUI.bgNavy,
+        foregroundColor: EngineRowingUI.textWhite,
+        elevation: 0,
+        title: Text(
+          '${s.multiEntryTitle}: $_playerName',
+          style: const TextStyle(
+            color: EngineRowingUI.textWhite,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: _navy))
-          : Column(
-              children: [
-                // رأس تعريفي باللاعب ونبض الراحة المعتمد بمعادلة كارفونين
-                _buildAthleteHeaderCard(s),
-
-                // المحتوى القابل للتمرير
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      body: RowingGridBackground(
+        child: _loading
+            ? const Center(
+                child: CircularProgressIndicator(color: EngineRowingUI.neonLime),
+              )
+            : Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 850),
+                  child: Column(
                     children: [
-                      // قسم المؤشرات اليومية المشتركة (HRV، النوم، الوزن، الإرهاق)
-                      _buildCommonMetricsCard(s),
-                      const SizedBox(height: 16),
+                      // رأس تعريفي باللاعب ونبض الراحة المعتمد بمعادلة كارفونين
+                      _buildAthleteHeaderCard(s),
 
-                      // هيدر تمارين اليوم
-                      Row(
-                        children: [
-                          const Icon(Icons.fitness_center, color: _navy, size: 22),
-                          const SizedBox(width: 8),
-                          Text(
-                            'فورمات تمارين اليوم (${_workoutForms.length} تمارين)',
-                            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: _navy),
-                          ),
-                        ],
+                      // المحتوى القابل للتمرير
+                      Expanded(
+                        child: ListView(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          children: [
+                            // قسم المؤشرات اليومية المشتركة (HRV، النوم، الوزن، الإرهاق)
+                            _buildCommonMetricsCard(s),
+                            const SizedBox(height: 16),
+
+                            // هيدر تمارين اليوم
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.fitness_center,
+                                  color: EngineRowingUI.neonLime,
+                                  size: 22,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'فورمات تمارين اليوم (${_workoutForms.length} تمارين)',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: EngineRowingUI.textWhite,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+
+                            // عدد من الفورمات بعدد تمارين اليوم، كل فورم مخصص لتمرين ومكتوب عليه ميعاده ونوعه
+                            ...List.generate(_workoutForms.length, (idx) {
+                              return _buildWorkoutSessionForm(s, idx, _workoutForms[idx]);
+                            }),
+
+                            const SizedBox(height: 24),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 10),
 
-                      // عدد من الفورمات بعدد تمارين اليوم، كل فورم مخصص لتمرين ومكتوب عليه ميعاده ونوعه
-                      ...List.generate(_workoutForms.length, (idx) {
-                        return _buildWorkoutSessionForm(s, idx, _workoutForms[idx]);
-                      }),
-
-                      const SizedBox(height: 24),
+                      // زر الحفظ الرئيسي والعودة لقائمة اللاعبين
+                      _buildSaveBottomButton(s),
                     ],
                   ),
                 ),
-
-                // زر الحفظ الرئيسي والعودة لقائمة اللاعبين
-                _buildSaveBottomButton(s),
-              ],
-            ),
+              ),
+      ),
     );
   }
 
@@ -443,18 +524,22 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: _sky.withValues(alpha: 0.6),
-        border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+      decoration: const BoxDecoration(
+        color: EngineRowingUI.cardFill,
+        border: Border(bottom: BorderSide(color: EngineRowingUI.bgGridLine)),
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 22,
-            backgroundColor: _navy,
+            backgroundColor: EngineRowingUI.equationCardFill,
             child: Text(
               _playerName.isNotEmpty ? _playerName[0] : 'A',
-              style: const TextStyle(color: _gold, fontWeight: FontWeight.bold, fontSize: 18),
+              style: const TextStyle(
+                color: EngineRowingUI.neonLime,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -464,29 +549,49 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
               children: [
                 Text(
                   _playerName,
-                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: _navy),
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: EngineRowingUI.textWhite,
+                  ),
                 ),
-                Text(
-                  'التاريخ: ${widget.date} • ${s.maxHRLabel}: $_currentMHR bpm',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade800),
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Text(
+                    'Date: ${widget.date} • ${s.maxHRLabel}: $_currentMHR bpm',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: EngineRowingUI.labelSlate,
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: EngineRowingUI.equationCardFill,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: EngineRowingUI.bgGridLine),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                const Text('RHR (7 أيام)', style: TextStyle(fontSize: 10, color: Colors.black54)),
-                Text(
-                  '$_effectiveRHR bpm',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: _navy),
+                const Text(
+                  'RHR (7d avg)',
+                  style: TextStyle(fontSize: 10, color: EngineRowingUI.labelSlate),
+                ),
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Text(
+                    '$_effectiveRHR bpm',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: EngineRowingUI.neonLime,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -498,8 +603,12 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
 
   Widget _buildCommonMetricsCard(AppStrings s) {
     return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      elevation: 0,
+      color: EngineRowingUI.cardFill,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: EngineRowingUI.bgGridLine),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
@@ -507,28 +616,41 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
           children: [
             Row(
               children: [
-                const Icon(Icons.monitor_heart, color: _navy, size: 20),
+                const Icon(
+                  Icons.monitor_heart,
+                  color: EngineRowingUI.neonLime,
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   s.commonDailyMetrics,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: _navy),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: EngineRowingUI.textWhite,
+                  ),
                 ),
               ],
             ),
-            const Divider(height: 16),
+            const Divider(height: 16, color: EngineRowingUI.bgGridLine),
             // الصف الأول: MHR و RHR الصباحي والوزن
             Row(
               children: [
                 // أقصى نبض (MHR)
                 Expanded(
-                  child: TextFormField(
-                    controller: _mhrCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: s.mhrFieldLabel,
-                      hintText: s.mhrFieldHint,
-                      suffixText: 'bpm',
-                      isDense: true,
+                  child: Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: TextFormField(
+                      controller: _mhrCtrl,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.left,
+                      style: _monoInputStyle(),
+                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      decoration: _fieldDeco(
+                        label: s.mhrFieldLabel,
+                        hint: s.mhrFieldHint,
+                        suffix: 'bpm',
+                      ),
                     ),
                   ),
                 ),
@@ -536,14 +658,19 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
 
                 // نبض الراحة الصباحي (RHR)
                 Expanded(
-                  child: TextFormField(
-                    controller: _rhrCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: s.morningRHRLabel,
-                      hintText: s.morningRHRHint,
-                      suffixText: 'bpm',
-                      isDense: true,
+                  child: Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: TextFormField(
+                      controller: _rhrCtrl,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.left,
+                      style: _monoInputStyle(),
+                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      decoration: _fieldDeco(
+                        label: s.morningRHRLabel,
+                        hint: s.morningRHRHint,
+                        suffix: 'bpm',
+                      ),
                     ),
                   ),
                 ),
@@ -551,14 +678,19 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
 
                 // الوزن
                 Expanded(
-                  child: TextFormField(
-                    controller: _weightCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: InputDecoration(
-                      labelText: s.weightLabel,
-                      hintText: s.weightHint,
-                      suffixText: 'كجم',
-                      isDense: true,
+                  child: Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: TextFormField(
+                      controller: _weightCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      textAlign: TextAlign.left,
+                      style: _monoInputStyle(),
+                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      decoration: _fieldDeco(
+                        label: s.weightLabel,
+                        hint: s.weightHint,
+                        suffix: 'kg',
+                      ),
                     ),
                   ),
                 ),
@@ -570,13 +702,19 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
               children: [
                 // ساعات النوم
                 Expanded(
-                  child: TextFormField(
-                    controller: _sleepCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: InputDecoration(
-                      labelText: s.sleepLabel,
-                      hintText: s.sleepHint,
-                      isDense: true,
+                  child: Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: TextFormField(
+                      controller: _sleepCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      textAlign: TextAlign.left,
+                      style: _monoInputStyle(),
+                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      decoration: _fieldDeco(
+                        label: s.sleepLabel,
+                        hint: s.sleepHint,
+                        suffix: 'h',
+                      ),
                     ),
                   ),
                 ),
@@ -584,13 +722,18 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
 
                 // الإرهاق (1-5)
                 Expanded(
-                  child: TextFormField(
-                    controller: _fatigueCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: s.fatigueLabel,
-                      hintText: '1 - 5',
-                      isDense: true,
+                  child: Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: TextFormField(
+                      controller: _fatigueCtrl,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.left,
+                      style: _monoInputStyle(),
+                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      decoration: _fieldDeco(
+                        label: s.fatigueLabel,
+                        hint: '1 - 5',
+                      ),
                     ),
                   ),
                 ),
@@ -598,14 +741,19 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
 
                 // HRV
                 Expanded(
-                  child: TextFormField(
-                    controller: _hrvCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: s.hrvLabel,
-                      hintText: s.hrvHint,
-                      suffixText: 'ms',
-                      isDense: true,
+                  child: Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: TextFormField(
+                      controller: _hrvCtrl,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.left,
+                      style: _monoInputStyle(),
+                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      decoration: _fieldDeco(
+                        label: s.hrvLabel,
+                        hint: s.hrvHint,
+                        suffix: 'ms',
+                      ),
                     ),
                   ),
                 ),
@@ -630,10 +778,11 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
+      elevation: 0,
+      color: EngineRowingUI.cardFill,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.blueGrey.shade100, width: 1.2),
+        side: const BorderSide(color: EngineRowingUI.bgGridLine, width: 1.2),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -646,17 +795,29 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: _navy,
+                    color: EngineRowingUI.equationCardFill,
                     borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: EngineRowingUI.bgGridLine),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.timer_outlined, color: _gold, size: 16),
+                      const Icon(
+                        Icons.timer_outlined,
+                        color: EngineRowingUI.neonLime,
+                        size: 16,
+                      ),
                       const SizedBox(width: 4),
-                      Text(
-                        'الساعة ${form.time}',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                      Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Text(
+                          form.time,
+                          style: const TextStyle(
+                            color: EngineRowingUI.textWhite,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -665,64 +826,84 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                 Expanded(
                   child: Text(
                     s.formForSession(formIdx, form.kind, form.time),
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _navy),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: EngineRowingUI.textWhite,
+                    ),
                   ),
                 ),
                 // شارة الزون التلقائية بناءً على النبض ومعادلة كارفونين بدلاً من الاختيار اليدوي
                 if (autoZone != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: HeartRateZones.zoneColor(autoZone),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.flash_on, color: Colors.white, size: 14),
-                        const SizedBox(width: 4),
-                        Text(
-                          HeartRateZones.zoneDisplayName(autoZone, isArabic: s.isArabic),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
+                  Builder(
+                    builder: (ctx) {
+                      final zColor = HeartRateZones.zoneColor(autoZone);
+                      final isLime = autoZone == 'Z1' || autoZone == 'zone1';
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: zColor,
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                      ],
-                    ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.flash_on,
+                              color: isLime ? EngineRowingUI.bgNavy : Colors.white,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              HeartRateZones.zoneDisplayName(autoZone, isArabic: false),
+                              style: TextStyle(
+                                color: isLime ? EngineRowingUI.bgNavy : Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
 
             // عرض نطاق النبض المستهدف بمعادلة كارفونين حسب زون التمرين
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.amber.shade50,
+                color: EngineRowingUI.equationCardFill,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.amber.shade300),
+                border: Border.all(color: EngineRowingUI.bgGridLine),
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.favorite, color: Colors.redAccent, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'نطاق النبض المستهدف (${form.currentZone}): $rangeText',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.brown.shade900,
+              child: Directionality(
+                textDirection: TextDirection.ltr,
+                child: Row(
+                  children: [
+                    const Icon(Icons.favorite, color: Colors.redAccent, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Target HR (${form.currentZone}): $rangeText',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: EngineRowingUI.textWhite,
+                        ),
                       ),
                     ),
-                  ),
-                  Text(
-                    'HRR: ${form.targetRange?.hrr ?? (_currentMHR - _currentRHR)} bpm',
-                    style: TextStyle(fontSize: 11, color: Colors.brown.shade700),
-                  ),
-                ],
+                    Text(
+                      'HRR: ${form.targetRange?.hrr ?? (_currentMHR - _currentRHR)} bpm',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: EngineRowingUI.labelSlate,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 14),
@@ -732,17 +913,22 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
               children: [
                 // الواط
                 Expanded(
-                  child: TextFormField(
-                    controller: form.avgPowerCtrl,
-                    keyboardType: TextInputType.number,
-                    onChanged: (_) {
-                      setState(() => _updateEF(form));
-                    },
-                    decoration: InputDecoration(
-                      labelText: s.avgPowerLabel,
-                      hintText: s.avgPowerHint,
-                      suffixText: 'W',
-                      isDense: true,
+                  child: Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: TextFormField(
+                      controller: form.avgPowerCtrl,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.left,
+                      style: _monoInputStyle(),
+                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      onChanged: (_) {
+                        setState(() => _updateEF(form));
+                      },
+                      decoration: _fieldDeco(
+                        label: s.avgPowerLabel,
+                        hint: s.avgPowerHint,
+                        suffix: 'W',
+                      ),
                     ),
                   ),
                 ),
@@ -750,14 +936,19 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
 
                 // السبليت
                 Expanded(
-                  child: TextFormField(
-                    controller: form.splitCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: InputDecoration(
-                      labelText: s.splitLabel,
-                      hintText: s.splitHint,
-                      suffixText: 'ث',
-                      isDense: true,
+                  child: Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: TextFormField(
+                      controller: form.splitCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      textAlign: TextAlign.left,
+                      style: _monoInputStyle(),
+                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      decoration: _fieldDeco(
+                        label: s.splitLabel,
+                        hint: s.splitHint,
+                        suffix: 's',
+                      ),
                     ),
                   ),
                 ),
@@ -769,14 +960,19 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
               children: [
                 // المسافة بالمتر
                 Expanded(
-                  child: TextFormField(
-                    controller: form.distanceCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: s.distanceLabel,
-                      hintText: s.distanceHint,
-                      suffixText: 'م',
-                      isDense: true,
+                  child: Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: TextFormField(
+                      controller: form.distanceCtrl,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.left,
+                      style: _monoInputStyle(),
+                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      decoration: _fieldDeco(
+                        label: s.distanceLabel,
+                        hint: s.distanceHint,
+                        suffix: 'm',
+                      ),
                     ),
                   ),
                 ),
@@ -784,15 +980,20 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
 
                 // معدل النبض
                 Expanded(
-                  child: TextFormField(
-                    controller: form.hrCtrl,
-                    keyboardType: TextInputType.number,
-                    onChanged: (_) => _onWorkoutHRChanged(form),
-                    decoration: InputDecoration(
-                      labelText: s.workoutHRLabel,
-                      hintText: s.workoutHRHint,
-                      suffixText: 'bpm',
-                      isDense: true,
+                  child: Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: TextFormField(
+                      controller: form.hrCtrl,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.left,
+                      style: _monoInputStyle(),
+                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      onChanged: (_) => _onWorkoutHRChanged(form),
+                      decoration: _fieldDeco(
+                        label: s.workoutHRLabel,
+                        hint: s.workoutHRHint,
+                        suffix: 'bpm',
+                      ),
                     ),
                   ),
                 ),
@@ -805,14 +1006,19 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
               children: [
                 // نبض الاستشفاء فوراً
                 Expanded(
-                  child: TextFormField(
-                    controller: form.postHRCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: s.postHRLabel,
-                      hintText: s.postHRHint,
-                      suffixText: 'bpm',
-                      isDense: true,
+                  child: Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: TextFormField(
+                      controller: form.postHRCtrl,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.left,
+                      style: _monoInputStyle(),
+                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      decoration: _fieldDeco(
+                        label: s.postHRLabel,
+                        hint: s.postHRHint,
+                        suffix: 'bpm',
+                      ),
                     ),
                   ),
                 ),
@@ -820,14 +1026,19 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
 
                 // نبض الاستشفاء بعد دقيقة
                 Expanded(
-                  child: TextFormField(
-                    controller: form.recovery1minCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: s.hr1MinLabel,
-                      hintText: s.hr1MinHint,
-                      suffixText: 'bpm',
-                      isDense: true,
+                  child: Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: TextFormField(
+                      controller: form.recovery1minCtrl,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.left,
+                      style: _monoInputStyle(),
+                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      decoration: _fieldDeco(
+                        label: s.hr1MinLabel,
+                        hint: s.hr1MinHint,
+                        suffix: 'bpm',
+                      ),
                     ),
                   ),
                 ),
@@ -836,76 +1047,123 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
 
             // مؤشر الكفاءة EF إذا كان محسوباً
             if (form.calculatedEF != null && form.calculatedEF! > 0) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(6),
+                  color: EngineRowingUI.equationCardFill,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: EngineRowingUI.bgGridLine),
                 ),
-                child: Text(
-                  'معدل الكفاءة المحسوب: EF = ${form.calculatedEF} (واط / نبض)',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.blue.shade900),
+                child: Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.bolt, color: EngineRowingUI.neonLime, size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Efficiency Factor: EF = ${form.calculatedEF} W/bpm',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: EngineRowingUI.neonLime,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
 
             const SizedBox(height: 10),
 
-            // حقلي واط NP ونبض Decoupling الاختياريين (Expansion Tile للتنظيم الأنيق)
-            ExpansionTile(
-              tilePadding: EdgeInsets.zero,
-              title: Text(
-                s.keyAthletesSection,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87),
-              ),
-              subtitle: Text(
-                'NP Watts & Decoupling HR (اختياري للاعبين الأساسيين)',
-                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-              ),
-              children: [
-                const SizedBox(height: 6),
-                TextFormField(
-                  controller: form.npWattsCtrl,
-                  onChanged: (_) => _onAdvancedCalculationsChanged(form),
-                  decoration: InputDecoration(
-                    labelText: s.npWattsLabel,
-                    hintText: s.npWattsHint,
-                    isDense: true,
+            // حقلي واط NP ونبض Decoupling الاختياريين
+            Theme(
+              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                iconColor: EngineRowingUI.neonLime,
+                collapsedIconColor: EngineRowingUI.labelSlate,
+                title: Text(
+                  s.keyAthletesSection,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: EngineRowingUI.textWhite,
                   ),
                 ),
-                if (form.calculatedNP != null) ...[
-                  const SizedBox(height: 4),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      '${s.calculatedNP}: ${form.calculatedNP} W',
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: _green, fontSize: 12),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: form.decouplingHRCtrl,
-                  onChanged: (_) => _onAdvancedCalculationsChanged(form),
-                  decoration: InputDecoration(
-                    labelText: s.decouplingHRLabel,
-                    hintText: s.decouplingHRHint,
-                    isDense: true,
-                  ),
+                subtitle: const Text(
+                  'NP Watts & Decoupling HR (Optional)',
+                  style: TextStyle(fontSize: 11, color: EngineRowingUI.labelSlate),
                 ),
-                if (form.calculatedDecoupling != null) ...[
-                  const SizedBox(height: 4),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      '${s.calculatedDecoupling}: ${form.calculatedDecoupling}%',
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: _navy, fontSize: 12),
+                children: [
+                  const SizedBox(height: 6),
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: TextFormField(
+                      controller: form.npWattsCtrl,
+                      textAlign: TextAlign.left,
+                      style: _monoInputStyle(),
+                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      onChanged: (_) => _onAdvancedCalculationsChanged(form),
+                      decoration: _fieldDeco(
+                        label: s.npWattsLabel,
+                        hint: s.npWattsHint,
+                      ),
                     ),
                   ),
+                  if (form.calculatedNP != null) ...[
+                    const SizedBox(height: 4),
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '${s.calculatedNP}: ${form.calculatedNP} W',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: EngineRowingUI.neonLime,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 10),
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: TextFormField(
+                      controller: form.decouplingHRCtrl,
+                      textAlign: TextAlign.left,
+                      style: _monoInputStyle(),
+                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      onChanged: (_) => _onAdvancedCalculationsChanged(form),
+                      decoration: _fieldDeco(
+                        label: s.decouplingHRLabel,
+                        hint: s.decouplingHRHint,
+                      ),
+                    ),
+                  ),
+                  if (form.calculatedDecoupling != null) ...[
+                    const SizedBox(height: 4),
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '${s.calculatedDecoupling}: ${form.calculatedDecoupling}%',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: EngineRowingUI.neonLime,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
                 ],
-                const SizedBox(height: 8),
-              ],
+              ),
             ),
           ],
         ),
@@ -916,36 +1174,38 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
   Widget _buildSaveBottomButton(AppStrings s) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            offset: const Offset(0, -3),
-            blurRadius: 10,
-          ),
-        ],
+      decoration: const BoxDecoration(
+        color: EngineRowingUI.bgNavy,
+        border: Border(top: BorderSide(color: EngineRowingUI.bgGridLine)),
       ),
       child: SafeArea(
         child: SizedBox(
           width: double.infinity,
-          height: 52,
+          height: 50,
           child: ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: _navy,
-              foregroundColor: Colors.white,
+              backgroundColor: EngineRowingUI.neonLime,
+              foregroundColor: EngineRowingUI.bgNavy,
+              elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             icon: _isSaving
                 ? const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: EngineRowingUI.bgNavy,
+                    ),
                   )
-                : const Icon(Icons.check_circle_outline),
+                : const Icon(Icons.check_circle_outline, color: EngineRowingUI.bgNavy),
             label: Text(
               s.saveAllWorkouts,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: EngineRowingUI.bgNavy,
+              ),
             ),
             onPressed: _isSaving ? null : _saveAllWorkouts,
           ),

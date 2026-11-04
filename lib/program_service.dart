@@ -96,12 +96,12 @@ const List<String> kProgramTestTypes = [
 ];
 
 const Map<String, Color> kZoneColors = {
-  'Z1': Color(0xFF1976D2), // أزرق
-  'Z2': Color(0xFF388E3C), // أخضر
-  'Z3': Color(0xFFFBC02D), // أصفر
-  'Z4': Color(0xFFF57C00), // برتقالي
-  'Threshold': Color(0xFF9C27B0), // بنفسجي/عتبة
-  'Z5': Color(0xFFD32F2F), // أحمر
+  'Z1': Color(0xFFB8F229), // فسفوري خفيف
+  'Z2': Color(0xFF2979FF), // أزرق متوسط
+  'Z3': Color(0xFFFF9100), // برتقالي متوسط
+  'Z4': Color(0xFFF4511E), // برتقالي غامق
+  'Threshold': Color(0xFFE65100), // برتقالي غامق / عتبة
+  'Z5': Color(0xFFFF5252), // أحمر خفيف
 };
 
 // ============================================================================

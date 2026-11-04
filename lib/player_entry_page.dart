@@ -1,12 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'db.dart';
 import 'app_strings.dart';
+import 'db.dart';
+import 'engine_rowing_ui.dart';
 import 'power_calculations.dart';
-
-const Color _navy = Color(0xFF0D3B66);
-const Color _sky = Color(0xFFE8F4FC);
-const Color _gold = Color(0xFFFFC93C);
 
 class PlayerEntryPage extends StatefulWidget {
   final String date;
@@ -44,7 +41,7 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
   final _splitCtrl = TextEditingController();
   final _efCtrl = TextEditingController();
 
-  // 2 New Optional Fields (for Key Athletes)
+  // 2 Optional Fields (for Key Athletes)
   final _npWattsCtrl = TextEditingController();
   final _decouplingHrCtrl = TextEditingController();
 
@@ -94,7 +91,6 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
       _calculatedDecoupling = decoupling;
     });
 
-    // إذا لم يكن هناك متوسط واط مدخل ومحسوب NP، نحسب EF تلقائياً
     if (np != null && _hrCtrl.text.isNotEmpty) {
       final hr = int.tryParse(_hrCtrl.text);
       if (hr != null && hr > 0 && _efCtrl.text.isEmpty) {
@@ -140,7 +136,6 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
       _splitCtrl.text = l['split_500'] != null ? '${l['split_500']}' : '';
       _efCtrl.text = l['ef'] != null ? '${l['ef']}' : '';
 
-      // استخراج الحقول الإضافية من player_notes
       final notes = l['player_notes'] as String?;
       if (notes != null && notes.isNotEmpty) {
         try {
@@ -163,7 +158,6 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
     final playerName = widget.player['name'] as String? ?? '';
     final mhr = widget.player['mhr'] as int? ?? 200;
 
-    // 1. التحقق من النبض
     final hr = int.tryParse(_hrCtrl.text);
     if (hr != null && (hr < 30 || hr > 230 || hr > mhr + 10)) {
       _showError(s.invalidHR(playerName));
@@ -182,14 +176,12 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
       return;
     }
 
-    // 2. التحقق من الإرهاق
     final fatigue = int.tryParse(_fatigueCtrl.text);
     if (fatigue != null && (fatigue < 1 || fatigue > 5)) {
       _showError(s.invalidFatigue);
       return;
     }
 
-    // 3. التحقق من الواط
     final avgPower = double.tryParse(_avgPowerCtrl.text) ?? _calculatedNP;
     final maxPower = double.tryParse(_maxPowerCtrl.text);
     if (avgPower != null && avgPower < 0) {
@@ -201,14 +193,12 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
       return;
     }
 
-    // 4. التحقق من المسافة
     final distance = int.tryParse(_distanceCtrl.text);
     if (distance != null && distance <= 0) {
       _showError(s.invalidDistance);
       return;
     }
 
-    // 5. التحقق من EF
     double? ef = double.tryParse(_efCtrl.text);
     if (ef == null && avgPower != null && hr != null && hr > 0) {
       ef = PowerCalculations.calculateEF(avgPower, hr);
@@ -220,7 +210,6 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
 
     setState(() => _isSaving = true);
 
-    // تجميع الملاحظات والحقول الإضافية للاعبين الأساسيين
     final extraData = {
       'np_watts_raw': _npWattsCtrl.text.trim(),
       'decoupling_hr_raw': _decouplingHrCtrl.text.trim(),
@@ -229,7 +218,6 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
     };
     final playerNotesJson = jsonEncode(extraData);
 
-    // حفظ في قاعدة البيانات
     await DB.put('logs', {
       'player_id': widget.player['id'],
       'date': widget.date,
@@ -255,12 +243,11 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
       setState(() => _isSaving = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(s.savedSuccessfully),
-          backgroundColor: Colors.green.shade700,
+          content: Text(s.savedSuccessfully, style: const TextStyle(color: EngineRowingUI.bgNavy, fontWeight: FontWeight.bold)),
+          backgroundColor: EngineRowingUI.neonLime,
           behavior: SnackBarBehavior.floating,
         ),
       );
-      // العودة التلقائية لقائمة اللاعبين
       Navigator.pop(context, true);
     }
   }
@@ -269,7 +256,7 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red.shade700,
+        backgroundColor: Colors.redAccent,
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -284,116 +271,125 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
 
     if (_loading) {
       return Scaffold(
+        backgroundColor: EngineRowingUI.bgNavy,
         appBar: AppBar(title: Text(s.playerEntryTitle)),
-        body: const Center(child: CircularProgressIndicator(color: _navy)),
+        body: const Center(child: CircularProgressIndicator(color: EngineRowingUI.neonLime)),
       );
     }
 
     return Scaffold(
+      backgroundColor: EngineRowingUI.bgNavy,
       appBar: AppBar(
         title: Text('${s.playerEntryTitle} - ${widget.player['name']}'),
-        backgroundColor: _navy,
-        foregroundColor: Colors.white,
+        backgroundColor: EngineRowingUI.bgNavy,
+        foregroundColor: EngineRowingUI.textWhite,
+        elevation: 0,
       ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        children: [
-          // بطاقة ملخص الحصة واللاعب
-          _buildSessionHeaderCard(s, zone, mhr, targetHR),
-          const SizedBox(height: 16),
+      body: RowingGridBackground(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 850),
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              children: [
+                // بطاقة ملخص الحصة واللاعب
+                _buildSessionHeaderCard(s, zone, mhr, targetHR),
+                const SizedBox(height: 16),
 
-          // 1. المؤشرات قبل التمرين (الصباحية)
-          _buildSectionHeader(s.preWorkoutSection, Icons.nightlight_round, Colors.indigo),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildField(_rhrCtrl, s.rhrLabel, hint: s.rhrHint),
-              const SizedBox(width: 8),
-              _buildField(_hrvCtrl, s.hrvLabel, hint: s.hrvHint),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildField(_sleepCtrl, s.sleepLabel, hint: s.sleepHint, isDecimal: true),
-              const SizedBox(width: 8),
-              _buildField(_fatigueCtrl, s.fatigueLabel, hint: s.fatigueHint),
-            ],
-          ),
-          const SizedBox(height: 16),
+                // 1. المؤشرات قبل التمرين (الصباحية)
+                _buildSectionHeader(s.preWorkoutSection, Icons.nightlight_round, EngineRowingUI.neonLime),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _buildField(_rhrCtrl, s.rhrLabel, hint: s.rhrHint),
+                    const SizedBox(width: 8),
+                    _buildField(_hrvCtrl, s.hrvLabel, hint: s.hrvHint),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _buildField(_sleepCtrl, s.sleepLabel, hint: s.sleepHint, isDecimal: true),
+                    const SizedBox(width: 8),
+                    _buildField(_fatigueCtrl, s.fatigueLabel, hint: s.fatigueHint),
+                  ],
+                ),
+                const SizedBox(height: 16),
 
-          // 2. الأداء أثناء التمرين
-          _buildSectionHeader(s.duringWorkoutSection, Icons.fitness_center, Colors.deepOrange),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildField(_avgPowerCtrl, s.avgPowerLabel, hint: s.avgPowerHint, isDecimal: true),
-              const SizedBox(width: 8),
-              _buildField(_maxPowerCtrl, s.maxPowerLabel, hint: s.maxPowerHint, isDecimal: true),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildField(_hrCtrl, s.workoutHRLabel, hint: s.workoutHRHint),
-              const SizedBox(width: 8),
-              _buildField(_hrMaxCtrl, s.workoutMaxHRLabel, hint: s.workoutMaxHRHint),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildField(_distanceCtrl, s.distanceLabel, hint: s.distanceHint),
-              const SizedBox(width: 8),
-              _buildField(_splitCtrl, s.splitLabel, hint: s.splitHint, isDecimal: true),
-              const SizedBox(width: 8),
-              _buildField(_efCtrl, s.efLabel, hint: s.efHint, isDecimal: true),
-            ],
-          ),
-          const SizedBox(height: 16),
+                // 2. الأداء أثناء التمرين
+                _buildSectionHeader(s.duringWorkoutSection, Icons.fitness_center, EngineRowingUI.neonLime),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _buildField(_avgPowerCtrl, s.avgPowerLabel, hint: s.avgPowerHint, isDecimal: true),
+                    const SizedBox(width: 8),
+                    _buildField(_maxPowerCtrl, s.maxPowerLabel, hint: s.maxPowerHint, isDecimal: true),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _buildField(_hrCtrl, s.workoutHRLabel, hint: s.workoutHRHint),
+                    const SizedBox(width: 8),
+                    _buildField(_hrMaxCtrl, s.workoutMaxHRLabel, hint: s.workoutMaxHRHint),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _buildField(_distanceCtrl, s.distanceLabel, hint: s.distanceHint),
+                    const SizedBox(width: 8),
+                    _buildField(_splitCtrl, s.splitLabel, hint: s.splitHint, isDecimal: true),
+                    const SizedBox(width: 8),
+                    _buildField(_efCtrl, s.efLabel, hint: s.efHint, isDecimal: true),
+                  ],
+                ),
+                const SizedBox(height: 16),
 
-          // 3. مؤشرات بعد التمرين والاستشفاء
-          _buildSectionHeader(s.postWorkoutSection, Icons.favorite_border, Colors.teal),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildField(_hrPostCtrl, s.postHRLabel, hint: s.postHRHint),
-              const SizedBox(width: 8),
-              _buildField(_hr1minCtrl, s.hr1MinLabel, hint: s.hr1MinHint),
-              const SizedBox(width: 8),
-              _buildField(_weightCtrl, s.weightLabel, hint: s.weightHint, isDecimal: true),
-            ],
-          ),
-          const SizedBox(height: 20),
+                // 3. مؤشرات بعد التمرين والاستشفاء
+                _buildSectionHeader(s.postWorkoutSection, Icons.favorite_border, EngineRowingUI.neonLime),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _buildField(_hrPostCtrl, s.postHRLabel, hint: s.postHRHint),
+                    const SizedBox(width: 8),
+                    _buildField(_hr1minCtrl, s.hr1MinLabel, hint: s.hr1MinHint),
+                    const SizedBox(width: 8),
+                    _buildField(_weightCtrl, s.weightLabel, hint: s.weightHint, isDecimal: true),
+                  ],
+                ),
+                const SizedBox(height: 20),
 
-          // 4. الحقلين الجديدين للاعبين الأساسيين (اختياري)
-          _buildKeyAthletesSection(s),
-          const SizedBox(height: 24),
+                // 4. الحقلين الاختياريين للاعبين الأساسيين
+                _buildKeyAthletesSection(s),
+                const SizedBox(height: 24),
 
-          // زر الحفظ والعودة
-          FilledButton.icon(
-            onPressed: _isSaving ? null : _save,
-            style: FilledButton.styleFrom(
-              backgroundColor: _gold,
-              foregroundColor: _navy,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              elevation: 2,
+                // زر الحفظ والعودة
+                FilledButton.icon(
+                  onPressed: _isSaving ? null : _save,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: EngineRowingUI.neonLime,
+                    foregroundColor: EngineRowingUI.bgNavy,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  icon: _isSaving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: EngineRowingUI.bgNavy),
+                        )
+                      : const Icon(Icons.check_circle_outline, size: 24, color: EngineRowingUI.bgNavy),
+                  label: Text(
+                    s.saveAndReturn,
+                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: EngineRowingUI.bgNavy),
+                  ),
+                ),
+                const SizedBox(height: 32),
+              ],
             ),
-            icon: _isSaving
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: _navy),
-                  )
-                : const Icon(Icons.check_circle_outline, size: 24),
-            label: Text(
-              s.saveAndReturn,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
           ),
-          const SizedBox(height: 32),
-        ],
+        ),
       ),
     );
   }
@@ -401,28 +397,22 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
   Widget _buildSessionHeaderCard(AppStrings s, String zone, int mhr, String targetHR) {
     return Container(
       decoration: BoxDecoration(
-        color: _navy,
+        color: EngineRowingUI.cardFill,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: _navy.withAlpha(50),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        border: Border.all(color: EngineRowingUI.bgGridLine),
       ),
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: _gold,
+            backgroundColor: EngineRowingUI.equationCardFill,
             radius: 26,
             child: Text(
               widget.player['name'].toString().isNotEmpty
                   ? widget.player['name'].toString()[0]
                   : 'P',
               style: const TextStyle(
-                color: _navy,
+                color: EngineRowingUI.neonLime,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
               ),
@@ -436,7 +426,7 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
                 Text(
                   '${widget.player['name']}',
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: EngineRowingUI.textWhite,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -444,7 +434,7 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
                 const SizedBox(height: 4),
                 Text(
                   '${s.workoutType}: ${widget.session['kind']} ($zone)',
-                  style: const TextStyle(color: _gold, fontSize: 14),
+                  style: const TextStyle(color: EngineRowingUI.neonLime, fontSize: 14),
                 ),
               ],
             ),
@@ -452,23 +442,30 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                '${s.maxHRLabel}: $mhr',
-                style: const TextStyle(color: Colors.white70, fontSize: 13),
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: Text(
+                  '${s.maxHRLabel}: $mhr bpm',
+                  style: const TextStyle(color: EngineRowingUI.labelSlate, fontSize: 13),
+                ),
               ),
               const SizedBox(height: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.white.withAlpha(30),
+                  color: EngineRowingUI.equationCardFill,
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: EngineRowingUI.bgGridLine),
                 ),
-                child: Text(
-                  '$targetHR bpm',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                child: Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Text(
+                    '$targetHR bpm',
+                    style: const TextStyle(
+                      color: EngineRowingUI.neonLime,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -503,18 +500,41 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
     bool isDecimal = false,
   }) {
     return Expanded(
-      child: TextField(
-        controller: ctrl,
-        keyboardType: TextInputType.numberWithOptions(decimal: isDecimal),
-        textInputAction: TextInputAction.next,
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-          filled: true,
-          fillColor: Colors.white,
+      child: Directionality(
+        textDirection: TextDirection.ltr,
+        child: TextField(
+          controller: ctrl,
+          keyboardType: TextInputType.numberWithOptions(decimal: isDecimal),
+          textInputAction: TextInputAction.next,
+          textAlign: TextAlign.left,
+          style: const TextStyle(
+            color: EngineRowingUI.textWhite,
+            fontFamily: EngineRowingUI.fontFamily,
+            fontSize: 14,
+          ),
+          inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+          decoration: InputDecoration(
+            labelText: label,
+            labelStyle: const TextStyle(color: EngineRowingUI.labelSlate, fontSize: 13),
+            hintText: hint,
+            hintStyle: const TextStyle(color: EngineRowingUI.captionGrey, fontSize: 12),
+            isDense: true,
+            filled: true,
+            fillColor: EngineRowingUI.equationCardFill,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: EngineRowingUI.neonLime, width: 1.5),
+            ),
+          ),
         ),
       ),
     );
@@ -524,9 +544,9 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
   Widget _buildKeyAthletesSection(AppStrings s) {
     return Container(
       decoration: BoxDecoration(
-        color: _sky.withAlpha(120),
+        color: EngineRowingUI.cardFill,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _navy.withAlpha(40), width: 1.5),
+        border: Border.all(color: EngineRowingUI.bgGridLine, width: 1.2),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -537,10 +557,10 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
               Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: _navy,
+                  color: EngineRowingUI.equationCardFill,
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: const Icon(Icons.star, color: _gold, size: 18),
+                child: const Icon(Icons.star, color: EngineRowingUI.neonLime, size: 18),
               ),
               const SizedBox(width: 8),
               Text(
@@ -548,7 +568,7 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: _navy,
+                  color: EngineRowingUI.textWhite,
                 ),
               ),
             ],
@@ -556,19 +576,38 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
           const SizedBox(height: 12),
 
           // الحقل الأول: واط NP (قراءات متعددة)
-          TextField(
-            controller: _npWattsCtrl,
-            keyboardType: TextInputType.text,
-            textInputAction: TextInputAction.next,
-            decoration: InputDecoration(
-              labelText: s.npWattsLabel,
-              hintText: s.npWattsHint,
-              prefixIcon: const Icon(Icons.electric_bolt, color: _navy, size: 20),
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              filled: true,
-              fillColor: Colors.white,
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: TextField(
+              controller: _npWattsCtrl,
+              keyboardType: TextInputType.text,
+              textInputAction: TextInputAction.next,
+              textAlign: TextAlign.left,
+              style: const TextStyle(color: EngineRowingUI.textWhite, fontSize: 13),
+              inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+              decoration: InputDecoration(
+                labelText: s.npWattsLabel,
+                labelStyle: const TextStyle(color: EngineRowingUI.labelSlate, fontSize: 13),
+                hintText: s.npWattsHint,
+                hintStyle: const TextStyle(color: EngineRowingUI.captionGrey, fontSize: 12),
+                prefixIcon: const Icon(Icons.electric_bolt, color: EngineRowingUI.neonLime, size: 20),
+                isDense: true,
+                filled: true,
+                fillColor: EngineRowingUI.equationCardFill,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: EngineRowingUI.neonLime),
+                ),
+              ),
             ),
           ),
           if (_calculatedNP != null) ...[
@@ -576,63 +615,89 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.green.shade50,
+                color: EngineRowingUI.equationCardFill,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green.shade300),
+                border: Border.all(color: EngineRowingUI.bgGridLine),
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.green, size: 18),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${s.calculatedNP}: ',
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                  ),
-                  Text(
-                    '${_calculatedNP!} W',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
+              child: Directionality(
+                textDirection: TextDirection.ltr,
+                child: Row(
+                  children: [
+                    const Icon(Icons.check_circle, color: EngineRowingUI.neonLime, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${s.calculatedNP}: ',
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: EngineRowingUI.textWhite),
                     ),
-                  ),
-                  const Spacer(),
-                  InkWell(
-                    onTap: () {
-                      _avgPowerCtrl.text = _calculatedNP.toString();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: _navy,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text(
-                        'استخدام كمتوسط',
-                        style: TextStyle(color: Colors.white, fontSize: 11),
+                    Text(
+                      '${_calculatedNP!} W',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: EngineRowingUI.neonLime,
                       ),
                     ),
-                  ),
-                ],
+                    const Spacer(),
+                    InkWell(
+                      onTap: () {
+                        _avgPowerCtrl.text = _calculatedNP.toString();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: EngineRowingUI.neonLime,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'Use as Avg',
+                          style: TextStyle(
+                            color: EngineRowingUI.bgNavy,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
           const SizedBox(height: 12),
 
           // الحقل الثاني: نبض Decoupling (قراءات متعددة)
-          TextField(
-            controller: _decouplingHrCtrl,
-            keyboardType: TextInputType.text,
-            textInputAction: TextInputAction.done,
-            decoration: InputDecoration(
-              labelText: s.decouplingHRLabel,
-              hintText: s.decouplingHRHint,
-              prefixIcon: const Icon(Icons.monitor_heart, color: Colors.red, size: 20),
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              filled: true,
-              fillColor: Colors.white,
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: TextField(
+              controller: _decouplingHrCtrl,
+              keyboardType: TextInputType.text,
+              textInputAction: TextInputAction.done,
+              textAlign: TextAlign.left,
+              style: const TextStyle(color: EngineRowingUI.textWhite, fontSize: 13),
+              inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+              decoration: InputDecoration(
+                labelText: s.decouplingHRLabel,
+                labelStyle: const TextStyle(color: EngineRowingUI.labelSlate, fontSize: 13),
+                hintText: s.decouplingHRHint,
+                hintStyle: const TextStyle(color: EngineRowingUI.captionGrey, fontSize: 12),
+                prefixIcon: const Icon(Icons.monitor_heart, color: Colors.redAccent, size: 20),
+                isDense: true,
+                filled: true,
+                fillColor: EngineRowingUI.equationCardFill,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: EngineRowingUI.neonLime),
+                ),
+              ),
             ),
           ),
           if (_calculatedDecoupling != null) ...[
@@ -640,27 +705,30 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.blue.shade50,
+                color: EngineRowingUI.equationCardFill,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.shade300),
+                border: Border.all(color: EngineRowingUI.bgGridLine),
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.analytics_outlined, color: Colors.blue, size: 18),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${s.calculatedDecoupling}: ',
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                  ),
-                  Text(
-                    '${_calculatedDecoupling!}% (${_calculatedDecoupling! < 5.0 ? 'ممتاز' : 'تراجع كفاءة'})',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: _calculatedDecoupling! < 5.0 ? Colors.green : Colors.orange,
+              child: Directionality(
+                textDirection: TextDirection.ltr,
+                child: Row(
+                  children: [
+                    const Icon(Icons.analytics_outlined, color: EngineRowingUI.neonLime, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${s.calculatedDecoupling}: ',
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: EngineRowingUI.textWhite),
                     ),
-                  ),
-                ],
+                    Text(
+                      '${_calculatedDecoupling!}% (${_calculatedDecoupling! < 5.0 ? 'Excellent' : 'Decoupled'})',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: _calculatedDecoupling! < 5.0 ? EngineRowingUI.neonLime : const Color(0xFFFF9100),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

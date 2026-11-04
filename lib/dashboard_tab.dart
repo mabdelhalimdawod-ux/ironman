@@ -2,13 +2,9 @@ import 'package:flutter/material.dart';
 import 'app_strings.dart';
 import 'auth_service.dart';
 import 'db.dart';
+import 'engine_rowing_ui.dart';
 import 'home_service.dart';
 import 'metrics_curve_page.dart';
-
-const Color _navy = Color(0xFF0D3B66);
-const Color _sky = Color(0xFFE8F4FC);
-const Color _yellow = Color(0xFFFFC93C);
-const Color _cardBg = Color(0xFFF7FAFC);
 
 /// التاب الأول: الشاشة الرئيسية (Home Tab)
 class DashboardTab extends StatefulWidget {
@@ -116,44 +112,52 @@ class _DashboardTabState extends State<DashboardTab> {
 
     if (_loading) {
       return const Center(
-        child: CircularProgressIndicator(color: _navy),
+        child: CircularProgressIndicator(color: EngineRowingUI.neonLime),
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _loadHomeData,
-      color: _navy,
-      child: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        children: [
-          // ── ترويسة الترحيب ──
-          _buildGreetingHeader(s, user),
-          const SizedBox(height: 16),
+    return RowingGridBackground(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 850),
+          child: RefreshIndicator(
+            onRefresh: _loadHomeData,
+            color: EngineRowingUI.neonLime,
+            backgroundColor: EngineRowingUI.cardFill,
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              children: [
+                // ── ترويسة الترحيب ──
+                _buildGreetingHeader(s, user),
+                const SizedBox(height: 16),
 
-          // ── رسالة المدرب إن وجدت (فقط للاعبين) ──
-          if (_unreadMessage != null) ...[
-            _buildCoachMessageCard(s, _unreadMessage!),
-            const SizedBox(height: 16),
-          ],
+                // ── رسالة المدرب إن وجدت (فقط للاعبين) ──
+                if (_unreadMessage != null) ...[
+                  _buildCoachMessageCard(s, _unreadMessage!),
+                  const SizedBox(height: 16),
+                ],
 
-          // ── كارت الحصة التدريبية القادمة ──
-          _buildNextSessionCard(s),
-          const SizedBox(height: 16),
+                // ── كارت الحصة التدريبية القادمة ──
+                _buildNextSessionCard(s),
+                const SizedBox(height: 16),
 
-          // ── كارت منحنيات مؤشرات التدريب (خمسة منحنيات) ──
-          _buildMetricsCurvesBanner(s),
-          const SizedBox(height: 16),
+                // ── كارت منحنيات مؤشرات التدريب (خمسة منحنيات) ──
+                _buildMetricsCurvesBanner(s),
+                const SizedBox(height: 16),
 
-          // ── كروت المؤشرات Highlights (تظهر فقط إن توفرت بيانات) ──
-          if (_highlights.isNotEmpty) ...[
-            _buildHighlightsSection(s),
-            const SizedBox(height: 16),
-          ],
+                // ── كروت المؤشرات Highlights (تظهر فقط إن توفرت بيانات) ──
+                if (_highlights.isNotEmpty) ...[
+                  _buildHighlightsSection(s),
+                  const SizedBox(height: 16),
+                ],
 
-          // ── مواعيد الاختبارات القادمة ──
-          _buildTestingDatesCard(s, user),
-          const SizedBox(height: 24),
-        ],
+                // ── مواعيد الاختبارات القادمة ──
+                _buildTestingDatesCard(s, user),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -169,15 +173,12 @@ class _DashboardTabState extends State<DashboardTab> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [_navy, Color(0xFF1B4D7E)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: EngineRowingUI.cardFill,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: EngineRowingUI.bgGridLine, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: _navy.withAlpha(35),
+            color: Colors.black.withValues(alpha: 0.25),
             blurRadius: 18,
             offset: const Offset(0, 6),
           ),
@@ -187,11 +188,11 @@ class _DashboardTabState extends State<DashboardTab> {
         children: [
           CircleAvatar(
             radius: 26,
-            backgroundColor: _yellow,
+            backgroundColor: EngineRowingUI.equationCardFill,
             child: const Icon(
               Icons.person_rounded,
               size: 32,
-              color: _navy,
+              color: EngineRowingUI.neonLime,
             ),
           ),
           const SizedBox(width: 16),
@@ -207,7 +208,7 @@ class _DashboardTabState extends State<DashboardTab> {
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: EngineRowingUI.textWhite,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -216,13 +217,16 @@ class _DashboardTabState extends State<DashboardTab> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: _yellow.withAlpha(40),
+                        color: EngineRowingUI.neonLime.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: EngineRowingUI.neonLime.withValues(alpha: 0.4),
+                        ),
                       ),
                       child: Text(
                         roleName,
                         style: const TextStyle(
-                          color: _yellow,
+                          color: EngineRowingUI.neonLime,
                           fontWeight: FontWeight.w700,
                           fontSize: 11,
                         ),
@@ -235,9 +239,9 @@ class _DashboardTabState extends State<DashboardTab> {
                   s.isArabic
                       ? 'جاهز لجلسة تدريب مميزة اليوم على الأرجو؟'
                       : 'Ready for an elite rowing session today?',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 12.5,
-                    color: Colors.white.withAlpha(200),
+                    color: EngineRowingUI.labelSlate,
                   ),
                 ),
               ],
@@ -252,12 +256,15 @@ class _DashboardTabState extends State<DashboardTab> {
   Widget _buildCoachMessageCard(AppStrings s, CoachMessageItem msg) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF9E6),
+        color: EngineRowingUI.cardFill,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _yellow.withAlpha(160), width: 1.2),
+        border: Border.all(
+          color: EngineRowingUI.neonLime.withValues(alpha: 0.5),
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: _yellow.withAlpha(20),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -272,12 +279,12 @@ class _DashboardTabState extends State<DashboardTab> {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: const BoxDecoration(
-                  color: _yellow,
+                  color: EngineRowingUI.neonLime,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.mark_email_unread_rounded,
-                  color: _navy,
+                  color: EngineRowingUI.bgNavy,
                   size: 18,
                 ),
               ),
@@ -288,13 +295,16 @@ class _DashboardTabState extends State<DashboardTab> {
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: _navy,
+                    color: EngineRowingUI.textWhite,
                   ),
                 ),
               ),
-              Text(
-                msg.date,
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: Text(
+                  RowingNumberFormatter.toEnglishDigits(msg.date),
+                  style: const TextStyle(fontSize: 12, color: EngineRowingUI.labelSlate),
+                ),
               ),
             ],
           ),
@@ -303,7 +313,7 @@ class _DashboardTabState extends State<DashboardTab> {
             msg.message,
             style: const TextStyle(
               fontSize: 14,
-              color: Color(0xFF2C3E50),
+              color: EngineRowingUI.textWhite,
               height: 1.4,
             ),
           ),
@@ -315,11 +325,15 @@ class _DashboardTabState extends State<DashboardTab> {
                 await HomeService.markMessageRead(msg.id);
                 setState(() => _unreadMessage = null);
               },
-              icon: const Icon(Icons.check_circle_outline_rounded, size: 18, color: _navy),
+              icon: const Icon(
+                Icons.check_circle_outline_rounded,
+                size: 18,
+                color: EngineRowingUI.neonLime,
+              ),
               label: Text(
                 s.markAsRead,
                 style: const TextStyle(
-                  color: _navy,
+                  color: EngineRowingUI.neonLime,
                   fontWeight: FontWeight.bold,
                   fontSize: 13,
                 ),
@@ -337,9 +351,9 @@ class _DashboardTabState extends State<DashboardTab> {
 
     return Container(
       decoration: BoxDecoration(
-        color: _cardBg,
+        color: EngineRowingUI.cardFill,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: EngineRowingUI.bgGridLine),
       ),
       padding: const EdgeInsets.all(18),
       child: Column(
@@ -347,14 +361,18 @@ class _DashboardTabState extends State<DashboardTab> {
         children: [
           Row(
             children: [
-              const Icon(Icons.event_available_rounded, color: _navy, size: 22),
+              const Icon(
+                Icons.event_available_rounded,
+                color: EngineRowingUI.neonLime,
+                size: 22,
+              ),
               const SizedBox(width: 8),
               Text(
                 s.nextSession,
                 style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
-                  color: _navy,
+                  color: EngineRowingUI.textWhite,
                 ),
               ),
             ],
@@ -365,27 +383,31 @@ class _DashboardTabState extends State<DashboardTab> {
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
                 s.noUpcomingSessions,
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                style: const TextStyle(color: EngineRowingUI.labelSlate, fontSize: 14),
               ),
             )
           else ...[
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: EngineRowingUI.equationCardFill,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: EngineRowingUI.bgGridLine),
               ),
               child: Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: _navy,
+                    backgroundColor: EngineRowingUI.cardFill,
                     radius: 20,
-                    child: Text(
-                      '${(session['idx'] as int? ?? 0) + 1}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                    child: Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Text(
+                        '${(session['idx'] as int? ?? 0) + 1}',
+                        style: const TextStyle(
+                          color: EngineRowingUI.neonLime,
+                          fontWeight: FontWeight.bold,
+                          fontFeatures: [FontFeature.tabularFigures()],
+                        ),
                       ),
                     ),
                   ),
@@ -399,34 +421,44 @@ class _DashboardTabState extends State<DashboardTab> {
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: _navy,
+                            color: EngineRowingUI.textWhite,
                           ),
                         ),
-                        Text(
-                          '${s.isArabic ? "التاريخ" : "Date"}: $_nextSessionDate',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey.shade600,
+                        Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: Text(
+                            '${s.isArabic ? "Date" : "Date"}: ${RowingNumberFormatter.toEnglishDigits(_nextSessionDate)}',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: EngineRowingUI.labelSlate,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: _sky,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '${session['zone']}',
-                      style: const TextStyle(
-                        color: _navy,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
-                  )
+                  Builder(
+                    builder: (ctx) {
+                      final zoneStr = session['zone'] as String? ?? 'Z2';
+                      final zoneColor = EngineRowingUI.zoneColors[zoneStr] ?? EngineRowingUI.neonLime;
+                      final isLime = zoneStr == 'Z1' || zoneStr == 'zone1';
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: zoneColor,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          zoneStr,
+                          style: TextStyle(
+                            color: isLime ? EngineRowingUI.bgNavy : Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
@@ -443,14 +475,18 @@ class _DashboardTabState extends State<DashboardTab> {
       children: [
         Row(
           children: [
-            const Icon(Icons.insights_rounded, color: _navy, size: 22),
+            const Icon(
+              Icons.insights_rounded,
+              color: EngineRowingUI.neonLime,
+              size: 22,
+            ),
             const SizedBox(width: 8),
             Text(
               s.highlightsTitle,
               style: const TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.bold,
-                color: _navy,
+                color: EngineRowingUI.textWhite,
               ),
             ),
           ],
@@ -474,12 +510,12 @@ class _DashboardTabState extends State<DashboardTab> {
                 return Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: EngineRowingUI.cardFill,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(color: EngineRowingUI.bgGridLine),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withAlpha(6),
+                        color: Colors.black.withValues(alpha: 0.15),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -490,12 +526,13 @@ class _DashboardTabState extends State<DashboardTab> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Color(item.colorHex).withAlpha(25),
+                          color: EngineRowingUI.equationCardFill,
                           borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: EngineRowingUI.bgGridLine),
                         ),
                         child: Icon(
                           item.icon,
-                          color: Color(item.colorHex),
+                          color: EngineRowingUI.neonLime,
                           size: 24,
                         ),
                       ),
@@ -507,21 +544,25 @@ class _DashboardTabState extends State<DashboardTab> {
                           children: [
                             Text(
                               s.isArabic ? item.titleAr : item.titleEn,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.grey.shade600,
+                                color: EngineRowingUI.labelSlate,
                               ),
                             ),
                             const SizedBox(height: 2),
-                            Text(
-                              item.value,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: _navy,
+                            Directionality(
+                              textDirection: TextDirection.ltr,
+                              child: Text(
+                                RowingNumberFormatter.toEnglishDigits(item.value),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: EngineRowingUI.textWhite,
+                                  fontFeatures: [FontFeature.tabularFigures()],
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
@@ -543,9 +584,9 @@ class _DashboardTabState extends State<DashboardTab> {
 
     return Container(
       decoration: BoxDecoration(
-        color: _cardBg,
+        color: EngineRowingUI.cardFill,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: EngineRowingUI.bgGridLine),
       ),
       padding: const EdgeInsets.all(18),
       child: Column(
@@ -553,7 +594,11 @@ class _DashboardTabState extends State<DashboardTab> {
         children: [
           Row(
             children: [
-              const Icon(Icons.timer_outlined, color: _navy, size: 22),
+              const Icon(
+                Icons.timer_outlined,
+                color: EngineRowingUI.neonLime,
+                size: 22,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -561,7 +606,7 @@ class _DashboardTabState extends State<DashboardTab> {
                   style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
-                    color: _navy,
+                    color: EngineRowingUI.textWhite,
                   ),
                 ),
               ),
@@ -571,10 +616,14 @@ class _DashboardTabState extends State<DashboardTab> {
                   icon: Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: _navy,
+                      color: EngineRowingUI.neonLime,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.add, color: Colors.white, size: 18),
+                    child: const Icon(
+                      Icons.add,
+                      color: EngineRowingUI.bgNavy,
+                      size: 18,
+                    ),
                   ),
                   onPressed: () => _showAddTestDialog(context, s, user!),
                 ),
@@ -586,7 +635,7 @@ class _DashboardTabState extends State<DashboardTab> {
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
                 s.noUpcomingTests,
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                style: const TextStyle(color: EngineRowingUI.labelSlate, fontSize: 14),
               ),
             )
           else ...[
@@ -597,31 +646,43 @@ class _DashboardTabState extends State<DashboardTab> {
               separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (context, idx) {
                 final test = _testingDates[idx];
+                final formattedDate = RowingNumberFormatter.toEnglishDigits(test.testDate);
                 return Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: EngineRowingUI.equationCardFill,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(color: EngineRowingUI.bgGridLine),
                   ),
                   child: Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         decoration: BoxDecoration(
-                          color: _sky,
+                          color: EngineRowingUI.cardFill,
                           borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: EngineRowingUI.bgGridLine),
                         ),
                         child: Column(
                           children: [
-                            const Icon(Icons.calendar_today_rounded, size: 16, color: _navy),
+                            const Icon(
+                              Icons.calendar_today_rounded,
+                              size: 16,
+                              color: EngineRowingUI.neonLime,
+                            ),
                             const SizedBox(height: 4),
-                            Text(
-                              test.testDate.length >= 10 ? test.testDate.substring(5) : test.testDate,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: _navy,
+                            Directionality(
+                              textDirection: TextDirection.ltr,
+                              child: Text(
+                                formattedDate.length >= 10
+                                    ? formattedDate.substring(5)
+                                    : formattedDate,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: EngineRowingUI.neonLime,
+                                  fontFeatures: [FontFeature.tabularFigures()],
+                                ),
                               ),
                             ),
                           ],
@@ -637,15 +698,18 @@ class _DashboardTabState extends State<DashboardTab> {
                               style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
-                                color: _navy,
+                                color: EngineRowingUI.textWhite,
                               ),
                             ),
                             const SizedBox(height: 2),
-                            Text(
-                              '${s.testDate}: ${test.testDate}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade600,
+                            Directionality(
+                              textDirection: TextDirection.ltr,
+                              child: Text(
+                                'Date: $formattedDate',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: EngineRowingUI.labelSlate,
+                                ),
                               ),
                             ),
                           ],
@@ -653,7 +717,11 @@ class _DashboardTabState extends State<DashboardTab> {
                       ),
                       if (isCoach)
                         IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+                          icon: const Icon(
+                            Icons.delete_outline_rounded,
+                            color: Colors.redAccent,
+                            size: 20,
+                          ),
                           tooltip: s.deleteTestDate,
                           onPressed: () async {
                             await HomeService.deleteTestingDate(test.id);
@@ -690,12 +758,22 @@ class _DashboardTabState extends State<DashboardTab> {
                 '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
 
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              backgroundColor: EngineRowingUI.cardFill,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: const BorderSide(color: EngineRowingUI.bgGridLine, width: 1.5),
+              ),
               title: Row(
                 children: [
-                  const Icon(Icons.event_note_rounded, color: _navy),
+                  const Icon(Icons.event_note_rounded, color: EngineRowingUI.neonLime),
                   const SizedBox(width: 10),
-                  Text(s.addTestingDate, style: const TextStyle(fontWeight: FontWeight.bold, color: _navy)),
+                  Text(
+                    s.addTestingDate,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: EngineRowingUI.textWhite,
+                    ),
+                  ),
                 ],
               ),
               content: SingleChildScrollView(
@@ -706,19 +784,53 @@ class _DashboardTabState extends State<DashboardTab> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // اسم الاختبار
-                      Text(s.testName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                      Text(
+                        s.testName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: EngineRowingUI.labelSlate,
+                        ),
+                      ),
                       const SizedBox(height: 6),
                       TextField(
                         controller: nameCtrl,
+                        style: const TextStyle(color: EngineRowingUI.textWhite),
                         decoration: InputDecoration(
                           hintText: s.testNameHint,
-                          prefixIcon: const Icon(Icons.speed_rounded, size: 20),
+                          hintStyle: const TextStyle(color: EngineRowingUI.captionGrey),
+                          filled: true,
+                          fillColor: EngineRowingUI.equationCardFill,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: EngineRowingUI.neonLime, width: 1.5),
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.speed_rounded,
+                            size: 20,
+                            color: EngineRowingUI.neonLime,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
 
                       // تاريخ الاختبار
-                      Text(s.testDate, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                      Text(
+                        s.testDate,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: EngineRowingUI.labelSlate,
+                        ),
+                      ),
                       const SizedBox(height: 6),
                       InkWell(
                         onTap: () async {
@@ -727,6 +839,20 @@ class _DashboardTabState extends State<DashboardTab> {
                             initialDate: selectedDate,
                             firstDate: DateTime.now(),
                             lastDate: DateTime.now().add(const Duration(days: 365)),
+                            builder: (context, child) {
+                              return Theme(
+                                data: ThemeData.dark().copyWith(
+                                  colorScheme: const ColorScheme.dark(
+                                    primary: EngineRowingUI.neonLime,
+                                    onPrimary: EngineRowingUI.bgNavy,
+                                    surface: EngineRowingUI.cardFill,
+                                    onSurface: EngineRowingUI.textWhite,
+                                  ),
+                                  dialogTheme: const DialogThemeData(backgroundColor: EngineRowingUI.cardFill),
+                                ),
+                                child: child!,
+                              );
+                            },
                           );
                           if (picked != null) {
                             setDlgState(() => selectedDate = picked);
@@ -736,29 +862,57 @@ class _DashboardTabState extends State<DashboardTab> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade400),
+                            border: Border.all(color: EngineRowingUI.bgGridLine),
                             borderRadius: BorderRadius.circular(10),
-                            color: Colors.white,
+                            color: EngineRowingUI.equationCardFill,
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(dateStr, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                              const Icon(Icons.calendar_month_rounded, size: 20, color: _navy),
-                            ],
+                          child: Directionality(
+                            textDirection: TextDirection.ltr,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  RowingNumberFormatter.toEnglishDigits(dateStr),
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: EngineRowingUI.textWhite,
+                                    fontFeatures: [FontFeature.tabularFigures()],
+                                  ),
+                                ),
+                                const Icon(
+                                  Icons.calendar_month_rounded,
+                                  size: 20,
+                                  color: EngineRowingUI.neonLime,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 16),
 
                       // المستهدفون
-                      Text(s.recipients, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                      Text(
+                        s.recipients,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: EngineRowingUI.labelSlate,
+                        ),
+                      ),
                       const SizedBox(height: 6),
                       Row(
                         children: [
                           ChoiceChip(
                             label: Text(s.allAthletes),
                             selected: allSelected,
+                            selectedColor: EngineRowingUI.neonLime,
+                            backgroundColor: EngineRowingUI.equationCardFill,
+                            labelStyle: TextStyle(
+                              color: allSelected ? EngineRowingUI.bgNavy : EngineRowingUI.textWhite,
+                              fontWeight: FontWeight.bold,
+                            ),
                             onSelected: (val) {
                               setDlgState(() {
                                 allSelected = true;
@@ -770,6 +924,12 @@ class _DashboardTabState extends State<DashboardTab> {
                           ChoiceChip(
                             label: Text(s.selectAthletes),
                             selected: !allSelected,
+                            selectedColor: EngineRowingUI.neonLime,
+                            backgroundColor: EngineRowingUI.equationCardFill,
+                            labelStyle: TextStyle(
+                              color: !allSelected ? EngineRowingUI.bgNavy : EngineRowingUI.textWhite,
+                              fontWeight: FontWeight.bold,
+                            ),
                             onSelected: (val) {
                               setDlgState(() => allSelected = false);
                             },
@@ -781,8 +941,9 @@ class _DashboardTabState extends State<DashboardTab> {
                         Container(
                           constraints: const BoxConstraints(maxHeight: 140),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade200),
+                            border: Border.all(color: EngineRowingUI.bgGridLine),
                             borderRadius: BorderRadius.circular(10),
+                            color: EngineRowingUI.equationCardFill,
                           ),
                           child: ListView(
                             shrinkWrap: true,
@@ -792,7 +953,15 @@ class _DashboardTabState extends State<DashboardTab> {
                               final checked = selectedAthleteIds.contains(id);
                               return CheckboxListTile(
                                 dense: true,
-                                title: Text(name, style: const TextStyle(fontSize: 13)),
+                                activeColor: EngineRowingUI.neonLime,
+                                checkColor: EngineRowingUI.bgNavy,
+                                title: Text(
+                                  name,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: EngineRowingUI.textWhite,
+                                  ),
+                                ),
                                 value: checked,
                                 onChanged: (val) {
                                   setDlgState(() {
@@ -815,9 +984,16 @@ class _DashboardTabState extends State<DashboardTab> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(dialogCtx),
-                  child: Text(s.cancel),
+                  child: Text(
+                    s.cancel,
+                    style: const TextStyle(color: EngineRowingUI.labelSlate),
+                  ),
                 ),
                 FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: EngineRowingUI.neonLime,
+                    foregroundColor: EngineRowingUI.bgNavy,
+                  ),
                   onPressed: () async {
                     final name = nameCtrl.text.trim();
                     if (name.isEmpty) {
@@ -846,7 +1022,10 @@ class _DashboardTabState extends State<DashboardTab> {
                       _loadHomeData();
                     }
                   },
-                  child: Text(s.add),
+                  child: Text(
+                    s.add,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             );
@@ -860,16 +1039,15 @@ class _DashboardTabState extends State<DashboardTab> {
   Widget _buildMetricsCurvesBanner(AppStrings s) {
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF07192C), _navy],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: EngineRowingUI.cardFill,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _yellow.withAlpha(90)),
+        border: Border.all(
+          color: EngineRowingUI.neonLime.withValues(alpha: 0.5),
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(40),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 16,
             offset: const Offset(0, 5),
           ),
@@ -881,11 +1059,17 @@ class _DashboardTabState extends State<DashboardTab> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: _yellow.withAlpha(30),
+              color: EngineRowingUI.equationCardFill,
               shape: BoxShape.circle,
-              border: Border.all(color: _yellow.withAlpha(120)),
+              border: Border.all(
+                color: EngineRowingUI.neonLime.withValues(alpha: 0.6),
+              ),
             ),
-            child: const Icon(Icons.auto_graph_rounded, color: _yellow, size: 26),
+            child: const Icon(
+              Icons.auto_graph_rounded,
+              color: EngineRowingUI.neonLime,
+              size: 26,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -899,20 +1083,20 @@ class _DashboardTabState extends State<DashboardTab> {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: EngineRowingUI.textWhite,
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: _yellow,
+                        color: EngineRowingUI.neonLime,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         s.isArabic ? '5 منحنيات' : '5 Curves',
                         style: const TextStyle(
-                          color: _navy,
+                          color: EngineRowingUI.bgNavy,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
@@ -925,9 +1109,9 @@ class _DashboardTabState extends State<DashboardTab> {
                   s.isArabic
                       ? 'تحليل ذكي لـ EF، الواط، Decoupling، النبض، وزون كيرف (كارفونين)'
                       : 'Smart curves for EF, Watts, Decoupling, HR & Zone Curve',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 12,
-                    color: Colors.white.withAlpha(190),
+                    color: EngineRowingUI.labelSlate,
                   ),
                 ),
               ],
@@ -936,8 +1120,8 @@ class _DashboardTabState extends State<DashboardTab> {
           const SizedBox(width: 8),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: _yellow,
-              foregroundColor: _navy,
+              backgroundColor: EngineRowingUI.neonLime,
+              foregroundColor: EngineRowingUI.bgNavy,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
@@ -949,7 +1133,11 @@ class _DashboardTabState extends State<DashboardTab> {
             },
             child: Text(
               s.isArabic ? 'فتح التحليل' : 'Open',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: EngineRowingUI.bgNavy,
+              ),
             ),
           ),
         ],

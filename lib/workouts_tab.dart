@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'db.dart';
 import 'app_strings.dart';
+import 'engine_rowing_ui.dart';
 import 'program_service.dart';
 import 'athlete_day_entry_page.dart';
 import 'metrics_curve_page.dart';
 
-const Color _navy = Color(0xFF0D3B66);
-const Color _sky = Color(0xFFE8F4FC);
-const Color _gold = Color(0xFFFFC93C);
-const Color _green = Color(0xFF2E7D32);
+const Color _navy = EngineRowingUI.bgNavy;
+const Color _cardFill = EngineRowingUI.cardFill;
+const Color _gold = EngineRowingUI.neonLime;
+const Color _gridLine = EngineRowingUI.bgGridLine;
+const Color _green = EngineRowingUI.neonLime;
 
 /// تاب "التمارين" (Workouts Tab):
 /// - هيدر علوي يعرض كل تمارين اليوم الجاية من تاب البرنامج بمواعيدها ونوعها
@@ -72,10 +74,11 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: _navy,
-              onPrimary: Colors.white,
-              secondary: _gold,
+            colorScheme: const ColorScheme.dark(
+              primary: _gold,
+              onPrimary: _navy,
+              surface: _cardFill,
+              onSurface: EngineRowingUI.textWhite,
             ),
           ),
           child: child!,
@@ -113,232 +116,250 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
     final dateStr = dstr(_selectedDate);
 
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: _navy));
+      return const Center(child: CircularProgressIndicator(color: _gold));
     }
 
     final totalSessionsCount = _todayWorkouts.length;
 
-    return RefreshIndicator(
-      onRefresh: _loadAll,
+    return Container(
       color: _navy,
-      child: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        children: [
-          // ══════════════════════════════════════════════════
-          // الهيدر العلوي: يعرض كل تمارين اليوم الجاية من تاب البرنامج بمواعيدها
-          // ══════════════════════════════════════════════════
-          _buildTodayWorkoutsHeader(s, dateStr),
-          const SizedBox(height: 16),
+      child: RefreshIndicator(
+        onRefresh: _loadAll,
+        color: _gold,
+        backgroundColor: _cardFill,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 850),
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              children: [
+                // ══════════════════════════════════════════════════
+                // الهيدر العلوي: يعرض كل تمارين اليوم الجاية من تاب البرنامج بمواعيدها
+                // ══════════════════════════════════════════════════
+                _buildTodayWorkoutsHeader(s, dateStr),
+                const SizedBox(height: 16),
 
-          // ══════════════════════════════════════════════════
-          // قائمة أسماء اللاعبين
-          // ══════════════════════════════════════════════════
-          _buildPlayersSectionHeader(s, totalSessionsCount),
-          const SizedBox(height: 10),
+                // ══════════════════════════════════════════════════
+                // قائمة أسماء اللاعبين
+                // ══════════════════════════════════════════════════
+                _buildPlayersSectionHeader(s, totalSessionsCount),
+                const SizedBox(height: 10),
 
-          if (_players.isEmpty)
-            _buildNoPlayersCard(s)
-          else
-            ..._players.map((p) => _buildPlayerItem(s, p, totalSessionsCount)),
+                if (_players.isEmpty)
+                  _buildNoPlayersCard(s)
+                else
+                  ..._players.map((p) => _buildPlayerItem(s, p, totalSessionsCount)),
 
-          const SizedBox(height: 24),
-        ],
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
 
   /// الهيدر العلوي لحصص اليوم بمواعيدها
   Widget _buildTodayWorkoutsHeader(AppStrings s, String dateStr) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: const LinearGradient(
-            colors: [_navy, Color(0xFF1B4975)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardFill,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _gridLine, width: 1.2),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 10,
+            offset: Offset(0, 4),
           ),
-        ),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // شريط اختيار التاريخ وعنوان تمارين اليوم
-            Row(
-              children: [
-                const Icon(Icons.fitness_center, color: _gold, size: 26),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        s.todaysWorkoutsHeader,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // شريط اختيار التاريخ وعنوان تمارين اليوم
+          Row(
+            children: [
+              const Icon(Icons.fitness_center, color: _gold, size: 26),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      s.todaysWorkoutsHeader,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: EngineRowingUI.textWhite,
                       ),
-                      Text(
-                        s.todaysWorkoutsSubtitle,
-                        style: const TextStyle(fontSize: 12, color: Colors.white70),
+                    ),
+                    Text(
+                      s.todaysWorkoutsSubtitle,
+                      style: const TextStyle(fontSize: 12, color: EngineRowingUI.labelSlate),
+                    ),
+                  ],
+                ),
+              ),
+              InkWell(
+                onTap: _pickDate,
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: EngineRowingUI.equationCardFill,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: _gridLine),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.calendar_today, color: _gold, size: 16),
+                      const SizedBox(width: 6),
+                      Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Text(
+                          RowingNumberFormatter.toEnglishDigits(dateStr),
+                          style: const TextStyle(
+                            color: EngineRowingUI.textWhite,
+                            fontWeight: FontWeight.bold,
+                            fontFeatures: [FontFeature.tabularFigures()],
+                            fontSize: 13,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
-                InkWell(
-                  onTap: _pickDate,
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.18),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.white30),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.calendar_today, color: _gold, size: 16),
-                        const SizedBox(width: 6),
-                        Text(
-                          dateStr,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
+              ),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MetricsCurvePage()),
+                  );
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _gold.withAlpha(35),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: _gold),
                   ),
-                ),
-                const SizedBox(width: 8),
-                InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const MetricsCurvePage()),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: _gold.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: _gold),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.auto_graph_rounded, color: _gold, size: 16),
-                        const SizedBox(width: 6),
-                        Text(
-                          s.curveZone,
-                          style: const TextStyle(
-                            color: _gold,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.auto_graph_rounded, color: _gold, size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        s.curveZone,
+                        style: const TextStyle(
+                          color: _gold,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const Divider(color: Colors.white24, height: 20),
-
-            // عرض كل تمارين اليوم بمواعيدها وأنواعها والزون
-            if (_todayWorkouts.isEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.nightlight_round, color: _gold, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        s.noWorkoutsToday,
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              )
-            else
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: List.generate(_todayWorkouts.length, (idx) {
-                  final session = _todayWorkouts[idx];
-                  final time = session['time'] as String? ?? '07:00';
-                  final kind = session['kind'] as String? ?? 'Erg';
-                  final zone = session['zone'] as String? ?? 'Z2';
+              ),
+            ],
+          ),
+          const Divider(color: _gridLine, height: 20),
 
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: _gold.withOpacity(0.4)),
+          // عرض كل تمارين اليوم بمواعيدها وأنواعها والزون
+          if (_todayWorkouts.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+              decoration: BoxDecoration(
+                color: EngineRowingUI.equationCardFill,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: _gridLine),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.nightlight_round, color: _gold, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      s.noWorkoutsToday,
+                      style: const TextStyle(color: EngineRowingUI.textWhite, fontSize: 13),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(
-                            color: _gold,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Text(
-                            '${idx + 1}',
-                            style: const TextStyle(
-                              color: _navy,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
+                  ),
+                ],
+              ),
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: List.generate(_todayWorkouts.length, (idx) {
+                final session = _todayWorkouts[idx];
+                final time = session['time'] as String? ?? '07:00';
+                final kind = session['kind'] as String? ?? 'Erg';
+                final zone = session['zone'] as String? ?? 'Z2';
+
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: EngineRowingUI.equationCardFill,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: _gridLine),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: _gold,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '${idx + 1}',
+                          style: const TextStyle(
+                            color: _navy,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '$kind • الساعة $time',
+                      ),
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Directionality(
+                            textDirection: TextDirection.ltr,
+                            child: Text(
+                              '$kind • ${RowingNumberFormatter.toEnglishDigits(time)}',
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: EngineRowingUI.textWhite,
                                 fontWeight: FontWeight.bold,
+                                fontFeatures: [FontFeature.tabularFigures()],
                                 fontSize: 13,
                               ),
                             ),
-                            Text(
-                              'الزون: $zone',
-                              style: const TextStyle(
-                                color: _gold,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 11,
-                              ),
+                          ),
+                          Text(
+                            'Zone: $zone',
+                            style: const TextStyle(
+                              color: _gold,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-              ),
-          ],
-        ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ),
+        ],
       ),
     );
   }
@@ -355,9 +376,11 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
       }
     }
 
+    final isAllDone = fullyCompletedCount == _players.length && _players.isNotEmpty;
+
     return Row(
       children: [
-        const Icon(Icons.people_alt, color: _navy, size: 22),
+        const Icon(Icons.people_alt, color: _gold, size: 22),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
@@ -368,12 +391,12 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: _navy,
+                  color: EngineRowingUI.textWhite,
                 ),
               ),
               Text(
                 s.tapAthleteToLogMulti,
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                style: const TextStyle(fontSize: 12, color: EngineRowingUI.labelSlate),
               ),
             ],
           ),
@@ -381,24 +404,22 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: fullyCompletedCount == _players.length && _players.isNotEmpty
-                ? _green.withOpacity(0.15)
-                : Colors.grey.shade100,
+            color: EngineRowingUI.equationCardFill,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: fullyCompletedCount == _players.length && _players.isNotEmpty
-                  ? _green
-                  : Colors.grey.shade300,
+              color: isAllDone ? _gold : _gridLine,
             ),
           ),
-          child: Text(
-            '$fullyCompletedCount / ${_players.length} مكتمل',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: fullyCompletedCount == _players.length && _players.isNotEmpty
-                  ? _green
-                  : _navy,
+          child: Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              '${RowingNumberFormatter.toEnglishDigits(fullyCompletedCount.toString())} / ${RowingNumberFormatter.toEnglishDigits(_players.length.toString())} Done',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                fontFeatures: const [FontFeature.tabularFigures()],
+                color: isAllDone ? _gold : EngineRowingUI.labelSlate,
+              ),
             ),
           ),
         ),
@@ -417,27 +438,23 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
     final isPartiallyCompleted = loggedCount > 0 && loggedCount < totalSessions;
 
     // ألوان الحالة
-    final Color cardBg = isFullyCompleted
-        ? const Color(0xFFE8F5E9) // أخضر فاتح مريح
-        : isPartiallyCompleted
-            ? const Color(0xFFFFF8E1) // عنبري فاتح
-            : Colors.white;
+    final Color cardBg = _cardFill;
 
     final Color borderColor = isFullyCompleted
-        ? _green
+        ? _gold
         : isPartiallyCompleted
-            ? Colors.amber.shade700
-            : Colors.grey.shade200;
+            ? const Color(0xFFFF9100)
+            : _gridLine;
 
     final Color nameColor = isFullyCompleted
-        ? _green // يتغير لون اسم اللاعب للأخضر عند إكمال كل تمارين يومه!
+        ? _gold // يتغير لون اسم اللاعب للفسفوري عند إكمال كل تمارين يومه!
         : isPartiallyCompleted
-            ? Colors.amber.shade900
-            : _navy;
+            ? const Color(0xFFFF9100)
+            : EngineRowingUI.textWhite;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
-      elevation: isFullyCompleted ? 2 : 1,
+      elevation: 0,
       color: cardBg,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
@@ -453,11 +470,11 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
               // أفاتار اللاعب بلون مميز
               CircleAvatar(
                 radius: 20,
-                backgroundColor: isFullyCompleted ? _green : _navy,
+                backgroundColor: isFullyCompleted ? _gold : EngineRowingUI.equationCardFill,
                 child: Text(
                   name.isNotEmpty ? name[0] : 'P',
                   style: TextStyle(
-                    color: isFullyCompleted ? Colors.white : _gold,
+                    color: isFullyCompleted ? _navy : _gold,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -479,9 +496,16 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      '${s.maxHRLabel}: $mhr bpm',
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Text(
+                        '${s.maxHRLabel}: ${RowingNumberFormatter.toEnglishDigits(mhr.toString())} bpm',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: EngineRowingUI.labelSlate,
+                          fontFeatures: [FontFeature.tabularFigures()],
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -492,18 +516,18 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: _green,
-                    borderRadius: BorderRadius.circular(12),
+                    color: _gold,
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.check_circle, color: Colors.white, size: 15),
+                      const Icon(Icons.check_circle, color: _navy, size: 15),
                       const SizedBox(width: 4),
                       Text(
                         s.allWorkoutsCompleted,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: _navy,
                           fontWeight: FontWeight.bold,
                           fontSize: 11,
                         ),
@@ -515,13 +539,13 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: Colors.amber.shade700,
-                    borderRadius: BorderRadius.circular(12),
+                    color: const Color(0xFFFF9100),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     s.partialWorkoutsCompleted(loggedCount, totalSessions),
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: _navy,
                       fontWeight: FontWeight.bold,
                       fontSize: 11,
                     ),
@@ -531,13 +555,14 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(12),
+                    color: EngineRowingUI.equationCardFill,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: _gridLine),
                   ),
                   child: Text(
                     s.noWorkoutsCompletedYet,
-                    style: TextStyle(
-                      color: Colors.grey.shade700,
+                    style: const TextStyle(
+                      color: EngineRowingUI.captionGrey,
                       fontWeight: FontWeight.bold,
                       fontSize: 11,
                     ),
@@ -547,7 +572,7 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
               const SizedBox(width: 6),
               Icon(
                 Icons.chevron_left_rounded,
-                color: isFullyCompleted ? _green : Colors.grey.shade400,
+                color: isFullyCompleted ? _gold : EngineRowingUI.captionGrey,
               ),
             ],
           ),
@@ -562,11 +587,11 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            Icon(Icons.person_off_outlined, size: 48, color: Colors.grey.shade400),
+            const Icon(Icons.person_off_outlined, size: 48, color: EngineRowingUI.captionGrey),
             const SizedBox(height: 12),
             Text(
               s.noActivePlayers,
-              style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+              style: const TextStyle(fontSize: 16, color: EngineRowingUI.labelSlate),
             ),
           ],
         ),

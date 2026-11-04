@@ -1,18 +1,12 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'db.dart';
 import 'app_strings.dart';
-import 'dart:math';
+import 'db.dart';
+import 'engine_rowing_ui.dart';
 import 'metrics_curve_page.dart';
 
-// ==================== ألوان التصميم ====================
-const _navy = Color(0xFF0D3B66);
-const _sky = Color(0xFFD6EEFB);
-const _yellow = Color(0xFFFFC93C);
-const _green = Color(0xFF4CAF50);
-const _orange = Color(0xFFFF9800);
-
-/// صفحة ملف اللاعب التفصيلي مع التحليلات الفسيولوجية (محوّلة لنمط الترجمة)
+/// صفحة ملف اللاعب التفصيلي مع التحليلات الفسيولوجية
 class PlayerProfilePage extends StatefulWidget {
   final Map<String, Object?> player;
   const PlayerProfilePage({super.key, required this.player});
@@ -23,7 +17,7 @@ class PlayerProfilePage extends StatefulWidget {
 class _PlayerProfileState extends State<PlayerProfilePage> {
   Map<String, Object?> get p => widget.player;
   int get playerId => p['id'] as int;
-  int get mhr => p['mhr'] as int;
+  int get mhr => (p['mhr'] as int?) ?? 190;
 
   bool loading = true;
   List<Map<String, Object?>> logs = [];
@@ -54,11 +48,22 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
     final s = AppStrings.of(context);
 
     return Scaffold(
+      backgroundColor: EngineRowingUI.bgNavy,
       appBar: AppBar(
-        title: Text('${p['name']} - ${s.athleteDetails}'),
+        backgroundColor: EngineRowingUI.bgNavy,
+        foregroundColor: EngineRowingUI.textWhite,
+        elevation: 0,
+        title: Text(
+          '${p['name']} - ${s.athleteDetails}',
+          style: const TextStyle(
+            color: EngineRowingUI.textWhite,
+            fontWeight: FontWeight.bold,
+            fontSize: 17,
+          ),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: EngineRowingUI.neonLime),
             onPressed: () {
               setState(() => loading = true);
               loadAll();
@@ -66,37 +71,44 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
           ),
         ],
       ),
-      body: loading
-          ? const Center(child: CircularProgressIndicator(color: _navy))
-          : logs.isEmpty
-              ? _emptyState(s)
-              : ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    _playerCard(s),
-                    if (alerts.isNotEmpty) ...[
-                      _sectionTitle(s.overtrainingAlerts),
-                      _alertsCard(),
-                    ],
-                    _sectionTitle(s.readinessScore),
-                    _readinessCard(s),
-                    _sectionTitle(s.physiologicalBalance),
-                    _balanceRadar(s),
-                    _sectionTitle('${s.rhrLabel} - RHR'),
-                    _rhrChart(),
-                    _sectionTitle('${s.hrvLabel} - HRV'),
-                    _hrvChart(),
-                    _sectionTitle(s.recoveryAnalytics),
-                    _recoveryChart(s),
-                    _sectionTitle(s.weightLabel),
-                    _weightChart(),
-                    _sectionTitle('📊 ${s.isArabic ? 'توزيع مناطق التدريب' : 'Training Zones Distribution'}'),
-                    _zonesChart(),
-                    _sectionTitle(s.sessionsHistory),
-                    _recentLogsTable(s),
-                    const SizedBox(height: 32),
-                  ],
-                ),
+      body: RowingGridBackground(
+        child: loading
+            ? const Center(child: CircularProgressIndicator(color: EngineRowingUI.neonLime))
+            : logs.isEmpty
+                ? _emptyState(s)
+                : Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 850),
+                      child: ListView(
+                        padding: const EdgeInsets.all(16),
+                        children: [
+                          _playerCard(s),
+                          if (alerts.isNotEmpty) ...[
+                            _sectionTitle(s.overtrainingAlerts),
+                            _alertsCard(),
+                          ],
+                          _sectionTitle(s.readinessScore),
+                          _readinessCard(s),
+                          _sectionTitle(s.physiologicalBalance),
+                          _balanceRadar(s),
+                          _sectionTitle('${s.rhrLabel} - RHR'),
+                          _rhrChart(),
+                          _sectionTitle('${s.hrvLabel} - HRV'),
+                          _hrvChart(),
+                          _sectionTitle(s.recoveryAnalytics),
+                          _recoveryChart(s),
+                          _sectionTitle(s.weightLabel),
+                          _weightChart(),
+                          _sectionTitle('📊 ${s.isArabic ? 'توزيع مناطق التدريب' : 'Training Zones Distribution'}'),
+                          _zonesChart(),
+                          _sectionTitle(s.sessionsHistory),
+                          _recentLogsTable(s),
+                          const SizedBox(height: 32),
+                        ],
+                      ),
+                    ),
+                  ),
+      ),
     );
   }
 
@@ -104,22 +116,31 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.insert_chart_outlined, size: 80, color: Colors.grey),
+            const Icon(Icons.insert_chart_outlined, size: 80, color: EngineRowingUI.labelSlate),
             const SizedBox(height: 16),
-            Text(s.noLogsForPlayer,
-                style: const TextStyle(fontSize: 18, color: Colors.grey)),
+            Text(
+              s.noLogsForPlayer,
+              style: const TextStyle(fontSize: 18, color: EngineRowingUI.textWhite, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
-            Text(s.tapPlayerToLog,
-                style: const TextStyle(color: Colors.grey)),
+            Text(
+              s.tapPlayerToLog,
+              style: const TextStyle(color: EngineRowingUI.labelSlate),
+            ),
           ],
         ),
       );
 
   Widget _sectionTitle(String t) => Padding(
       padding: const EdgeInsets.only(top: 20, bottom: 8),
-      child: Text(t,
-          style: const TextStyle(
-              fontSize: 18, fontWeight: FontWeight.bold, color: _navy)));
+      child: Text(
+        t,
+        style: const TextStyle(
+          fontSize: 17,
+          fontWeight: FontWeight.bold,
+          color: EngineRowingUI.textWhite,
+        ),
+      ));
 
   // ==================== بطاقة اللاعب ====================
   Widget _playerCard(AppStrings s) {
@@ -130,7 +151,12 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
     }).length;
 
     return Card(
-      color: _navy,
+      elevation: 0,
+      color: EngineRowingUI.cardFill,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: EngineRowingUI.bgGridLine),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -139,49 +165,67 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
             Row(children: [
               CircleAvatar(
                 radius: 30,
-                backgroundColor: _yellow,
-                child: Text('${p['name'].toString()[0]}',
-                    style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: _navy)),
+                backgroundColor: EngineRowingUI.equationCardFill,
+                child: Text(
+                  '${p['name'].toString().isNotEmpty ? p['name'].toString()[0] : 'A'}',
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: EngineRowingUI.neonLime,
+                  ),
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${p['name']}',
-                        style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white)),
-                    Text('${s.maxHRLabel}: $mhr • ${p['active'] == 1 ? s.playerStatusActive : s.playerStatusInactive}',
-                        style: TextStyle(
-                            fontSize: 14, color: Colors.white.withOpacity(0.8))),
+                    Text(
+                      '${p['name']}',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: EngineRowingUI.textWhite,
+                      ),
+                    ),
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Text(
+                        '${s.maxHRLabel}: $mhr bpm • ${p['active'] == 1 ? s.playerStatusActive : s.playerStatusInactive}',
+                        style: const TextStyle(fontSize: 13, color: EngineRowingUI.labelSlate),
+                      ),
+                    ),
                   ],
                 ),
               ),
             ]),
             const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _statChip(s.isArabic ? 'حصص الأسبوع' : 'Weekly', '$sessionCount7'),
-                _statChip(s.isArabic ? 'إجمالي السجلات' : 'Total Logs', '${logs.length}'),
-                if (latest != null && latest['rhr'] != null)
-                  _statChip(s.isArabic ? 'آخر RHR' : 'Latest RHR', '${latest['rhr']}'),
-                if (baseline.isNotEmpty && baseline['avg_rhr'] != null)
-                  _statChip(s.isArabic ? 'متوسط RHR' : 'Avg RHR', '${baseline['avg_rhr']?.round()}'),
-              ],
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+              decoration: BoxDecoration(
+                color: EngineRowingUI.equationCardFill,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: EngineRowingUI.bgGridLine),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _statChip(s.isArabic ? 'حصص الأسبوع' : 'Weekly', '$sessionCount7'),
+                  _statChip(s.isArabic ? 'إجمالي السجلات' : 'Total Logs', '${logs.length}'),
+                  if (latest != null && latest['rhr'] != null)
+                    _statChip(s.isArabic ? 'آخر RHR' : 'Latest RHR', '${latest['rhr']}'),
+                  if (baseline.isNotEmpty && baseline['avg_rhr'] != null)
+                    _statChip(s.isArabic ? 'متوسط RHR' : 'Avg RHR', '${baseline['avg_rhr']?.round()}'),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
                 style: FilledButton.styleFrom(
-                  backgroundColor: _yellow,
-                  foregroundColor: _navy,
+                  backgroundColor: EngineRowingUI.neonLime,
+                  foregroundColor: EngineRowingUI.bgNavy,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
@@ -193,10 +237,10 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                     ),
                   );
                 },
-                icon: const Icon(Icons.auto_graph_rounded),
+                icon: const Icon(Icons.auto_graph_rounded, color: EngineRowingUI.bgNavy),
                 label: Text(
                   s.isArabic ? 'منحنيات مؤشرات التدريب (خمسة منحنيات)' : 'View Metrics Curves (5 Curves)',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: EngineRowingUI.bgNavy),
                 ),
               ),
             ),
@@ -207,19 +251,32 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
   }
 
   Widget _statChip(String label, String value) => Column(children: [
-        Text(value,
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: Text(
+            RowingNumberFormatter.toEnglishDigits(value),
             style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: _yellow)),
-        Text(label,
-            style: TextStyle(
-                fontSize: 11, color: Colors.white.withOpacity(0.7))),
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: EngineRowingUI.neonLime,
+            ),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: EngineRowingUI.labelSlate),
+        ),
       ]);
 
   // ==================== التنبيهات ====================
   Widget _alertsCard() => Card(
-        color: const Color(0xFFFFF3E0),
+        elevation: 0,
+        color: EngineRowingUI.cardFill,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: Colors.redAccent, width: 1.2),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -228,7 +285,18 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
               for (final a in alerts)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(a, style: const TextStyle(fontSize: 15)),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          RowingNumberFormatter.toEnglishDigits(a),
+                          style: const TextStyle(fontSize: 14, color: EngineRowingUI.textWhite),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
             ],
           ),
@@ -250,10 +318,20 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
       );
     }
 
-    final color = Color(readinessColor(score));
+    final color = score >= 80
+        ? EngineRowingUI.neonLime
+        : score >= 60
+            ? const Color(0xFFFF9100)
+            : const Color(0xFFFF5252);
     final text = readinessText(score);
 
     return Card(
+      elevation: 0,
+      color: EngineRowingUI.cardFill,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: EngineRowingUI.bgGridLine),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(children: [
@@ -265,21 +343,26 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                 height: 120,
                 child: CircularProgressIndicator(
                   value: score / 100,
-                  strokeWidth: 12,
-                  backgroundColor: Colors.grey.shade200,
+                  strokeWidth: 10,
+                  backgroundColor: EngineRowingUI.equationCardFill,
                   valueColor: AlwaysStoppedAnimation(color),
                 ),
               ),
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('${score.round()}%',
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      '${score.round()}%',
                       style: TextStyle(
-                          fontSize: 30,
-                          fontWeight: FontWeight.bold,
-                          color: color)),
-                  Text(text,
-                      style: TextStyle(fontSize: 15, color: color)),
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: color,
+                      ),
+                    ),
+                  ),
+                  Text(text, style: TextStyle(fontSize: 14, color: color, fontWeight: FontWeight.w600)),
                 ],
               ),
             ],
@@ -304,15 +387,28 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(children: [
         Expanded(
-            child: Text(label,
-                style: const TextStyle(fontSize: 14, color: Colors.grey))),
-        Text(value,
-            style:
-                const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+          child: Text(label, style: const TextStyle(fontSize: 14, color: EngineRowingUI.labelSlate)),
+        ),
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: Text(
+            RowingNumberFormatter.toEnglishDigits(value),
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: EngineRowingUI.textWhite,
+            ),
+          ),
+        ),
         if (sub.isNotEmpty) ...[
           const SizedBox(width: 8),
-          Text(sub,
-              style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              RowingNumberFormatter.toEnglishDigits(sub),
+              style: const TextStyle(fontSize: 12, color: EngineRowingUI.captionGrey),
+            ),
+          ),
         ],
       ]));
 
@@ -320,9 +416,20 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
   Widget _balanceRadar(AppStrings s) {
     if (balance.isEmpty) {
       return Card(
-          child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(s.isArabic ? 'لا توجد بيانات كافية لعرض التوازن' : 'Not enough data for balance radar')));
+        elevation: 0,
+        color: EngineRowingUI.cardFill,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: EngineRowingUI.bgGridLine),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            s.isArabic ? 'لا توجد بيانات كافية لعرض التوازن' : 'Not enough data for balance radar',
+            style: const TextStyle(color: EngineRowingUI.labelSlate),
+          ),
+        ),
+      );
     }
 
     final keys = balance.keys.toList();
@@ -330,43 +437,52 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
     final avgScore = values.reduce((a, b) => a + b) / values.length;
 
     return Card(
+      elevation: 0,
+      color: EngineRowingUI.cardFill,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: EngineRowingUI.bgGridLine),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(children: [
-          Text('${s.isArabic ? 'المؤشر العام' : 'Overall Index'}: ${avgScore.round()}%',
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(readinessColor(avgScore)))),
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              '${s.isArabic ? 'المؤشر العام' : 'Overall Index'}: ${avgScore.round()}%',
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+                color: EngineRowingUI.neonLime,
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
           SizedBox(
             height: 260,
             child: RadarChart(
               RadarChartData(
                 radarShape: RadarShape.polygon,
-                radarBorderData:
-                    const BorderSide(color: Colors.transparent),
-                gridBorderData:
-                    BorderSide(color: Colors.grey.shade300, width: 1),
-                tickBorderData:
-                    const BorderSide(color: Colors.transparent),
+                radarBorderData: const BorderSide(color: Colors.transparent),
+                gridBorderData: const BorderSide(color: EngineRowingUI.bgGridLine, width: 1),
+                tickBorderData: const BorderSide(color: Colors.transparent),
                 tickCount: 4,
                 ticksTextStyle: const TextStyle(fontSize: 0),
                 titleTextStyle: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: _navy),
-                getTitle: (i, _) =>
-                    RadarChartTitle(text: keys[i]),
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: EngineRowingUI.labelSlate,
+                ),
+                getTitle: (i, _) => RadarChartTitle(text: keys[i]),
                 dataSets: [
                   RadarDataSet(
                     dataEntries: [
                       for (final v in values) RadarEntry(value: v)
                     ],
-                    fillColor: _navy.withOpacity(0.15),
-                    borderColor: _navy,
-                    borderWidth: 2.5,
-                    entryRadius: 4,
+                    fillColor: EngineRowingUI.neonLime.withValues(alpha: 0.15),
+                    borderColor: EngineRowingUI.neonLime,
+                    borderWidth: 2,
+                    entryRadius: 3,
                   ),
                 ],
               ),
@@ -379,10 +495,15 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
             children: [
               for (int i = 0; i < keys.length; i++)
                 Chip(
-                  label: Text('${keys[i]}: ${values[i].round()}%',
-                      style: const TextStyle(fontSize: 11)),
-                  backgroundColor: Color(readinessColor(values[i]))
-                      .withOpacity(0.2),
+                  label: Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      '${keys[i]}: ${values[i].round()}%',
+                      style: const TextStyle(fontSize: 11, color: EngineRowingUI.textWhite),
+                    ),
+                  ),
+                  backgroundColor: EngineRowingUI.equationCardFill,
+                  side: const BorderSide(color: EngineRowingUI.bgGridLine),
                 ),
             ],
           ),
@@ -399,16 +520,33 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
     String? refLabel,
   }) {
     if (spots.length < 2) {
-      return const Card(
-          child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('بيانات غير كافية (مطلوب نقطتان على الأقل)')));
+      return Card(
+        elevation: 0,
+        color: EngineRowingUI.cardFill,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: EngineRowingUI.bgGridLine),
+        ),
+        child: const Padding(
+          padding: EdgeInsets.all(16),
+          child: Text(
+            'بيانات غير كافية (مطلوب نقطتان على الأقل)',
+            style: TextStyle(color: EngineRowingUI.labelSlate),
+          ),
+        ),
+      );
     }
 
     final minY = spots.map((s) => s.y).reduce(min) - 5;
     final maxY = spots.map((s) => s.y).reduce(max) + 5;
 
     return Card(
+      elevation: 0,
+      color: EngineRowingUI.cardFill,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: EngineRowingUI.bgGridLine),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: SizedBox(
@@ -421,23 +559,23 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                 show: true,
                 drawVerticalLine: false,
                 horizontalInterval: ((maxY - minY) / 4).clamp(1, 50),
-                getDrawingHorizontalLine: (v) => FlLine(
-                    color: Colors.grey.shade200, strokeWidth: 1),
+                getDrawingHorizontalLine: (v) => const FlLine(
+                  color: EngineRowingUI.bgGridLine,
+                  strokeWidth: 1,
+                ),
               ),
               titlesData: FlTitlesData(
-                topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false)),
-                rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false)),
-                bottomTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false)),
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                bottomTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
                     reservedSize: 40,
-                    getTitlesWidget: (v, _) => Text('${v.round()}',
-                        style: const TextStyle(
-                            fontSize: 11, color: Colors.grey)),
+                    getTitlesWidget: (v, _) => Text(
+                      '${v.round()}',
+                      style: const TextStyle(fontSize: 11, color: EngineRowingUI.labelSlate),
+                    ),
                   ),
                 ),
               ),
@@ -446,14 +584,13 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                   ? ExtraLinesData(horizontalLines: [
                       HorizontalLine(
                         y: refLine,
-                        color: Colors.red.withOpacity(0.5),
+                        color: Colors.redAccent.withValues(alpha: 0.6),
                         strokeWidth: 1.5,
                         dashArray: [8, 4],
                         label: HorizontalLineLabel(
                           show: true,
                           labelResolver: (_) => refLabel ?? '',
-                          style: const TextStyle(
-                              fontSize: 11, color: Colors.red),
+                          style: const TextStyle(fontSize: 11, color: Colors.redAccent),
                         ),
                       ),
                     ])
@@ -468,14 +605,11 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                   dotData: FlDotData(
                     show: spots.length <= 20,
                     getDotPainter: (_, __, ___, ____) =>
-                        FlDotCirclePainter(
-                            radius: 3,
-                            color: color,
-                            strokeWidth: 0),
+                        FlDotCirclePainter(radius: 3, color: color, strokeWidth: 0),
                   ),
                   belowBarData: BarAreaData(
                     show: true,
-                    color: color.withOpacity(0.1),
+                    color: color.withValues(alpha: 0.12),
                   ),
                 ),
               ],
@@ -485,9 +619,10 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                       .map((s) => LineTooltipItem(
                             '${s.y.round()}',
                             TextStyle(
-                                color: color,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13),
+                              color: color,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
                           ))
                       .toList(),
                 ),
@@ -514,9 +649,9 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
 
     return _lineChartCard(
       spots,
-      Colors.red.shade400,
+      Colors.redAccent,
       refLine: baseline['avg_rhr'],
-      refLabel: 'المتوسط: ${baseline['avg_rhr']?.round() ?? ''}',
+      refLabel: 'Avg: ${baseline['avg_rhr']?.round() ?? ''}',
     );
   }
 
@@ -535,9 +670,9 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
 
     return _lineChartCard(
       spots,
-      Colors.blue.shade400,
+      const Color(0xFF2979FF),
       refLine: baseline['avg_hrv'],
-      refLabel: 'المتوسط: ${baseline['avg_hrv']?.round() ?? ''}',
+      refLabel: 'Avg: ${baseline['avg_hrv']?.round() ?? ''}',
     );
   }
 
@@ -545,9 +680,20 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
   Widget _recoveryChart(AppStrings s) {
     if (recoveryData.isEmpty) {
       return Card(
-          child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(s.isArabic ? 'لا توجد بيانات استشفاء مسجلة' : 'No recovery data recorded')));
+        elevation: 0,
+        color: EngineRowingUI.cardFill,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: EngineRowingUI.bgGridLine),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            s.isArabic ? 'لا توجد بيانات استشفاء مسجلة' : 'No recovery data recorded',
+            style: const TextStyle(color: EngineRowingUI.labelSlate),
+          ),
+        ),
+      );
     }
 
     final reversedData = recoveryData.reversed.toList();
@@ -561,14 +707,14 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
     }
 
     return Column(children: [
-      _lineChartCard(spots, _green, refLine: 20, refLabel: 'هدف: 20%+'),
+      _lineChartCard(spots, EngineRowingUI.neonLime, refLine: 20, refLabel: 'Target: 20%+'),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Text(
           s.isArabic
               ? '💡 نسبة الاستشفاء = مدى انخفاض النبض بعد التمرين. أعلى من 20% = ممتاز'
               : '💡 Recovery Rate = Heart rate drop post-workout. >20% = Excellent',
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
+          style: const TextStyle(fontSize: 12, color: EngineRowingUI.captionGrey),
         ),
       ),
     ]);
@@ -590,9 +736,9 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
 
     return _lineChartCard(
       spots,
-      _orange,
+      const Color(0xFFFF9100),
       refLine: baseline['avg_weight'],
-      refLabel: 'المتوسط: ${baseline['avg_weight']?.toStringAsFixed(1) ?? ''}',
+      refLabel: 'Avg: ${baseline['avg_weight']?.toStringAsFixed(1) ?? ''}',
     );
   }
 
@@ -600,23 +746,32 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
   Widget _zonesChart() {
     if (zonesDist.isEmpty) {
       return const Card(
-          child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('لا توجد بيانات كافية')));
+        elevation: 0,
+        color: EngineRowingUI.cardFill,
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Text('لا توجد بيانات كافية', style: TextStyle(color: EngineRowingUI.labelSlate)),
+        ),
+      );
     }
 
     final colors = [
-      Colors.green.shade300,
-      Colors.blue.shade300,
-      Colors.orange.shade300,
-      Colors.red.shade300,
-      Colors.purple.shade300,
+      EngineRowingUI.zone1Color,
+      EngineRowingUI.zone2Color,
+      EngineRowingUI.zone3Color,
+      EngineRowingUI.thresholdColor,
+      EngineRowingUI.zone5Color,
     ];
 
-    final totalSessions =
-        zonesDist.values.fold<int>(0, (a, b) => a + b);
+    final totalSessions = zonesDist.values.fold<int>(0, (a, b) => a + b);
 
     return Card(
+      elevation: 0,
+      color: EngineRowingUI.cardFill,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: EngineRowingUI.bgGridLine),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(children: [
@@ -629,12 +784,9 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                 gridData: const FlGridData(show: false),
                 borderData: FlBorderData(show: false),
                 titlesData: FlTitlesData(
-                  topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  leftTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
@@ -643,8 +795,10 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                         if (v.toInt() < keys.length) {
                           return Padding(
                             padding: const EdgeInsets.only(top: 4),
-                            child: Text(keys[v.toInt()],
-                                style: const TextStyle(fontSize: 11)),
+                            child: Text(
+                              keys[v.toInt()],
+                              style: const TextStyle(fontSize: 11, color: EngineRowingUI.textWhite),
+                            ),
                           );
                         }
                         return const SizedBox();
@@ -658,9 +812,8 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                       BarChartRodData(
                         toY: zonesDist.values.elementAt(i).toDouble(),
                         color: colors[i % colors.length],
-                        width: 26,
-                        borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(6)),
+                        width: 24,
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
                       ),
                     ]),
                 ],
@@ -668,8 +821,13 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
             ),
           ),
           const SizedBox(height: 12),
-          Text('إجمالي: $totalSessions حصة في آخر 30 يوم',
-              style: const TextStyle(color: Colors.grey)),
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              'Total: $totalSessions sessions (last 30 days)',
+              style: const TextStyle(color: EngineRowingUI.labelSlate, fontSize: 12),
+            ),
+          ),
         ]),
       ),
     );
@@ -680,47 +838,122 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
     final recentLogs = logs.take(15).toList();
     if (recentLogs.isEmpty) {
       return Card(
-          child: Padding(
-              padding: const EdgeInsets.all(16), child: Text(s.noData)));
+        elevation: 0,
+        color: EngineRowingUI.cardFill,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(s.noData, style: const TextStyle(color: EngineRowingUI.labelSlate)),
+        ),
+      );
     }
 
     return Card(
+      elevation: 0,
+      color: EngineRowingUI.cardFill,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: EngineRowingUI.bgGridLine),
+      ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: DataTable(
-          headingRowColor: WidgetStateProperty.all(_sky),
+          headingRowColor: WidgetStateProperty.all(EngineRowingUI.equationCardFill),
           columnSpacing: 14,
           columns: [
-            DataColumn(label: Text(s.isArabic ? 'التاريخ' : 'Date', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(s.isArabic ? 'النوع' : 'Kind', style: const TextStyle(fontWeight: FontWeight.bold))),
-            const DataColumn(label: Text('RHR', style: TextStyle(fontWeight: FontWeight.bold))),
-            const DataColumn(label: Text('HRV', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(s.workoutHRLabel, style: const TextStyle(fontWeight: FontWeight.bold))),
-            const DataColumn(label: Text('HR Max', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(s.postHRLabel, style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(s.hr1MinLabel, style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(s.weightLabel, style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(s.fatigueLabel, style: const TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(
+              label: Text(
+                s.isArabic ? 'Date' : 'Date',
+                style: const TextStyle(fontWeight: FontWeight.bold, color: EngineRowingUI.neonLime),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                s.isArabic ? 'Kind' : 'Kind',
+                style: const TextStyle(fontWeight: FontWeight.bold, color: EngineRowingUI.neonLime),
+              ),
+            ),
+            const DataColumn(label: Text('RHR', style: TextStyle(fontWeight: FontWeight.bold, color: EngineRowingUI.neonLime))),
+            const DataColumn(label: Text('HRV', style: TextStyle(fontWeight: FontWeight.bold, color: EngineRowingUI.neonLime))),
+            DataColumn(label: Text(s.workoutHRLabel, style: const TextStyle(fontWeight: FontWeight.bold, color: EngineRowingUI.neonLime))),
+            const DataColumn(label: Text('HR Max', style: TextStyle(fontWeight: FontWeight.bold, color: EngineRowingUI.neonLime))),
+            DataColumn(label: Text(s.postHRLabel, style: const TextStyle(fontWeight: FontWeight.bold, color: EngineRowingUI.neonLime))),
+            DataColumn(label: Text(s.hr1MinLabel, style: const TextStyle(fontWeight: FontWeight.bold, color: EngineRowingUI.neonLime))),
+            DataColumn(label: Text(s.weightLabel, style: const TextStyle(fontWeight: FontWeight.bold, color: EngineRowingUI.neonLime))),
+            DataColumn(label: Text(s.fatigueLabel, style: const TextStyle(fontWeight: FontWeight.bold, color: EngineRowingUI.neonLime))),
           ],
           rows: [
             for (final l in recentLogs)
               DataRow(cells: [
-                DataCell(Text('${l['date'] ?? ''}', style: const TextStyle(fontSize: 13))),
-                DataCell(Text('${l['kind'] ?? '-'}', style: const TextStyle(fontSize: 13))),
+                DataCell(
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      RowingNumberFormatter.toEnglishDigits('${l['date'] ?? ''}'),
+                      style: const TextStyle(fontSize: 13, color: EngineRowingUI.textWhite),
+                    ),
+                  ),
+                ),
+                DataCell(
+                  Text(
+                    '${l['kind'] ?? '-'}',
+                    style: const TextStyle(fontSize: 13, color: EngineRowingUI.textWhite),
+                  ),
+                ),
                 DataCell(_hrCell(l['rhr'] as int?)),
-                DataCell(Text('${l['hrv'] ?? '-'}', style: const TextStyle(fontSize: 13))),
+                DataCell(
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      RowingNumberFormatter.toEnglishDigits('${l['hrv'] ?? '-'}'),
+                      style: const TextStyle(fontSize: 13, color: EngineRowingUI.textWhite),
+                    ),
+                  ),
+                ),
                 DataCell(_hrCell(l['hr'] as int?, zone: l['zone'] as String?)),
-                DataCell(Text('${l['hr_max'] ?? '-'}', style: const TextStyle(fontSize: 13))),
-                DataCell(Text('${l['hr_post'] ?? '-'}', style: const TextStyle(fontSize: 13))),
-                DataCell(Text('${l['hr_1min'] ?? '-'}', style: const TextStyle(fontSize: 13))),
-                DataCell(Text(
-                    l['weight'] != null
-                        ? (l['weight'] as num).toStringAsFixed(1)
-                        : '-',
-                    style: const TextStyle(fontSize: 13))),
-                DataCell(Text(
+                DataCell(
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      RowingNumberFormatter.toEnglishDigits('${l['hr_max'] ?? '-'}'),
+                      style: const TextStyle(fontSize: 13, color: EngineRowingUI.textWhite),
+                    ),
+                  ),
+                ),
+                DataCell(
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      RowingNumberFormatter.toEnglishDigits('${l['hr_post'] ?? '-'}'),
+                      style: const TextStyle(fontSize: 13, color: EngineRowingUI.textWhite),
+                    ),
+                  ),
+                ),
+                DataCell(
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      RowingNumberFormatter.toEnglishDigits('${l['hr_1min'] ?? '-'}'),
+                      style: const TextStyle(fontSize: 13, color: EngineRowingUI.textWhite),
+                    ),
+                  ),
+                ),
+                DataCell(
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      RowingNumberFormatter.toEnglishDigits(
+                        l['weight'] != null ? (l['weight'] as num).toStringAsFixed(1) : '-',
+                      ),
+                      style: const TextStyle(fontSize: 13, color: EngineRowingUI.textWhite),
+                    ),
+                  ),
+                ),
+                DataCell(
+                  Text(
                     fatigueLabels[l['fatigue'] as int?] ?? '-',
-                    style: const TextStyle(fontSize: 13))),
+                    style: const TextStyle(fontSize: 13, color: EngineRowingUI.textWhite),
+                  ),
+                ),
               ]),
           ],
         ),
@@ -730,26 +963,32 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
 
   /// خلية نبض ملونة حسب مقارنتها بالـ MHR والـ Zone
   Widget _hrCell(int? hr, {String? zone}) {
-    if (hr == null) return const Text('-', style: TextStyle(fontSize: 13));
+    if (hr == null) {
+      return const Text('-', style: TextStyle(fontSize: 13, color: EngineRowingUI.labelSlate));
+    }
 
-    Color textColor = Colors.black;
+    Color textColor = EngineRowingUI.textWhite;
     if (zone != null) {
       final z = zones[zone];
       if (z != null) {
         final lower = (mhr * z[0] / 100).round();
         final upper = (mhr * z[1] / 100).round();
         if (hr < lower - 5) {
-          textColor = Colors.blue;
+          textColor = const Color(0xFF2979FF);
         } else if (hr > upper + 5) {
-          textColor = Colors.red;
+          textColor = const Color(0xFFFF5252);
         } else {
-          textColor = _green;
+          textColor = EngineRowingUI.neonLime;
         }
       }
     }
 
-    return Text('$hr',
-        style: TextStyle(
-            fontSize: 13, color: textColor, fontWeight: FontWeight.bold));
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Text(
+        RowingNumberFormatter.toEnglishDigits('$hr'),
+        style: TextStyle(fontSize: 13, color: textColor, fontWeight: FontWeight.bold),
+      ),
+    );
   }
 }

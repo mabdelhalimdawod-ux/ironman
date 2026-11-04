@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_strings.dart';
 import 'db.dart';
-
-const Color _navy = Color(0xFF0D3B66);
-const Color _sky = Color(0xFFE8F4FC);
-const Color _gold = Color(0xFFFFC93C);
+import 'engine_rowing_ui.dart';
 
 /// التاب الثالث: الإعدادات (Settings Tab)
 class SettingsTab extends StatefulWidget {
@@ -45,25 +42,32 @@ class _SettingsTabState extends State<SettingsTab> {
     final s = AppStrings.of(context);
     final isArabic = AppLanguage.instance.isArabic;
 
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      children: [
-        // رأس الصفحة
-        _buildHeader(s),
-        const SizedBox(height: 16),
+    return RowingGridBackground(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 850),
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            children: [
+              // رأس الصفحة
+              _buildHeader(s),
+              const SizedBox(height: 16),
 
-        // 1. قسم تغيير لغة التطبيق
-        _buildLanguageSection(s, isArabic),
-        const SizedBox(height: 16),
+              // 1. قسم تغيير لغة التطبيق
+              _buildLanguageSection(s, isArabic),
+              const SizedBox(height: 16),
 
-        // 2. بطاقة بنية المرحلة الأولى
-        _buildPhase1InfoCard(s),
-        const SizedBox(height: 16),
+              // 2. بطاقة بنية المرحلة الأولى
+              _buildPhase1InfoCard(s),
+              const SizedBox(height: 16),
 
-        // 3. إحصائيات النظام وقاعدة البيانات
-        _buildDatabaseStatsCard(s),
-        const SizedBox(height: 32),
-      ],
+              // 3. إحصائيات النظام وقاعدة البيانات
+              _buildDatabaseStatsCard(s),
+              const SizedBox(height: 32),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -73,10 +77,11 @@ class _SettingsTabState extends State<SettingsTab> {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: _navy,
+            color: EngineRowingUI.cardFill,
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: EngineRowingUI.bgGridLine),
           ),
-          child: const Icon(Icons.settings, color: _gold, size: 28),
+          child: const Icon(Icons.settings, color: EngineRowingUI.neonLime, size: 28),
         ),
         const SizedBox(width: 12),
         Column(
@@ -87,12 +92,12 @@ class _SettingsTabState extends State<SettingsTab> {
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: _navy,
+                color: EngineRowingUI.textWhite,
               ),
             ),
             Text(
               s.languageSwitchDesc,
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+              style: const TextStyle(fontSize: 13, color: EngineRowingUI.labelSlate),
             ),
           ],
         ),
@@ -104,16 +109,9 @@ class _SettingsTabState extends State<SettingsTab> {
   Widget _buildLanguageSection(AppStrings s, bool isArabic) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: EngineRowingUI.cardFill,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(8),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: EngineRowingUI.bgGridLine),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -121,14 +119,14 @@ class _SettingsTabState extends State<SettingsTab> {
         children: [
           Row(
             children: [
-              const Icon(Icons.translate, color: _navy, size: 22),
+              const Icon(Icons.translate, color: EngineRowingUI.neonLime, size: 22),
               const SizedBox(width: 8),
               Text(
                 s.languageSettings,
                 style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
-                  color: _navy,
+                  color: EngineRowingUI.textWhite,
                 ),
               ),
             ],
@@ -136,7 +134,7 @@ class _SettingsTabState extends State<SettingsTab> {
           const SizedBox(height: 8),
           Text(
             s.languageSwitchDesc,
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            style: const TextStyle(fontSize: 13, color: EngineRowingUI.labelSlate),
           ),
           const SizedBox(height: 16),
           Row(
@@ -151,10 +149,10 @@ class _SettingsTabState extends State<SettingsTab> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     decoration: BoxDecoration(
-                      color: isArabic ? _navy : _sky.withAlpha(80),
+                      color: isArabic ? EngineRowingUI.neonLime : EngineRowingUI.equationCardFill,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isArabic ? _navy : Colors.grey.shade300,
+                        color: isArabic ? EngineRowingUI.neonLime : EngineRowingUI.bgGridLine,
                         width: isArabic ? 2 : 1,
                       ),
                     ),
@@ -165,7 +163,7 @@ class _SettingsTabState extends State<SettingsTab> {
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
-                            color: isArabic ? Colors.white : _navy,
+                            color: isArabic ? EngineRowingUI.bgNavy : EngineRowingUI.textWhite,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -173,7 +171,7 @@ class _SettingsTabState extends State<SettingsTab> {
                           'Arabic (RTL)',
                           style: TextStyle(
                             fontSize: 11,
-                            color: isArabic ? _gold : Colors.grey.shade600,
+                            color: isArabic ? EngineRowingUI.bgNavy.withValues(alpha: 0.8) : EngineRowingUI.labelSlate,
                           ),
                         ),
                       ],
@@ -192,10 +190,10 @@ class _SettingsTabState extends State<SettingsTab> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     decoration: BoxDecoration(
-                      color: !isArabic ? _navy : _sky.withAlpha(80),
+                      color: !isArabic ? EngineRowingUI.neonLime : EngineRowingUI.equationCardFill,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: !isArabic ? _navy : Colors.grey.shade300,
+                        color: !isArabic ? EngineRowingUI.neonLime : EngineRowingUI.bgGridLine,
                         width: !isArabic ? 2 : 1,
                       ),
                     ),
@@ -206,7 +204,7 @@ class _SettingsTabState extends State<SettingsTab> {
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
-                            color: !isArabic ? Colors.white : _navy,
+                            color: !isArabic ? EngineRowingUI.bgNavy : EngineRowingUI.textWhite,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -214,7 +212,7 @@ class _SettingsTabState extends State<SettingsTab> {
                           'إنجليزية (LTR)',
                           style: TextStyle(
                             fontSize: 11,
-                            color: !isArabic ? _gold : Colors.grey.shade600,
+                            color: !isArabic ? EngineRowingUI.bgNavy.withValues(alpha: 0.8) : EngineRowingUI.labelSlate,
                           ),
                         ),
                       ],
@@ -232,9 +230,9 @@ class _SettingsTabState extends State<SettingsTab> {
   Widget _buildPhase1InfoCard(AppStrings s) {
     return Container(
       decoration: BoxDecoration(
-        color: _sky.withAlpha(90),
+        color: EngineRowingUI.cardFill,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _navy.withAlpha(40)),
+        border: Border.all(color: EngineRowingUI.bgGridLine),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -242,14 +240,14 @@ class _SettingsTabState extends State<SettingsTab> {
         children: [
           Row(
             children: [
-              const Icon(Icons.layers_outlined, color: _navy, size: 22),
+              const Icon(Icons.layers_outlined, color: EngineRowingUI.neonLime, size: 22),
               const SizedBox(width: 8),
               Text(
                 s.appArchitecture,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: _navy,
+                  color: EngineRowingUI.textWhite,
                 ),
               ),
             ],
@@ -257,14 +255,14 @@ class _SettingsTabState extends State<SettingsTab> {
           const SizedBox(height: 8),
           Text(
             s.phase1Active,
-            style: const TextStyle(fontSize: 14, color: _navy, fontWeight: FontWeight.w600),
+            style: const TextStyle(fontSize: 14, color: EngineRowingUI.neonLime, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 6),
           Text(
             '• Engine Rowing Dashboard: الجاهزية، السيكل، الحصة القادمة، اتجاه وتنبيه EF للفريق\n'
             '• التمارين: فتح حصة اليوم، قائمة اللاعبين مع تلوين حالة التسجيل، فورم إدخال متكامل مع NP و Decoupling للاعبين الأساسيين\n'
             '• الإعدادات: بنية الترجمة والتبديل السلس بين اللغات',
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade800, height: 1.5),
+            style: const TextStyle(fontSize: 12, color: EngineRowingUI.labelSlate, height: 1.5),
           ),
         ],
       ),
@@ -274,9 +272,9 @@ class _SettingsTabState extends State<SettingsTab> {
   Widget _buildDatabaseStatsCard(AppStrings s) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: EngineRowingUI.cardFill,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: EngineRowingUI.bgGridLine),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -284,26 +282,34 @@ class _SettingsTabState extends State<SettingsTab> {
         children: [
           Row(
             children: [
-              const Icon(Icons.storage, color: Colors.teal, size: 22),
+              const Icon(Icons.storage, color: EngineRowingUI.neonLime, size: 22),
               const SizedBox(width: 8),
               Text(
                 s.databaseStatus,
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: _navy,
+                  color: EngineRowingUI.textWhite,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildStatChip('اللاعبون', '$_playerCount'),
-              _buildStatChip('الـ Cycles', '$_cycleCount'),
-              _buildStatChip('الحصص', '$_sessionCount'),
-            ],
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+            decoration: BoxDecoration(
+              color: EngineRowingUI.equationCardFill,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: EngineRowingUI.bgGridLine),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildStatChip(s.isArabic ? 'اللاعبون' : 'Athletes', '$_playerCount'),
+                _buildStatChip('Cycles', '$_cycleCount'),
+                _buildStatChip(s.isArabic ? 'الحصص' : 'Sessions', '$_sessionCount'),
+              ],
+            ),
           ),
         ],
       ),
@@ -313,18 +319,22 @@ class _SettingsTabState extends State<SettingsTab> {
   Widget _buildStatChip(String label, String value) {
     return Column(
       children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: _navy,
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: Text(
+            RowingNumberFormatter.toEnglishDigits(value),
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: EngineRowingUI.neonLime,
+              fontFeatures: [FontFeature.tabularFigures()],
+            ),
           ),
         ),
         const SizedBox(height: 2),
         Text(
           label,
-          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          style: const TextStyle(fontSize: 12, color: EngineRowingUI.labelSlate),
         ),
       ],
     );

@@ -5,14 +5,15 @@ import 'admin_placeholder.dart';
 import 'app_strings.dart';
 import 'auth_service.dart';
 import 'dashboard_tab.dart';
+import 'engine_rowing_ui.dart';
 import 'login_page.dart';
 import 'metrics_curve_page.dart';
 import 'program_tab.dart';
 import 'workouts_tab.dart';
 
-const Color navy = Color(0xFF0D3B66);
-const Color sky = Color(0xFFE8F4FC);
-const Color yellow = Color(0xFFFFC93C);
+const Color navy = EngineRowingUI.bgNavy;
+const Color sky = EngineRowingUI.cardFill;
+const Color yellow = EngineRowingUI.neonLime;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -90,55 +91,12 @@ class _IronmanAppState extends State<IronmanApp> {
               child: child!,
             );
           },
-          theme: ThemeData(
-            useMaterial3: true,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: navy,
-              primary: navy,
-              secondary: yellow,
-              surface: Colors.white,
-            ),
-            scaffoldBackgroundColor: const Color(0xFFF9FBFC),
-            appBarTheme: const AppBarTheme(
-              backgroundColor: navy,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              centerTitle: true,
-              titleTextStyle: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            cardTheme: CardThemeData(
-              color: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: Colors.grey.shade200),
-              ),
-            ),
-            filledButtonTheme: FilledButtonThemeData(
-              style: FilledButton.styleFrom(
-                backgroundColor: yellow,
-                foregroundColor: navy,
-                minimumSize: const Size(0, 52),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-            inputDecorationTheme: InputDecorationTheme(
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            ),
-          ),
+          theme: EngineRowingUI.globalTheme,
           home: _checkingSession
               ? const Scaffold(
-                  backgroundColor: navy,
+                  backgroundColor: EngineRowingUI.bgNavy,
                   body: Center(
-                    child: CircularProgressIndicator(color: yellow),
+                    child: CircularProgressIndicator(color: EngineRowingUI.neonLime),
                   ),
                 )
               : _currentUser == null
@@ -298,10 +256,9 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
           Container(
             height: 60,
             decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [navy, Color(0xFF164B7A)],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
+              color: EngineRowingUI.bgNavy,
+              border: Border(
+                bottom: BorderSide(color: EngineRowingUI.bgGridLine, width: 1.0),
               ),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -319,7 +276,7 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: EngineRowingUI.textWhite,
                       letterSpacing: 0.5,
                     ),
                     textAlign: isArabic ? TextAlign.right : TextAlign.left,
@@ -362,7 +319,7 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
               width: 3,
               height: 48,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: EngineRowingUI.bgGridLine,
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
@@ -380,14 +337,18 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
       width: _navWidth,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0F4070), navy],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
+        color: const Color(0xFF071126),
+        border: Border(
+          right: isArabic
+              ? BorderSide.none
+              : const BorderSide(color: EngineRowingUI.bgGridLine, width: 1),
+          left: isArabic
+              ? const BorderSide(color: EngineRowingUI.bgGridLine, width: 1)
+              : BorderSide.none,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(40),
+            color: Colors.black.withAlpha(80),
             blurRadius: 24,
             offset: Offset(isArabic ? -4 : 4, 0),
           ),
@@ -544,6 +505,7 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
 
     // الشريط الجانبي على اليمين في العربية، وعلى اليسار في الإنجليزية
     return Scaffold(
+      backgroundColor: EngineRowingUI.bgNavy,
       body: Row(
         textDirection: TextDirection.ltr,
         children: isArabic
@@ -749,11 +711,11 @@ class _HamburgerHubSheet extends StatelessWidget {
       builder: (context, scrollController) {
         return Container(
           decoration: const BoxDecoration(
-            color: Color(0xFFF9FBFC),
+            color: EngineRowingUI.bgNavy,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black26,
+                color: Colors.black54,
                 blurRadius: 20,
                 offset: Offset(0, -4),
               ),
@@ -768,7 +730,7 @@ class _HamburgerHubSheet extends StatelessWidget {
                   width: 48,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: EngineRowingUI.bgGridLine,
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -779,10 +741,9 @@ class _HamburgerHubSheet extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [navy, Color(0xFF164B7A)],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
+                  color: EngineRowingUI.cardFill,
+                  border: Border(
+                    bottom: BorderSide(color: EngineRowingUI.bgGridLine, width: 1.0),
                   ),
                 ),
                 child: Row(
@@ -790,11 +751,11 @@ class _HamburgerHubSheet extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: yellow.withAlpha(40),
+                        color: EngineRowingUI.neonLime.withAlpha(35),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(Icons.menu_rounded,
-                          color: yellow, size: 26),
+                          color: EngineRowingUI.neonLime, size: 26),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -804,15 +765,15 @@ class _HamburgerHubSheet extends StatelessWidget {
                           Text(
                             s.hamburgerTitle,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: EngineRowingUI.textWhite,
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
                             s.hamburgerSubtitle,
-                            style: TextStyle(
-                              color: Colors.white.withAlpha(200),
+                            style: const TextStyle(
+                              color: EngineRowingUI.labelSlate,
                               fontSize: 12,
                             ),
                           ),
@@ -821,7 +782,7 @@ class _HamburgerHubSheet extends StatelessWidget {
                     ),
                     IconButton(
                       icon: const Icon(Icons.close_rounded,
-                          color: Colors.white70),
+                          color: EngineRowingUI.textWhite),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
@@ -839,7 +800,7 @@ class _HamburgerHubSheet extends StatelessWidget {
                       context: context,
                       title: s.multiDashboardNav,
                       icon: Icons.dashboard_customize_rounded,
-                      iconColor: const Color(0xFF1976D2),
+                      iconColor: EngineRowingUI.neonLime,
                       children: [
                         _buildActionTile(
                           icon: Icons.speed_rounded,
@@ -852,7 +813,7 @@ class _HamburgerHubSheet extends StatelessWidget {
                                 'يتم عرض مؤشرات النبض والسرعة والمسافة الآن لحظياً من المستشعرات.');
                           },
                         ),
-                        const Divider(height: 1),
+                        const Divider(height: 1, color: EngineRowingUI.bgGridLine),
                         _buildActionTile(
                           icon: Icons.analytics_outlined,
                           title: s.analyticsDashboard,
@@ -864,7 +825,7 @@ class _HamburgerHubSheet extends StatelessWidget {
                                 'لوحة التحليلات المتقدمة جاهزة لمتابعة إحصائيات الفريق.');
                           },
                         ),
-                        const Divider(height: 1),
+                        const Divider(height: 1, color: EngineRowingUI.bgGridLine),
                         _buildActionTile(
                           icon: Icons.healing_rounded,
                           title: s.medicalReport,
@@ -876,7 +837,7 @@ class _HamburgerHubSheet extends StatelessWidget {
                                 'تقرير الاستشفاء الطبي: جميع مؤشرات اللاعبين ضمن النطاق الآمن.');
                           },
                         ),
-                        const Divider(height: 1),
+                        const Divider(height: 1, color: EngineRowingUI.bgGridLine),
                         _buildActionTile(
                           icon: Icons.compare_arrows_rounded,
                           title: s.peerDataComparison,
@@ -897,7 +858,7 @@ class _HamburgerHubSheet extends StatelessWidget {
                       context: context,
                       title: s.rosterManagement,
                       icon: Icons.manage_accounts_rounded,
-                      iconColor: const Color(0xFFE65100),
+                      iconColor: const Color(0xFF2979FF),
                       children: [
                         _buildActionTile(
                           icon: Icons.switch_account_rounded,
@@ -919,7 +880,7 @@ class _HamburgerHubSheet extends StatelessWidget {
                       context: context,
                       title: s.hardwareIntegration,
                       icon: Icons.sensors_rounded,
-                      iconColor: const Color(0xFF00897B),
+                      iconColor: EngineRowingUI.neonLime,
                       children: [
                         _buildActionTile(
                           icon: Icons.wifi_tethering_rounded,
@@ -931,7 +892,7 @@ class _HamburgerHubSheet extends StatelessWidget {
                                 'الاتصال سليم ومستقر بين أجهزة اللاعبين والمدرب.');
                           },
                         ),
-                        const Divider(height: 1),
+                        const Divider(height: 1, color: EngineRowingUI.bgGridLine),
                         _buildActionTile(
                           icon: Icons.bluetooth_connected_rounded,
                           title: s.sensorCalibration,
@@ -943,7 +904,7 @@ class _HamburgerHubSheet extends StatelessWidget {
                                 'تمت معايرة جميع المستشعرات وبلوتوث التجديف بدقة 100%.');
                           },
                         ),
-                        const Divider(height: 1),
+                        const Divider(height: 1, color: EngineRowingUI.bgGridLine),
                         _buildActionTile(
                           icon: Icons.cloud_sync_rounded,
                           title: s.cloudSync,
@@ -964,23 +925,23 @@ class _HamburgerHubSheet extends StatelessWidget {
                       context: context,
                       title: s.metricsCurvesShortcut,
                       icon: Icons.show_chart_rounded,
-                      iconColor: const Color(0xFF6A1B9A),
+                      iconColor: const Color(0xFFFF9100),
                       children: [
                         Padding(
                           padding: const EdgeInsets.all(14),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              const Text(
                                 'الوصول المباشر إلى المنحنيات الخمسة في البرنامج (كفاءة EF، الواط، التفكك القلبي، النبض، وزونات كارفونين الذكية).',
                                 style: TextStyle(
-                                    fontSize: 13, color: Colors.grey.shade700),
+                                    fontSize: 13, color: EngineRowingUI.labelSlate),
                               ),
                               const SizedBox(height: 12),
                               ElevatedButton.icon(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: navy,
-                                  foregroundColor: yellow,
+                                  backgroundColor: EngineRowingUI.neonLime,
+                                  foregroundColor: EngineRowingUI.bgNavy,
                                   minimumSize: const Size(double.infinity, 48),
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10)),
@@ -1004,7 +965,7 @@ class _HamburgerHubSheet extends StatelessWidget {
                       context: context,
                       title: s.advancedDataExport,
                       icon: Icons.file_download_outlined,
-                      iconColor: const Color(0xFF2E7D32),
+                      iconColor: const Color(0xFF2979FF),
                       children: [
                         _buildActionTile(
                           icon: Icons.table_chart_rounded,
@@ -1017,7 +978,7 @@ class _HamburgerHubSheet extends StatelessWidget {
                                 'تم تصدير ملف Excel بنجاح وحفظه في مجلد المستندات.');
                           },
                         ),
-                        const Divider(height: 1),
+                        const Divider(height: 1, color: EngineRowingUI.bgGridLine),
                         _buildActionTile(
                           icon: Icons.picture_as_pdf_rounded,
                           title: s.exportToPdf,
@@ -1029,7 +990,7 @@ class _HamburgerHubSheet extends StatelessWidget {
                                 'تم إنشاء تقرير PDF الطبي والفني بنجاح.');
                           },
                         ),
-                        const Divider(height: 1),
+                        const Divider(height: 1, color: EngineRowingUI.bgGridLine),
                         _buildActionTile(
                           icon: Icons.share_rounded,
                           title: s.shareReportAction,
@@ -1063,14 +1024,14 @@ class _HamburgerHubSheet extends StatelessWidget {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
+        color: EngineRowingUI.cardFill,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: EngineRowingUI.bgGridLine, width: 1.2),
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withAlpha(8),
+            color: Colors.black26,
             blurRadius: 10,
-            offset: const Offset(0, 3),
+            offset: Offset(0, 3),
           ),
         ],
       ),
@@ -1080,10 +1041,10 @@ class _HamburgerHubSheet extends StatelessWidget {
           // رأس الكارت
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: iconColor.withAlpha(15),
+            decoration: const BoxDecoration(
+              color: EngineRowingUI.equationCardFill,
               borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(15)),
+                  BorderRadius.vertical(top: Radius.circular(13)),
             ),
             child: Row(
               children: [
@@ -1092,10 +1053,10 @@ class _HamburgerHubSheet extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14.5,
                       fontWeight: FontWeight.bold,
-                      color: navy,
+                      color: EngineRowingUI.textWhite,
                     ),
                   ),
                 ),
@@ -1116,23 +1077,23 @@ class _HamburgerHubSheet extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return ListTile(
-      leading: Icon(icon, color: navy, size: 22),
+      leading: Icon(icon, color: EngineRowingUI.neonLime, size: 22),
       title: Text(
         title,
         style: const TextStyle(
           fontSize: 13.5,
           fontWeight: FontWeight.w700,
-          color: navy,
+          color: EngineRowingUI.textWhite,
         ),
       ),
       subtitle: Text(
         subtitle,
-        style: TextStyle(fontSize: 11.5, color: Colors.grey.shade700),
+        style: const TextStyle(fontSize: 11.5, color: EngineRowingUI.labelSlate),
       ),
       trailing: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: sky,
-          foregroundColor: navy,
+          backgroundColor: EngineRowingUI.neonLime,
+          foregroundColor: EngineRowingUI.bgNavy,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           shape:
@@ -1153,17 +1114,17 @@ class _HamburgerHubSheet extends StatelessWidget {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle_rounded, color: Colors.white),
+            const Icon(Icons.check_circle_rounded, color: EngineRowingUI.neonLime),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 '$title: $msg',
-                style: const TextStyle(fontSize: 12.5),
+                style: const TextStyle(fontSize: 12.5, color: EngineRowingUI.textWhite),
               ),
             ),
           ],
         ),
-        backgroundColor: navy,
+        backgroundColor: EngineRowingUI.toastBg,
         behavior: SnackBarBehavior.floating,
       ),
     );

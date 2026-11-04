@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'app_strings.dart';
+import 'engine_rowing_ui.dart';
 import 'program_service.dart';
 import 'session_workouts_page.dart';
 
-const Color _navy = Color(0xFF0D3B66);
-const Color _sky = Color(0xFFE8F4FC);
-const Color _gold = Color(0xFFFFC93C);
+const Color _navy = EngineRowingUI.bgNavy;
+const Color _cardFill = EngineRowingUI.cardFill;
+const Color _gold = EngineRowingUI.neonLime;
+const Color _gridLine = EngineRowingUI.bgGridLine;
 
 /// المستوى 3: صفحة الحصص التدريبية لهذا اليوم (Day Sessions Page)
 /// تبدأ بحصة تدريبية واحدة مع زر (+) لإضافة حصة تدريبية جديدة،
@@ -128,9 +130,11 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
       initialTime: initial,
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(
-            primary: _navy,
-            secondary: _gold,
+          colorScheme: const ColorScheme.dark(
+            primary: _gold,
+            onPrimary: _navy,
+            surface: _cardFill,
+            onSurface: EngineRowingUI.textWhite,
           ),
         ),
         child: child!,
@@ -155,30 +159,34 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: _cardFill,
         title: Row(
           children: [
             Icon(isPhysio ? Icons.health_and_safety_outlined : Icons.engineering_outlined,
-                color: _navy),
+                color: _gold),
             const SizedBox(width: 8),
-            Text('$title - ${session.name}'),
+            Text('$title - ${session.name}',
+                style: const TextStyle(color: EngineRowingUI.textWhite)),
           ],
         ),
         content: TextField(
           controller: ctrl,
           maxLines: 4,
+          style: const TextStyle(color: EngineRowingUI.textWhite),
           decoration: InputDecoration(
             hintText: 'اكتب تفاصيل $title...',
+            hintStyle: const TextStyle(color: EngineRowingUI.labelSlate),
             border: const OutlineInputBorder(),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(s.cancel),
+            child: Text(s.cancel, style: const TextStyle(color: EngineRowingUI.labelSlate)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: _navy, foregroundColor: Colors.white),
+                backgroundColor: _gold, foregroundColor: _navy),
             onPressed: () async {
               if (isPhysio) {
                 session.notesPhysio = ctrl.text.trim();
@@ -216,7 +224,10 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
     final s = AppStrings.of(context);
 
     return Scaffold(
+      backgroundColor: _navy,
       appBar: AppBar(
+        backgroundColor: _navy,
+        foregroundColor: EngineRowingUI.textWhite,
         title: Text('${widget.dayName} - ${s.daySessionsPageTitle}'),
         actions: [
           // زر إضافة حصة تدريبية جديدة في الهيدر
@@ -228,65 +239,70 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: _navy))
-          : ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              children: [
-                // هيدر توضيحي
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: _sky.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.info_outline_rounded,
-                          color: _navy, size: 22),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'الحصص التدريبية ليوم ${widget.dayName} • كل حصة تحتوي على خانة التوقيت، وحسابات الـ 6 زونات، وملاحظات وزر الدخول للتمارين.',
-                          style: TextStyle(
-                              fontSize: 12.5,
-                              color: Colors.grey.shade800,
-                              height: 1.4),
-                        ),
+          ? const Center(child: CircularProgressIndicator(color: _gold))
+          : Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 850),
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  children: [
+                    // هيدر توضيحي
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: _cardFill,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _gridLine),
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // ── قائمة لوحات الحصص التدريبية ──
-                ..._sessions.map((session) => _buildSessionPanel(s, session)),
-
-                const SizedBox(height: 20),
-
-                // زر إضافة حصة تدريبية أسفل القائمة
-                Center(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _navy,
-                      foregroundColor: _gold,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      elevation: 2,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline_rounded,
+                              color: _gold, size: 22),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'الحصص التدريبية ليوم ${widget.dayName} • كل حصة تحتوي على خانة التوقيت، وحسابات الـ 6 زونات، وملاحظات وزر الدخول للتمارين.',
+                              style: const TextStyle(
+                                  fontSize: 12.5,
+                                  color: EngineRowingUI.labelSlate,
+                                  height: 1.4),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    icon: const Icon(Icons.add, size: 20),
-                    label: Text(
-                      s.addSession,
-                      style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.bold),
+                    const SizedBox(height: 16),
+
+                    // ── قائمة لوحات الحصص التدريبية ──
+                    ..._sessions.map((session) => _buildSessionPanel(s, session)),
+
+                    const SizedBox(height: 20),
+
+                    // زر إضافة حصة تدريبية أسفل القائمة
+                    Center(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _gold,
+                          foregroundColor: _navy,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          elevation: 2,
+                        ),
+                        icon: const Icon(Icons.add, size: 20),
+                        label: Text(
+                          s.addSession,
+                          style: const TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.bold),
+                        ),
+                        onPressed: _addNewSession,
+                      ),
                     ),
-                    onPressed: _addNewSession,
-                  ),
+                    const SizedBox(height: 24),
+                  ],
                 ),
-                const SizedBox(height: 24),
-              ],
+              ),
             ),
     );
   }
@@ -298,14 +314,14 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade300, width: 1.2),
-        boxShadow: [
+        color: _cardFill,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _gridLine, width: 1.2),
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: Colors.black26,
             blurRadius: 16,
-            offset: const Offset(0, 6),
+            offset: Offset(0, 6),
           ),
         ],
       ),
@@ -315,10 +331,11 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
           // ── شريط رأس لوحة الحصة التدريبية ──
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: _navy,
+            decoration: const BoxDecoration(
+              color: EngineRowingUI.equationCardFill,
               borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(18)),
+                  BorderRadius.vertical(top: Radius.circular(13)),
+              border: Border(bottom: BorderSide(color: _gridLine, width: 1.0)),
             ),
             child: Row(
               children: [
@@ -329,7 +346,7 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
                   child: Text(
                     session.name,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: EngineRowingUI.textWhite,
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
                     ),
@@ -361,7 +378,7 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
                 if (_sessions.length > 1)
                   IconButton(
                     icon: const Icon(Icons.delete_outline_rounded,
-                        color: Colors.white70, size: 22),
+                        color: Colors.redAccent, size: 22),
                     tooltip: s.removeSession,
                     onPressed: () => _deleteSession(session),
                   ),
@@ -381,29 +398,32 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: _sky,
+                        color: EngineRowingUI.equationCardFill,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: _navy.withValues(alpha: 0.2)),
+                        border: Border.all(color: _gridLine),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(Icons.access_time_filled_rounded,
-                              size: 18, color: _navy),
+                              size: 18, color: _gold),
                           const SizedBox(width: 8),
-                          Text(
-                            '${s.sessionTime}: ${session.time}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13.5,
-                              color: _navy,
+                          Directionality(
+                            textDirection: TextDirection.ltr,
+                            child: Text(
+                              '${s.sessionTime}: ${RowingNumberFormatter.toEnglishDigits(session.time)}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13.5,
+                                color: EngineRowingUI.textWhite,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
                           InkWell(
                             onTap: () => _pickSessionTime(session),
                             child: const Icon(Icons.edit_calendar,
-                                size: 16, color: _navy),
+                                size: 16, color: _gold),
                           ),
                         ],
                       ),
@@ -411,10 +431,10 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
                     const SizedBox(width: 12),
                     Text(
                       '• عدد التمارين: ${session.workouts.length}',
-                      style: TextStyle(
+                      style: const TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
-                          color: Colors.grey.shade700),
+                          color: EngineRowingUI.labelSlate),
                     ),
                   ],
                 ),
@@ -427,7 +447,7 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: EngineRowingUI.textWhite,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -447,13 +467,13 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
                               horizontal: 4, vertical: 8),
                           decoration: BoxDecoration(
                             color: isZero
-                                ? Colors.grey.shade100.withValues(alpha: 0.6)
-                                : color.withValues(alpha: 0.12),
+                                ? EngineRowingUI.equationCardFill.withAlpha(120)
+                                : color.withAlpha(35),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
                               color: isZero
-                                  ? Colors.grey.shade300
-                                  : color.withValues(alpha: 0.8),
+                                  ? _gridLine
+                                  : color,
                               width: isZero ? 1 : 1.5,
                             ),
                           ),
@@ -465,20 +485,24 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
                                 style: TextStyle(
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.bold,
-                                  color: isZero ? Colors.grey.shade400 : color,
+                                  color: isZero ? EngineRowingUI.captionGrey : color,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 isZero
                                     ? '-'
-                                    : ProgramService.formatDurationDetailed(secs),
+                                    : RowingNumberFormatter.toEnglishDigits(
+                                        ProgramService.formatDurationDetailed(secs)),
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
+                                  fontFeatures: const [
+                                    FontFeature.tabularFigures()
+                                  ],
                                   color: isZero
-                                      ? Colors.grey.shade400
-                                      : Colors.black87,
+                                      ? EngineRowingUI.captionGrey
+                                      : EngineRowingUI.textWhite,
                                 ),
                               ),
                             ],
@@ -489,7 +513,7 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Divider(height: 1),
+                const Divider(height: 1, color: _gridLine),
                 const SizedBox(height: 12),
 
                 // ── الملاحظات الفسيولوجية والفنية ──
@@ -500,14 +524,14 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF9FBFC),
+                          color: EngineRowingUI.equationCardFill,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.grey.shade200),
+                          border: Border.all(color: _gridLine),
                         ),
                         child: Row(
                           children: [
                             const Icon(Icons.health_and_safety_outlined,
-                                size: 18, color: Colors.teal),
+                                size: 18, color: _gold),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
@@ -519,14 +543,14 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
                                 style: TextStyle(
                                   fontSize: 11.5,
                                   color: session.notesPhysio.isNotEmpty
-                                      ? Colors.black87
-                                      : Colors.grey.shade500,
+                                      ? EngineRowingUI.textWhite
+                                      : EngineRowingUI.labelSlate,
                                 ),
                               ),
                             ),
                             IconButton(
                               icon: const Icon(Icons.add_circle_outline,
-                                  size: 18, color: _navy),
+                                  size: 18, color: _gold),
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
                               onPressed: () => _editNoteDialog(
@@ -543,14 +567,14 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF9FBFC),
+                          color: EngineRowingUI.equationCardFill,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.grey.shade200),
+                          border: Border.all(color: _gridLine),
                         ),
                         child: Row(
                           children: [
                             const Icon(Icons.engineering_outlined,
-                                size: 18, color: Colors.blueGrey),
+                                size: 18, color: _gold),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
@@ -562,14 +586,14 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
                                 style: TextStyle(
                                   fontSize: 11.5,
                                   color: session.notesTech.isNotEmpty
-                                      ? Colors.black87
-                                      : Colors.grey.shade500,
+                                      ? EngineRowingUI.textWhite
+                                      : EngineRowingUI.labelSlate,
                                 ),
                               ),
                             ),
                             IconButton(
                               icon: const Icon(Icons.add_circle_outline,
-                                  size: 18, color: _navy),
+                                  size: 18, color: _gold),
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
                               onPressed: () => _editNoteDialog(

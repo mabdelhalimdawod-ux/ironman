@@ -3,17 +3,18 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'app_strings.dart';
 import 'auth_service.dart';
+import 'engine_rowing_ui.dart';
 
 // ============================================================================
-// ثيم وألوان شاشة المصادقة (Auth Theme Constants)
+// ثيم وألوان شاشة المصادقة (Auth Theme Constants) - Aligned with EngineRowingUI
 // ============================================================================
-const Color authBlueDeep = Color(0xFF115A8E);
-const Color authBlueMid = Color(0xFF1989BE);
-const Color authCyan = Color(0xFF2DB3E1);
-const Color authGold = Color(0xFFD7C593);
-const Color authGoldDeep = Color(0xFFBFAA7A);
-const Color authCardDark = Color(0xFF0B2236);
-const Color authScrim = Color(0xFF0A3556);
+const Color authBlueDeep = EngineRowingUI.equationCardFill; // #122147
+const Color authBlueMid = EngineRowingUI.cardFill;          // #15264F
+const Color authCyan = EngineRowingUI.neonLime;             // #B8F229
+const Color authGold = EngineRowingUI.neonLime;             // #B8F229
+const Color authGoldDeep = Color(0xFFA4D924);
+const Color authCardDark = EngineRowingUI.cardFill;         // #15264F
+const Color authScrim = EngineRowingUI.bgNavy;              // #0A1633
 
 /// شاشة المصادقة الموحدة: تسجيل الدخول + إنشاء حساب بتبويبين (Login & Sign Up Page)
 class LoginPage extends StatefulWidget {
@@ -215,28 +216,31 @@ class _LoginPageState extends State<LoginPage> {
         return BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: AlertDialog(
-            backgroundColor: authCardDark.withOpacity(0.95),
+            backgroundColor: EngineRowingUI.cardFill,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
-              side: BorderSide(color: authCyan.withOpacity(0.4), width: 1.2),
+              side: const BorderSide(color: EngineRowingUI.bgGridLine, width: 1.2),
             ),
             title: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: authCyan.withOpacity(0.2),
+                    color: EngineRowingUI.neonLime.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.hourglass_top_rounded,
-                      color: authGold, size: 28),
+                  child: const Icon(
+                    Icons.hourglass_top_rounded,
+                    color: EngineRowingUI.neonLime,
+                    size: 28,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     s.signUpSuccessTitle,
                     style: const TextStyle(
-                      color: authGold,
+                      color: EngineRowingUI.textWhite,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -247,7 +251,7 @@ class _LoginPageState extends State<LoginPage> {
             content: Text(
               s.signUpSuccessMessage,
               style: const TextStyle(
-                color: Colors.white,
+                color: EngineRowingUI.textWhite,
                 fontSize: 14.5,
                 height: 1.5,
               ),
@@ -255,8 +259,8 @@ class _LoginPageState extends State<LoginPage> {
             actions: [
               FilledButton(
                 style: FilledButton.styleFrom(
-                  backgroundColor: authBlueMid,
-                  foregroundColor: authGold,
+                  backgroundColor: EngineRowingUI.neonLime,
+                  foregroundColor: EngineRowingUI.bgNavy,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -272,8 +276,13 @@ class _LoginPageState extends State<LoginPage> {
                     _signUpConfirmPasswordController.clear();
                   });
                 },
-                child: Text(s.ok,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                child: Text(
+                  s.ok,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: EngineRowingUI.bgNavy,
+                  ),
+                ),
               ),
             ],
           ),
@@ -291,19 +300,19 @@ class _LoginPageState extends State<LoginPage> {
         return BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: AlertDialog(
-            backgroundColor: authCardDark.withOpacity(0.95),
+            backgroundColor: EngineRowingUI.cardFill,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
-              side: BorderSide(color: authCyan.withOpacity(0.4), width: 1.2),
+              side: const BorderSide(color: EngineRowingUI.bgGridLine, width: 1.2),
             ),
             title: Row(
               children: [
-                const Icon(Icons.gavel_rounded, color: authGold, size: 24),
+                const Icon(Icons.gavel_rounded, color: EngineRowingUI.neonLime, size: 24),
                 const SizedBox(width: 10),
                 Text(
                   s.termsAndConditionsTitle,
                   style: const TextStyle(
-                    color: authGold,
+                    color: EngineRowingUI.textWhite,
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
                   ),
@@ -313,7 +322,7 @@ class _LoginPageState extends State<LoginPage> {
             content: Text(
               s.termsComingSoon,
               style: const TextStyle(
-                color: Colors.white70,
+                color: EngineRowingUI.labelSlate,
                 fontSize: 14.5,
                 height: 1.5,
               ),
@@ -323,7 +332,10 @@ class _LoginPageState extends State<LoginPage> {
                 onPressed: () => Navigator.pop(ctx),
                 child: Text(
                   s.close,
-                  style: const TextStyle(color: authCyan, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: EngineRowingUI.neonLime,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -342,19 +354,19 @@ class _LoginPageState extends State<LoginPage> {
         return BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: AlertDialog(
-            backgroundColor: authCardDark.withOpacity(0.95),
+            backgroundColor: EngineRowingUI.cardFill,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
-              side: BorderSide(color: authCyan.withOpacity(0.4), width: 1.2),
+              side: const BorderSide(color: EngineRowingUI.bgGridLine, width: 1.2),
             ),
             title: Row(
               children: [
-                const Icon(Icons.help_outline_rounded, color: authGold, size: 24),
+                const Icon(Icons.help_outline_rounded, color: EngineRowingUI.neonLime, size: 24),
                 const SizedBox(width: 10),
                 Text(
                   s.forgotPasswordTitle,
                   style: const TextStyle(
-                    color: authGold,
+                    color: EngineRowingUI.textWhite,
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
                   ),
@@ -364,7 +376,7 @@ class _LoginPageState extends State<LoginPage> {
             content: Text(
               s.forgotPasswordDialogText,
               style: const TextStyle(
-                color: Colors.white,
+                color: EngineRowingUI.textWhite,
                 fontSize: 14.5,
                 height: 1.5,
               ),
@@ -374,7 +386,10 @@ class _LoginPageState extends State<LoginPage> {
                 onPressed: () => Navigator.pop(ctx),
                 child: Text(
                   s.close,
-                  style: const TextStyle(color: authCyan, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: EngineRowingUI.neonLime,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -389,20 +404,20 @@ class _LoginPageState extends State<LoginPage> {
     final s = AppStrings.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        backgroundColor: authCardDark,
+        backgroundColor: EngineRowingUI.cardFill,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: authCyan.withOpacity(0.4)),
+          side: const BorderSide(color: EngineRowingUI.bgGridLine),
         ),
         content: Row(
           children: [
-            const Icon(Icons.info_outline, color: authGold, size: 22),
+            const Icon(Icons.info_outline, color: EngineRowingUI.neonLime, size: 22),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 s.googleComingSoon,
-                style: const TextStyle(color: Colors.white, fontSize: 13.5),
+                style: const TextStyle(color: EngineRowingUI.textWhite, fontSize: 13.5),
               ),
             ),
           ],
@@ -417,236 +432,217 @@ class _LoginPageState extends State<LoginPage> {
     final isArabic = AppLanguage.instance.isArabic;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // 1. صورة الخلفية مع Fallback أنيق بتدرج لوني عميق
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/engine_rowing_logo_bg.png',
-              fit: BoxFit.cover,
-              errorBuilder: (ctx, err, stack) => Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Color(0xFF04121E),
-                      Color(0xFF0A2E50),
-                      Color(0xFF07192A),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // 2. طبقة الحجب الشفافة (authScrim Overlay 35-45%)
-          Positioned.fill(
-            child: Container(
-              color: authScrim.withOpacity(0.40),
-            ),
-          ),
-
-          // 3. المحتوى المتجاوب
-          SafeArea(
-            child: Column(
-              children: [
-                // ── الشريط العلوي: الساعة الحية + زر تبديل اللغة ──
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // الساعة الحية
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                        decoration: BoxDecoration(
-                          color: authCardDark.withOpacity(0.65),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: authCyan.withOpacity(0.35)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: authCyan,
-                                shape: BoxShape.circle,
+      backgroundColor: EngineRowingUI.bgNavy,
+      body: RowingGridBackground(
+        child: Stack(
+          children: [
+            // المحتوى المتجاوب
+            SafeArea(
+              child: Column(
+                children: [
+                  // ── الشريط العلوي: الساعة الحية + زر تبديل اللغة ──
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // الساعة الحية
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: EngineRowingUI.cardFill,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: EngineRowingUI.bgGridLine),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: EngineRowingUI.neonLime,
+                                  shape: BoxShape.circle,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              _formatClockTime(_currentTime),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.bold,
-                                fontFeatures: [FontFeature.tabularFigures()],
-                                letterSpacing: 0.8,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // زر تبديل اللغة الفوري (عربي / English)
-                      Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(20),
-                          onTap: () => AppLanguage.instance.toggleLanguage(),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 7),
-                            decoration: BoxDecoration(
-                              color: authCardDark.withOpacity(0.65),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: authCyan.withOpacity(0.35)),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.language_rounded,
-                                    color: authGold, size: 18),
-                                const SizedBox(width: 6),
-                                Text(
-                                  isArabic ? 'English' : 'العربية',
+                              const SizedBox(width: 8),
+                              Directionality(
+                                textDirection: TextDirection.ltr,
+                                child: Text(
+                                  _formatClockTime(_currentTime),
                                   style: const TextStyle(
-                                    color: authGold,
+                                    color: EngineRowingUI.textWhite,
+                                    fontSize: 13.5,
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 13,
+                                    fontFeatures: [FontFeature.tabularFigures()],
+                                    letterSpacing: 0.8,
                                   ),
                                 ),
-                              ],
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // زر تبديل اللغة الفوري (عربي / English)
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(20),
+                            onTap: () => AppLanguage.instance.toggleLanguage(),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: EngineRowingUI.cardFill,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: EngineRowingUI.bgGridLine),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.language_rounded,
+                                    color: EngineRowingUI.neonLime,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    isArabic ? 'English' : 'العربية',
+                                    style: const TextStyle(
+                                      color: EngineRowingUI.neonLime,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
 
-                // ── البطاقة الزجاجية المركزية ──
-                Expanded(
-                  child: Center(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 16),
-                      child: Container(
-                        constraints: const BoxConstraints(maxWidth: 460),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(24),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 28, vertical: 32),
-                              decoration: BoxDecoration(
-                                color: authCardDark.withOpacity(0.62),
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(
-                                  color: authCyan.withOpacity(0.32),
-                                  width: 1.2,
+                  // ── البطاقة المركزية ──
+                  Expanded(
+                    child: Center(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        child: Container(
+                          constraints: const BoxConstraints(maxWidth: 460),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(24),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 28,
+                                  vertical: 32,
                                 ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.45),
-                                    blurRadius: 35,
-                                    offset: const Offset(0, 16),
+                                decoration: BoxDecoration(
+                                  color: EngineRowingUI.cardFill.withValues(alpha: 0.88),
+                                  borderRadius: BorderRadius.circular(24),
+                                  border: Border.all(
+                                    color: EngineRowingUI.bgGridLine,
+                                    width: 1.5,
                                   ),
-                                ],
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  // ── لوجو وعنوان التطبيق ──
-                                  Center(
-                                    child: Column(
-                                      children: [
-                                        Text(
-                                          s.authBrandTitle,
-                                          style: const TextStyle(
-                                            color: authGold,
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.w900,
-                                            letterSpacing: 2.2,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          s.authBrandSubtitle,
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            color: Colors.white.withOpacity(0.72),
-                                            fontSize: 12.5,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.45),
+                                      blurRadius: 35,
+                                      offset: const Offset(0, 16),
                                     ),
-                                  ),
-                                  const SizedBox(height: 24),
-
-                                  // ── شريط التبويبين (تسجيل الدخول / إنشاء حساب) ──
-                                  Container(
-                                    padding: const EdgeInsets.all(4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withOpacity(0.28),
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(
-                                        color: authCyan.withOpacity(0.25),
+                                  ],
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    // ── لوجو وعنوان التطبيق ──
+                                    Center(
+                                      child: Column(
+                                        children: [
+                                          const Text(
+                                            'ENGINE ROWING',
+                                            style: TextStyle(
+                                              color: EngineRowingUI.neonLime,
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: 2.2,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            s.authBrandSubtitle,
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              color: EngineRowingUI.labelSlate,
+                                              fontSize: 12.5,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    child: Row(
-                                      children: [
-                                        // تبويب تسجيل الدخول
-                                        Expanded(
-                                          child: _AuthTabButton(
-                                            title: s.loginTab,
-                                            isActive: _activeTabIndex == 0,
-                                            onTap: () {
-                                              if (_activeTabIndex != 0) {
-                                                setState(() {
-                                                  _activeTabIndex = 0;
-                                                  _loginError = null;
-                                                });
-                                              }
-                                            },
-                                          ),
-                                        ),
-                                        // تبويب إنشاء حساب
-                                        Expanded(
-                                          child: _AuthTabButton(
-                                            title: s.signUpTab,
-                                            isActive: _activeTabIndex == 1,
-                                            onTap: () {
-                                              if (_activeTabIndex != 1) {
-                                                setState(() {
-                                                  _activeTabIndex = 1;
-                                                  _signUpError = null;
-                                                });
-                                              }
-                                            },
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 24),
+                                    const SizedBox(height: 24),
 
-                                  // ── محتوى التبويب النشط بحركة انسيابية ──
-                                  AnimatedCrossFade(
-                                    duration: const Duration(milliseconds: 280),
-                                    crossFadeState: _activeTabIndex == 0
-                                        ? CrossFadeState.showFirst
-                                        : CrossFadeState.showSecond,
-                                    firstChild: _buildLoginForm(context),
-                                    secondChild: _buildSignUpForm(context),
-                                  ),
-                                ],
+                                    // ── شريط التبويبين (تسجيل الدخول / إنشاء حساب) ──
+                                    Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: EngineRowingUI.equationCardFill,
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: EngineRowingUI.bgGridLine,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          // تبويب تسجيل الدخول
+                                          Expanded(
+                                            child: _AuthTabButton(
+                                              title: s.loginTab,
+                                              isActive: _activeTabIndex == 0,
+                                              onTap: () {
+                                                if (_activeTabIndex != 0) {
+                                                  setState(() {
+                                                    _activeTabIndex = 0;
+                                                    _loginError = null;
+                                                  });
+                                                }
+                                              },
+                                            ),
+                                          ),
+                                          // تبويب إنشاء حساب
+                                          Expanded(
+                                            child: _AuthTabButton(
+                                              title: s.signUpTab,
+                                              isActive: _activeTabIndex == 1,
+                                              onTap: () {
+                                                if (_activeTabIndex != 1) {
+                                                  setState(() {
+                                                    _activeTabIndex = 1;
+                                                    _signUpError = null;
+                                                  });
+                                                }
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+
+                                    // ── محتوى التبويب النشط بحركة انسيابية ──
+                                    AnimatedCrossFade(
+                                      duration: const Duration(milliseconds: 280),
+                                      crossFadeState: _activeTabIndex == 0
+                                          ? CrossFadeState.showFirst
+                                          : CrossFadeState.showSecond,
+                                      firstChild: _buildLoginForm(context),
+                                      secondChild: _buildSignUpForm(context),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -654,11 +650,11 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -690,7 +686,11 @@ class _LoginPageState extends State<LoginPage> {
             isRequired: true,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
-            prefixIcon: const Icon(Icons.email_outlined, color: authGold, size: 20),
+            prefixIcon: const Icon(
+              Icons.email_outlined,
+              color: EngineRowingUI.neonLime,
+              size: 20,
+            ),
             validator: (val) {
               if (val == null || val.trim().isEmpty) return s.invalidEmail;
               final regex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
@@ -707,8 +707,11 @@ class _LoginPageState extends State<LoginPage> {
             isRequired: true,
             isPassword: true,
             textInputAction: TextInputAction.done,
-            prefixIcon:
-                const Icon(Icons.lock_outline_rounded, color: authGold, size: 20),
+            prefixIcon: const Icon(
+              Icons.lock_outline_rounded,
+              color: EngineRowingUI.neonLime,
+              size: 20,
+            ),
             onFieldSubmitted: (_) => _handleLogin(),
             validator: (val) {
               if (val == null || val.isEmpty) return s.emptyPassword;
@@ -735,10 +738,12 @@ class _LoginPageState extends State<LoginPage> {
                         height: 20,
                         child: Checkbox(
                           value: _rememberMe,
-                          activeColor: authCyan,
-                          checkColor: authCardDark,
-                          side: BorderSide(
-                              color: authCyan.withOpacity(0.6), width: 1.5),
+                          activeColor: EngineRowingUI.neonLime,
+                          checkColor: EngineRowingUI.bgNavy,
+                          side: const BorderSide(
+                            color: EngineRowingUI.bgGridLine,
+                            width: 1.5,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(4),
                           ),
@@ -749,8 +754,8 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(width: 8),
                       Text(
                         s.rememberMe,
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.85),
+                        style: const TextStyle(
+                          color: EngineRowingUI.textWhite,
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                         ),
@@ -771,7 +776,7 @@ class _LoginPageState extends State<LoginPage> {
                 child: Text(
                   s.forgotPasswordTitle,
                   style: const TextStyle(
-                    color: authCyan,
+                    color: EngineRowingUI.neonLime,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -781,7 +786,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
           const SizedBox(height: 22),
 
-          // الزر الرئيسي (Sign In) بتدرج authBlueDeep -> authBlueMid ولون نص authGold
+          // الزر الرئيسي (Sign In)
           _AuthMainButton(
             title: s.signInButton,
             isLoading: _isLoginLoading,
@@ -856,16 +861,16 @@ class _LoginPageState extends State<LoginPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: authCardDark.withOpacity(0.50),
+              color: EngineRowingUI.equationCardFill,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: authCyan.withOpacity(0.25)),
+              border: Border.all(color: EngineRowingUI.bgGridLine),
             ),
             child: Row(
               children: [
                 Text(
                   '${s.accountType}:',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.85),
+                  style: const TextStyle(
+                    color: EngineRowingUI.labelSlate,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -908,7 +913,11 @@ class _LoginPageState extends State<LoginPage> {
             isRequired: true,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
-            prefixIcon: const Icon(Icons.email_outlined, color: authGold, size: 20),
+            prefixIcon: const Icon(
+              Icons.email_outlined,
+              color: EngineRowingUI.neonLime,
+              size: 20,
+            ),
             validator: (val) {
               if (val == null || val.trim().isEmpty) return s.invalidEmail;
               final regex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
@@ -925,8 +934,11 @@ class _LoginPageState extends State<LoginPage> {
             isRequired: true,
             isPassword: true,
             textInputAction: TextInputAction.next,
-            prefixIcon:
-                const Icon(Icons.lock_outline_rounded, color: authGold, size: 20),
+            prefixIcon: const Icon(
+              Icons.lock_outline_rounded,
+              color: EngineRowingUI.neonLime,
+              size: 20,
+            ),
             validator: (val) {
               if (val == null || val.isEmpty) return s.emptyPassword;
               if (val.length < 6) return s.passwordTooShort;
@@ -942,8 +954,11 @@ class _LoginPageState extends State<LoginPage> {
             isRequired: true,
             isPassword: true,
             textInputAction: TextInputAction.done,
-            prefixIcon: const Icon(Icons.lock_reset_rounded,
-                color: authGold, size: 20),
+            prefixIcon: const Icon(
+              Icons.lock_reset_rounded,
+              color: EngineRowingUI.neonLime,
+              size: 20,
+            ),
             onFieldSubmitted: (_) => _handleSignUp(),
             validator: (val) {
               if (val == null || val.isEmpty) return s.emptyPassword;
@@ -964,10 +979,12 @@ class _LoginPageState extends State<LoginPage> {
                 height: 20,
                 child: Checkbox(
                   value: _agreedToTerms,
-                  activeColor: authCyan,
-                  checkColor: authCardDark,
-                  side: BorderSide(
-                      color: authCyan.withOpacity(0.6), width: 1.5),
+                  activeColor: EngineRowingUI.neonLime,
+                  checkColor: EngineRowingUI.bgNavy,
+                  side: const BorderSide(
+                    color: EngineRowingUI.bgGridLine,
+                    width: 1.5,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(4),
                   ),
@@ -984,15 +1001,15 @@ class _LoginPageState extends State<LoginPage> {
                       children: [
                         TextSpan(
                           text: '${s.agreeToTerms} ',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
+                          style: const TextStyle(
+                            color: EngineRowingUI.textWhite,
                             fontSize: 13,
                           ),
                         ),
                         const TextSpan(
                           text: 'ⓘ',
                           style: TextStyle(
-                            color: authCyan,
+                            color: EngineRowingUI.neonLime,
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                           ),
@@ -1024,15 +1041,15 @@ class _LoginPageState extends State<LoginPage> {
         Expanded(
           child: Container(
             height: 1,
-            color: authCyan.withOpacity(0.25),
+            color: EngineRowingUI.bgGridLine,
           ),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Text(
             text,
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.6),
+            style: const TextStyle(
+              color: EngineRowingUI.labelSlate,
               fontSize: 12.5,
               fontWeight: FontWeight.w600,
             ),
@@ -1041,7 +1058,7 @@ class _LoginPageState extends State<LoginPage> {
         Expanded(
           child: Container(
             height: 1,
-            color: authCyan.withOpacity(0.25),
+            color: EngineRowingUI.bgGridLine,
           ),
         ),
       ],
@@ -1057,13 +1074,13 @@ class _LoginPageState extends State<LoginPage> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => _handleGoogleSignIn(context),
-        hoverColor: Colors.white.withOpacity(0.08),
+        hoverColor: EngineRowingUI.equationCardFill,
         child: Container(
           height: 48,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.08),
+            color: EngineRowingUI.equationCardFill,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: authCyan.withOpacity(0.35)),
+            border: Border.all(color: EngineRowingUI.bgGridLine),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -1073,7 +1090,7 @@ class _LoginPageState extends State<LoginPage> {
               Text(
                 s.continueWithGoogle,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: EngineRowingUI.textWhite,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.3,
@@ -1088,7 +1105,7 @@ class _LoginPageState extends State<LoginPage> {
 }
 
 // ============================================================================
-// عنصر الزر الرئيسي للشاشة (Gradient authBlueDeep -> authBlueMid)
+// عنصر الزر الرئيسي للشاشة
 // ============================================================================
 class _AuthMainButton extends StatelessWidget {
   final String title;
@@ -1106,15 +1123,11 @@ class _AuthMainButton extends StatelessWidget {
     return Container(
       height: 50,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [authBlueDeep, authBlueMid],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
+        color: EngineRowingUI.neonLime,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: authBlueMid.withOpacity(0.35),
+            color: EngineRowingUI.neonLime.withValues(alpha: 0.3),
             blurRadius: 14,
             offset: const Offset(0, 4),
           ),
@@ -1132,13 +1145,13 @@ class _AuthMainButton extends StatelessWidget {
                     height: 22,
                     child: CircularProgressIndicator(
                       strokeWidth: 2.4,
-                      valueColor: AlwaysStoppedAnimation<Color>(authGold),
+                      valueColor: AlwaysStoppedAnimation<Color>(EngineRowingUI.bgNavy),
                     ),
                   )
                 : Text(
                     title,
                     style: const TextStyle(
-                      color: authGold,
+                      color: EngineRowingUI.bgNavy,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.1,
@@ -1173,17 +1186,12 @@ class _AuthTabButton extends StatelessWidget {
         duration: const Duration(milliseconds: 220),
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          gradient: isActive
-              ? const LinearGradient(
-                  colors: [authBlueDeep, authBlueMid],
-                )
-              : null,
-          color: isActive ? null : Colors.transparent,
+          color: isActive ? EngineRowingUI.neonLime : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           boxShadow: isActive
               ? [
                   BoxShadow(
-                    color: authCyan.withOpacity(0.25),
+                    color: EngineRowingUI.neonLime.withValues(alpha: 0.25),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -1194,7 +1202,7 @@ class _AuthTabButton extends StatelessWidget {
           child: Text(
             title,
             style: TextStyle(
-              color: isActive ? authGold : Colors.white.withOpacity(0.65),
+              color: isActive ? EngineRowingUI.bgNavy : EngineRowingUI.labelSlate,
               fontSize: 14.5,
               fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
             ),
@@ -1227,12 +1235,12 @@ class _RoleChoiceChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
         decoration: BoxDecoration(
-          color: isSelected ? authBlueMid.withOpacity(0.8) : Colors.transparent,
+          color: isSelected ? EngineRowingUI.neonLime : EngineRowingUI.equationCardFill,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? authCyan : authCyan.withOpacity(0.2),
+            color: isSelected ? EngineRowingUI.neonLime : EngineRowingUI.bgGridLine,
           ),
         ),
         child: Row(
@@ -1241,13 +1249,13 @@ class _RoleChoiceChip extends StatelessWidget {
             Icon(
               icon,
               size: 16,
-              color: isSelected ? authGold : Colors.white60,
+              color: isSelected ? EngineRowingUI.bgNavy : EngineRowingUI.labelSlate,
             ),
             const SizedBox(width: 4),
             Text(
               title,
               style: TextStyle(
-                color: isSelected ? authGold : Colors.white70,
+                color: isSelected ? EngineRowingUI.bgNavy : EngineRowingUI.textWhite,
                 fontSize: 12.5,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
@@ -1348,20 +1356,20 @@ class _AuthFloatingTextFieldState extends State<_AuthFloatingTextField> {
             duration: const Duration(milliseconds: 220),
             height: 60,
             decoration: BoxDecoration(
-              color: authCardDark.withOpacity(0.55),
+              color: EngineRowingUI.equationCardFill,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: _errorText != null
-                    ? Colors.redAccent.withOpacity(0.8)
+                    ? Colors.redAccent
                     : _isFocused
-                        ? authCyan
-                        : authCyan.withOpacity(0.28),
-                width: _isFocused ? 1.6 : 1.0,
+                        ? EngineRowingUI.neonLime
+                        : EngineRowingUI.bgGridLine,
+                width: _isFocused ? 1.5 : 1.0,
               ),
               boxShadow: _isFocused
                   ? [
                       BoxShadow(
-                        color: authCyan.withOpacity(0.22),
+                        color: EngineRowingUI.neonLime.withValues(alpha: 0.18),
                         blurRadius: 10,
                         spreadRadius: 1,
                       ),
@@ -1390,8 +1398,8 @@ class _AuthFloatingTextFieldState extends State<_AuthFloatingTextField> {
                           curve: Curves.easeInOutCubic,
                           style: TextStyle(
                             color: isFloated
-                                ? (_isFocused ? authCyan : authGold)
-                                : Colors.white.withOpacity(0.50),
+                                ? (_isFocused ? EngineRowingUI.neonLime : EngineRowingUI.labelSlate)
+                                : EngineRowingUI.labelSlate,
                             fontSize: isFloated ? 11.5 : 15.0,
                             fontWeight: isFloated
                                 ? FontWeight.w700
@@ -1432,11 +1440,11 @@ class _AuthFloatingTextFieldState extends State<_AuthFloatingTextField> {
                       textInputAction: widget.textInputAction,
                       onFieldSubmitted: widget.onFieldSubmitted,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: EngineRowingUI.textWhite,
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
                       ),
-                      cursorColor: authCyan,
+                      cursorColor: EngineRowingUI.neonLime,
                       decoration: const InputDecoration(
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
@@ -1479,7 +1487,7 @@ class _AuthFloatingTextFieldState extends State<_AuthFloatingTextField> {
                         _obscureText
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined,
-                        color: _obscureText ? Colors.white60 : authCyan,
+                        color: _obscureText ? EngineRowingUI.labelSlate : EngineRowingUI.neonLime,
                         size: 20,
                       ),
                       onPressed: () {
@@ -1530,20 +1538,20 @@ class _AuthAlertBox extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: isError
-            ? Colors.redAccent.withOpacity(0.18)
-            : authCyan.withOpacity(0.18),
+            ? Colors.redAccent.withValues(alpha: 0.18)
+            : EngineRowingUI.neonLime.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: isError
-              ? Colors.redAccent.withOpacity(0.5)
-              : authCyan.withOpacity(0.5),
+              ? Colors.redAccent.withValues(alpha: 0.5)
+              : EngineRowingUI.neonLime.withValues(alpha: 0.5),
         ),
       ),
       child: Row(
         children: [
           Icon(
             isError ? Icons.error_outline_rounded : Icons.info_outline_rounded,
-            color: isError ? Colors.redAccent : authCyan,
+            color: isError ? Colors.redAccent : EngineRowingUI.neonLime,
             size: 20,
           ),
           const SizedBox(width: 10),
@@ -1551,7 +1559,7 @@ class _AuthAlertBox extends StatelessWidget {
             child: Text(
               message,
               style: TextStyle(
-                color: isError ? Colors.red.shade200 : Colors.white,
+                color: isError ? Colors.red.shade200 : EngineRowingUI.textWhite,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
@@ -1605,7 +1613,7 @@ class _GoogleLogoPainter extends CustomPainter {
     canvas.drawArc(rect, 3.927, 1.57, true, redPaint);
 
     // Hole center
-    final holePaint = Paint()..color = authCardDark;
+    final holePaint = Paint()..color = EngineRowingUI.equationCardFill;
     canvas.drawCircle(Offset(w / 2, h / 2), w * 0.32, holePaint);
 
     // Horizontal blue bar

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'app_strings.dart';
 import 'db.dart';
+import 'engine_rowing_ui.dart';
 import 'program_service.dart';
 import 'cycle_weekly_cycles_page.dart';
 
-const Color _navy = Color(0xFF0D3B66);
-const Color _sky = Color(0xFFE8F4FC);
-const Color _gold = Color(0xFFFFC93C);
+const Color _navy = EngineRowingUI.bgNavy;
+const Color _cardFill = EngineRowingUI.cardFill;
+const Color _gold = EngineRowingUI.neonLime;
+const Color _gridLine = EngineRowingUI.bgGridLine;
 
 /// المستوى 1: صفحة السيكلات لتاب Program (Cycles Page)
 /// - مخصصة للمدربين
@@ -127,9 +129,11 @@ class _ProgramTabState extends State<ProgramTab> {
       lastDate: DateTime(2035),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(
-            primary: _navy,
-            secondary: _gold,
+          colorScheme: const ColorScheme.dark(
+            primary: _gold,
+            onPrimary: _navy,
+            surface: _cardFill,
+            onSurface: EngineRowingUI.textWhite,
           ),
         ),
         child: child!,
@@ -165,29 +169,35 @@ class _ProgramTabState extends State<ProgramTab> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: _cardFill,
         title: Row(
           children: [
-            const Icon(Icons.comment_outlined, color: _navy),
+            const Icon(Icons.comment_outlined, color: _gold),
             const SizedBox(width: 8),
-            Text('${s.comment} - ${cycle.name}'),
+            Text(
+              '${s.comment} - ${cycle.name}',
+              style: const TextStyle(color: EngineRowingUI.textWhite),
+            ),
           ],
         ),
         content: TextField(
           controller: ctrl,
           maxLines: 4,
+          style: const TextStyle(color: EngineRowingUI.textWhite),
           decoration: const InputDecoration(
             hintText: 'اكتب تعليق أو ملاحظات عامة حول هذا السيكل...',
+            hintStyle: TextStyle(color: EngineRowingUI.labelSlate),
             border: OutlineInputBorder(),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(s.cancel),
+            child: Text(s.cancel, style: const TextStyle(color: EngineRowingUI.labelSlate)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: _navy, foregroundColor: Colors.white),
+                backgroundColor: _gold, foregroundColor: _navy),
             onPressed: () async {
               setState(() => cycle.comment = ctrl.text.trim());
               await ProgramService.updateProgramCycle(cycle);
@@ -209,30 +219,36 @@ class _ProgramTabState extends State<ProgramTab> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: _cardFill,
         title: Row(
           children: [
             Icon(isPhysio ? Icons.health_and_safety_outlined : Icons.engineering_outlined,
-                color: _navy),
+                color: _gold),
             const SizedBox(width: 8),
-            Text('$title - ${cycle.name}'),
+            Text(
+              '$title - ${cycle.name}',
+              style: const TextStyle(color: EngineRowingUI.textWhite),
+            ),
           ],
         ),
         content: TextField(
           controller: ctrl,
           maxLines: 4,
+          style: const TextStyle(color: EngineRowingUI.textWhite),
           decoration: InputDecoration(
             hintText: 'اكتب تفاصيل $title...',
+            hintStyle: const TextStyle(color: EngineRowingUI.labelSlate),
             border: const OutlineInputBorder(),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(s.cancel),
+            child: Text(s.cancel, style: const TextStyle(color: EngineRowingUI.labelSlate)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: _navy, foregroundColor: Colors.white),
+                backgroundColor: _gold, foregroundColor: _navy),
             onPressed: () async {
               if (isPhysio) {
                 cycle.notesPhysio = ctrl.text.trim();
@@ -266,23 +282,32 @@ class _ProgramTabState extends State<ProgramTab> {
     final s = AppStrings.of(context);
 
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: _navy));
+      return const Center(child: CircularProgressIndicator(color: _gold));
     }
 
-    return RefreshIndicator(
-      onRefresh: _loadCycles,
+    return Container(
       color: _navy,
-      child: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        children: [
-          // ── شريط رأس تاب Program مع زرار (+) لإضافة سيكل جديد ──
-          _buildHeaderBar(s),
-          const SizedBox(height: 18),
+      child: RefreshIndicator(
+        onRefresh: _loadCycles,
+        color: _gold,
+        backgroundColor: _cardFill,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 850),
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              children: [
+                // ── شريط رأس تاب Program مع زرار (+) لإضافة سيكل جديد ──
+                _buildHeaderBar(s),
+                const SizedBox(height: 18),
 
-          // ── كروت السيكلات المجسمة ──
-          ..._cycles.map((c) => _buildCyclePanel(s, c)),
-          const SizedBox(height: 24),
-        ],
+                // ── كروت السيكلات المجسمة ──
+                ..._cycles.map((c) => _buildCyclePanel(s, c)),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -292,14 +317,14 @@ class _ProgramTabState extends State<ProgramTab> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade300, width: 1.2),
-        boxShadow: [
+        color: _cardFill,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _gridLine, width: 1.2),
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: Colors.black38,
             blurRadius: 14,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -310,11 +335,12 @@ class _ProgramTabState extends State<ProgramTab> {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: _navy,
-              borderRadius: BorderRadius.circular(14),
+              color: EngineRowingUI.equationCardFill,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _gridLine),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
               child: Image.asset(
                 'assets/images/program_tab_icon.png',
                 fit: BoxFit.cover,
@@ -339,7 +365,7 @@ class _ProgramTabState extends State<ProgramTab> {
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: _navy,
+                        color: EngineRowingUI.textWhite,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -347,7 +373,7 @@ class _ProgramTabState extends State<ProgramTab> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: _navy.withValues(alpha: 0.08),
+                        color: _gold.withAlpha(30),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Text(
@@ -355,15 +381,15 @@ class _ProgramTabState extends State<ProgramTab> {
                         style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: _navy),
+                            color: _gold),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 3),
-                Text(
+                const Text(
                   'تخطيط السيكلات والدورات التدريبية وحسابات الزونات الستة والتستات',
-                  style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 12.5, color: EngineRowingUI.labelSlate),
                 ),
               ],
             ),
@@ -372,14 +398,14 @@ class _ProgramTabState extends State<ProgramTab> {
           // ── زرار علامة (+) لإضافة تاب سيكل كامل جديد ──
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: _navy,
-              foregroundColor: _gold,
+              backgroundColor: _gold,
+              foregroundColor: _navy,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
               elevation: 2,
             ),
-            icon: const Icon(Icons.add_circle, color: _gold, size: 20),
+            icon: const Icon(Icons.add_circle, color: _navy, size: 20),
             label: Text(
               s.addCycle,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
@@ -408,14 +434,14 @@ class _ProgramTabState extends State<ProgramTab> {
     return Container(
       margin: const EdgeInsets.only(bottom: 22),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _navy.withValues(alpha: 0.25), width: 1.4),
-        boxShadow: [
+        color: _cardFill,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _gridLine, width: 1.2),
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.10),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: Colors.black45,
+            blurRadius: 18,
+            offset: Offset(0, 6),
           ),
         ],
       ),
@@ -426,8 +452,9 @@ class _ProgramTabState extends State<ProgramTab> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             decoration: const BoxDecoration(
-              color: _navy,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              color: EngineRowingUI.equationCardFill,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
+              border: Border(bottom: BorderSide(color: _gridLine, width: 1.0)),
             ),
             child: Row(
               children: [
@@ -445,7 +472,7 @@ class _ProgramTabState extends State<ProgramTab> {
                   child: Text(
                     cycle.name,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: EngineRowingUI.textWhite,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.5,
@@ -460,7 +487,7 @@ class _ProgramTabState extends State<ProgramTab> {
                     cycle.comment.isNotEmpty
                         ? Icons.comment_rounded
                         : Icons.mode_comment_outlined,
-                    color: cycle.comment.isNotEmpty ? _gold : Colors.white70,
+                    color: cycle.comment.isNotEmpty ? _gold : EngineRowingUI.labelSlate,
                     size: 22,
                   ),
                   onPressed: () => _showCommentDialog(cycle),
@@ -472,7 +499,7 @@ class _ProgramTabState extends State<ProgramTab> {
                   IconButton(
                     tooltip: s.deleteCycle,
                     icon: const Icon(Icons.delete_outline_rounded,
-                        color: Colors.white70, size: 22),
+                        color: Colors.redAccent, size: 22),
                     onPressed: () => _deleteCycle(cycle),
                   ),
               ],
@@ -497,26 +524,29 @@ class _ProgramTabState extends State<ProgramTab> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: _sky,
+                          color: EngineRowingUI.equationCardFill,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                              color: _navy.withValues(alpha: 0.25)),
+                          border: Border.all(color: _gridLine),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(Icons.date_range_rounded,
-                                size: 18, color: _navy),
+                                size: 18, color: _gold),
                             const SizedBox(width: 8),
-                            Text(
-                              '${cycle.startDate} ➔ ${cycle.endDate}',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12.5,
-                                  color: _navy),
+                            Directionality(
+                              textDirection: TextDirection.ltr,
+                              child: Text(
+                                '${RowingNumberFormatter.toEnglishDigits(cycle.startDate)}  ➔  ${RowingNumberFormatter.toEnglishDigits(cycle.endDate)}',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12.5,
+                                    fontFeatures: [FontFeature.tabularFigures()],
+                                    color: EngineRowingUI.textWhite),
+                              ),
                             ),
                             const SizedBox(width: 6),
-                            const Icon(Icons.edit, size: 14, color: _navy),
+                            const Icon(Icons.edit, size: 14, color: _gold),
                           ],
                         ),
                       ),
@@ -527,22 +557,26 @@ class _ProgramTabState extends State<ProgramTab> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: Colors.green.shade50,
+                        color: EngineRowingUI.equationCardFill,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.green.shade300),
+                        border: Border.all(color: _gold.withAlpha(90)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.auto_awesome_rounded,
-                              size: 16, color: Colors.green.shade800),
+                          const Icon(Icons.auto_awesome_rounded,
+                              size: 16, color: _gold),
                           const SizedBox(width: 6),
-                          Text(
-                            '${s.weeksCountCalculated}: ${cycle.totalWeeks} أسابيع (تلقائي)',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green.shade900,
+                          Directionality(
+                            textDirection: TextDirection.ltr,
+                            child: Text(
+                              '${s.weeksCountCalculated}: ${RowingNumberFormatter.toEnglishDigits(cycle.totalWeeks.toString())} wks',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                fontFeatures: [FontFeature.tabularFigures()],
+                                color: _gold,
+                              ),
                             ),
                           ),
                         ],
@@ -555,23 +589,27 @@ class _ProgramTabState extends State<ProgramTab> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: EngineRowingUI.equationCardFill,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.grey.shade300),
+                        border: Border.all(color: _gridLine),
                       ),
                       child: Row(
                         children: [
                           const Icon(Icons.place_outlined,
-                              size: 18, color: _navy),
+                              size: 18, color: _gold),
                           const SizedBox(width: 6),
                           Expanded(
                             child: TextFormField(
                               initialValue: cycle.location,
                               style: const TextStyle(
-                                  fontSize: 12, fontWeight: FontWeight.w600),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: EngineRowingUI.textWhite),
                               decoration: InputDecoration(
                                 labelText: s.trainingLocation,
-                                labelStyle: const TextStyle(fontSize: 11),
+                                labelStyle: const TextStyle(
+                                    fontSize: 11,
+                                    color: EngineRowingUI.labelSlate),
                                 border: InputBorder.none,
                                 isDense: true,
                               ),
@@ -590,19 +628,25 @@ class _ProgramTabState extends State<ProgramTab> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 8),
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
+                        color: EngineRowingUI.equationCardFill,
                         borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: _gridLine.withAlpha(60)),
                       ),
-                      child: Text(
-                        'أنشئ: $createdDateStr • عُدل: $updatedDateStr',
-                        style: TextStyle(
-                            fontSize: 11, color: Colors.grey.shade700),
+                      child: Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Text(
+                          'Created: ${RowingNumberFormatter.toEnglishDigits(createdDateStr)} • Updated: ${RowingNumberFormatter.toEnglishDigits(updatedDateStr)}',
+                          style: const TextStyle(
+                              fontSize: 11,
+                              fontFeatures: [FontFeature.tabularFigures()],
+                              color: EngineRowingUI.captionGrey),
+                        ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Divider(height: 1),
+                const Divider(height: 1, color: _gridLine),
                 const SizedBox(height: 14),
 
                 // ── 2. أربع خانات التستات الأربعة (500m, 750m, 1500m, 3000m) مع Checkbox ──
@@ -611,7 +655,7 @@ class _ProgramTabState extends State<ProgramTab> {
                   style: const TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.bold,
-                      color: _navy),
+                      color: _gold),
                 ),
                 const SizedBox(height: 8),
                 Wrap(
@@ -634,14 +678,12 @@ class _ProgramTabState extends State<ProgramTab> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 6),
                       decoration: BoxDecoration(
-                        color: testItem.isCompleted
-                            ? Colors.green.shade50
-                            : const Color(0xFFFBFDFE),
+                        color: EngineRowingUI.equationCardFill,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: testItem.isCompleted
-                              ? Colors.green.shade400
-                              : Colors.grey.shade300,
+                              ? _gold
+                              : _gridLine,
                         ),
                       ),
                       child: Column(
@@ -654,7 +696,9 @@ class _ProgramTabState extends State<ProgramTab> {
                                 height: 20,
                                 child: Checkbox(
                                   value: testItem.isCompleted,
-                                  activeColor: Colors.green.shade700,
+                                  activeColor: _gold,
+                                  checkColor: _navy,
+                                  side: const BorderSide(color: EngineRowingUI.labelSlate),
                                   onChanged: (val) {
                                     setState(() {
                                       testItem.isCompleted = val ?? false;
@@ -665,14 +709,17 @@ class _ProgramTabState extends State<ProgramTab> {
                               ),
                               const SizedBox(width: 4),
                               Expanded(
-                                child: Text(
-                                  testType,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 11.5,
-                                    color: testItem.isCompleted
-                                        ? Colors.green.shade900
-                                        : _navy,
+                                child: Directionality(
+                                  textDirection: TextDirection.ltr,
+                                  child: Text(
+                                    testType,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 11.5,
+                                      color: testItem.isCompleted
+                                          ? _gold
+                                          : EngineRowingUI.textWhite,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -680,21 +727,43 @@ class _ProgramTabState extends State<ProgramTab> {
                           ),
                           const SizedBox(height: 4),
                           // إدخال قيمة التست المستهدفة
-                          TextFormField(
-                            initialValue: testItem.targetValue,
-                            style: const TextStyle(fontSize: 11),
-                            decoration: const InputDecoration(
-                              hintText: 'الزمن أو الواط المستهدف...',
-                              hintStyle: TextStyle(fontSize: 10),
-                              isDense: true,
-                              contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 4),
-                              border: OutlineInputBorder(),
+                          Directionality(
+                            textDirection: TextDirection.ltr,
+                            child: TextFormField(
+                              initialValue: testItem.targetValue,
+                              textAlign: TextAlign.left,
+                              inputFormatters: [
+                                RowingNumberFormatter.englishDigitsInputFormatter,
+                              ],
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: EngineRowingUI.textWhite,
+                                fontFeatures: [FontFeature.tabularFigures()],
+                              ),
+                              decoration: const InputDecoration(
+                                hintText: 'Target split or W...',
+                                hintStyle: TextStyle(
+                                    fontSize: 10,
+                                    color: EngineRowingUI.captionGrey),
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 4),
+                                border: OutlineInputBorder(
+                                  borderSide: BorderSide(color: _gridLine),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: _gridLine),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: _gold),
+                                ),
+                              ),
+                              onChanged: (val) {
+                                testItem.targetValue =
+                                    RowingNumberFormatter.toEnglishDigits(val.trim());
+                                ProgramService.updateProgramCycle(cycle);
+                              },
                             ),
-                            onChanged: (val) {
-                              testItem.targetValue = val.trim();
-                              ProgramService.updateProgramCycle(cycle);
-                            },
                           ),
                         ],
                       ),
@@ -718,7 +787,7 @@ class _ProgramTabState extends State<ProgramTab> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: EngineRowingUI.textWhite,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -739,12 +808,12 @@ class _ProgramTabState extends State<ProgramTab> {
                                         horizontal: 4, vertical: 8),
                                     decoration: BoxDecoration(
                                       color: isZero
-                                          ? Colors.grey.shade100
-                                          : color.withValues(alpha: 0.12),
+                                          ? EngineRowingUI.equationCardFill.withAlpha(120)
+                                          : color.withAlpha(35),
                                       borderRadius: BorderRadius.circular(8),
                                       border: Border.all(
                                         color: isZero
-                                            ? Colors.grey.shade300
+                                            ? _gridLine
                                             : color,
                                         width: isZero ? 1 : 1.5,
                                       ),
@@ -758,7 +827,7 @@ class _ProgramTabState extends State<ProgramTab> {
                                             fontSize: 10.5,
                                             fontWeight: FontWeight.bold,
                                             color: isZero
-                                                ? Colors.grey.shade400
+                                                ? EngineRowingUI.captionGrey
                                                 : color,
                                           ),
                                         ),
@@ -766,14 +835,18 @@ class _ProgramTabState extends State<ProgramTab> {
                                         Text(
                                           isZero
                                               ? '-'
-                                              : ProgramService
-                                                  .formatDurationDetailed(secs),
+                                              : RowingNumberFormatter.toEnglishDigits(
+                                                  ProgramService
+                                                      .formatDurationDetailed(secs)),
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.bold,
+                                            fontFeatures: const [
+                                              FontFeature.tabularFigures()
+                                            ],
                                             color: isZero
-                                                ? Colors.grey.shade400
-                                                : Colors.black87,
+                                                ? EngineRowingUI.captionGrey
+                                                : EngineRowingUI.textWhite,
                                           ),
                                         ),
                                       ],
@@ -794,10 +867,10 @@ class _ProgramTabState extends State<ProgramTab> {
                       children: [
                         Text(
                           s.zoneParticipationTitle,
-                          style: TextStyle(
+                          style: const TextStyle(
                               fontSize: 10.5,
                               fontWeight: FontWeight.bold,
-                              color: Colors.grey.shade700),
+                              color: EngineRowingUI.labelSlate),
                         ),
                         const SizedBox(height: 6),
                         Container(
@@ -805,41 +878,44 @@ class _ProgramTabState extends State<ProgramTab> {
                           height: 64,
                           padding: const EdgeInsets.all(5),
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade50,
+                            color: EngineRowingUI.equationCardFill,
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: Colors.grey.shade300),
+                            border: Border.all(color: _gridLine),
                           ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: kProgramZones.map((z) {
-                              final secs = zoneTotals[z] ?? 0;
-                              final fraction = totalAllSecs > 0
-                                  ? (secs / totalAllSecs).clamp(0.08, 1.0)
-                                  : 0.08;
-                              final color = kZoneColors[z] ?? _navy;
+                          child: Directionality(
+                            textDirection: TextDirection.ltr,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: kProgramZones.map((z) {
+                                final secs = zoneTotals[z] ?? 0;
+                                final fraction = totalAllSecs > 0
+                                    ? (secs / totalAllSecs).clamp(0.08, 1.0)
+                                    : 0.08;
+                                final color = kZoneColors[z] ?? _navy;
 
-                              return Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 1.5),
-                                  child: Tooltip(
-                                    message:
-                                        '$z: ${totalAllSecs > 0 ? ((secs / totalAllSecs) * 100).toStringAsFixed(1) : 0}%',
-                                    child: Container(
-                                      height: 52 * fraction,
-                                      decoration: BoxDecoration(
-                                        color: secs > 0
-                                            ? color
-                                            : Colors.grey.shade300,
-                                        borderRadius:
-                                            const BorderRadius.vertical(
-                                                top: Radius.circular(3)),
+                                return Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 1.5),
+                                    child: Tooltip(
+                                      message:
+                                          '$z: ${totalAllSecs > 0 ? ((secs / totalAllSecs) * 100).toStringAsFixed(1) : 0}%',
+                                      child: Container(
+                                        height: 52 * fraction,
+                                        decoration: BoxDecoration(
+                                          color: secs > 0
+                                              ? color
+                                              : _gridLine,
+                                          borderRadius:
+                                              const BorderRadius.vertical(
+                                                  top: Radius.circular(3)),
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              );
-                            }).toList(),
+                                );
+                              }).toList(),
+                            ),
                           ),
                         ),
                       ],
@@ -852,8 +928,8 @@ class _ProgramTabState extends State<ProgramTab> {
                 Center(
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _navy,
-                      foregroundColor: _gold,
+                      backgroundColor: _gold,
+                      foregroundColor: _navy,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 36, vertical: 12),
                       shape: RoundedRectangleBorder(
@@ -861,7 +937,7 @@ class _ProgramTabState extends State<ProgramTab> {
                       elevation: 2,
                     ),
                     icon: const Icon(Icons.meeting_room_rounded,
-                        color: _gold, size: 20),
+                        color: _navy, size: 20),
                     label: Text(
                       '${s.enterCycle} (${cycle.name})',
                       style: const TextStyle(
@@ -871,7 +947,7 @@ class _ProgramTabState extends State<ProgramTab> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Divider(height: 1),
+                const Divider(height: 1, color: _gridLine),
                 const SizedBox(height: 12),
 
                 // ── 5. أسفل تاب السيكل: ملاحظة فسيولوجية (+) وملاحظة فنية (+) ──
@@ -882,14 +958,14 @@ class _ProgramTabState extends State<ProgramTab> {
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF9FBFC),
+                          color: EngineRowingUI.equationCardFill,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.grey.shade200),
+                          border: Border.all(color: _gridLine),
                         ),
                         child: Row(
                           children: [
                             const Icon(Icons.health_and_safety_outlined,
-                                size: 18, color: Colors.teal),
+                                size: 18, color: _gold),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
@@ -901,14 +977,14 @@ class _ProgramTabState extends State<ProgramTab> {
                                 style: TextStyle(
                                   fontSize: 11.5,
                                   color: cycle.notesPhysio.isNotEmpty
-                                      ? Colors.black87
-                                      : Colors.grey.shade500,
+                                      ? EngineRowingUI.textWhite
+                                      : EngineRowingUI.labelSlate,
                                 ),
                               ),
                             ),
                             IconButton(
                               icon: const Icon(Icons.add_circle_outline,
-                                  size: 18, color: _navy),
+                                  size: 18, color: _gold),
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
                               onPressed: () => _showNoteDialog(cycle, true),
@@ -924,14 +1000,14 @@ class _ProgramTabState extends State<ProgramTab> {
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF9FBFC),
+                          color: EngineRowingUI.equationCardFill,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.grey.shade200),
+                          border: Border.all(color: _gridLine),
                         ),
                         child: Row(
                           children: [
                             const Icon(Icons.engineering_outlined,
-                                size: 18, color: Colors.blueGrey),
+                                size: 18, color: _gold),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
@@ -943,14 +1019,14 @@ class _ProgramTabState extends State<ProgramTab> {
                                 style: TextStyle(
                                   fontSize: 11.5,
                                   color: cycle.notesTech.isNotEmpty
-                                      ? Colors.black87
-                                      : Colors.grey.shade500,
+                                      ? EngineRowingUI.textWhite
+                                      : EngineRowingUI.labelSlate,
                                 ),
                               ),
                             ),
                             IconButton(
                               icon: const Icon(Icons.add_circle_outline,
-                                  size: 18, color: _navy),
+                                  size: 18, color: _gold),
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
                               onPressed: () => _showNoteDialog(cycle, false),

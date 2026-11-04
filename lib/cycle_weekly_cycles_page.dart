@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'app_strings.dart';
 import 'db.dart';
 import 'day_sessions_page.dart';
+import 'engine_rowing_ui.dart';
 import 'program_service.dart';
 
-const Color _navy = Color(0xFF0D3B66);
-const Color _sky = Color(0xFFE8F4FC);
-const Color _gold = Color(0xFFFFC93C);
+const Color _navy = EngineRowingUI.bgNavy;
+const Color _cardFill = EngineRowingUI.cardFill;
+const Color _gold = EngineRowingUI.neonLime;
+const Color _gridLine = EngineRowingUI.bgGridLine;
 
 /// المستوى 2: صفحة الدورات التدريبية الأسبوعية (Basic & Secondary Weekly Cycles)
 /// تنقسم إلى:
@@ -92,29 +94,32 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: _cardFill,
         title: Row(
           children: [
-            const Icon(Icons.comment_outlined, color: _navy),
+            const Icon(Icons.comment_outlined, color: _gold),
             const SizedBox(width: 8),
-            Text(title),
+            Text(title, style: const TextStyle(color: EngineRowingUI.textWhite)),
           ],
         ),
         content: TextField(
           controller: ctrl,
           maxLines: 4,
+          style: const TextStyle(color: EngineRowingUI.textWhite),
           decoration: const InputDecoration(
             hintText: 'اكتب التعليق هنا...',
+            hintStyle: TextStyle(color: EngineRowingUI.labelSlate),
             border: OutlineInputBorder(),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(s.cancel),
+            child: Text(s.cancel, style: const TextStyle(color: EngineRowingUI.labelSlate)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: _navy, foregroundColor: Colors.white),
+                backgroundColor: _gold, foregroundColor: _navy),
             onPressed: () {
               onSave(ctrl.text.trim());
               Navigator.pop(ctx);
@@ -133,95 +138,103 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
     final isRepsValid = _cycle.isRepsCountValid;
 
     return Scaffold(
+      backgroundColor: _navy,
       appBar: AppBar(
+        backgroundColor: _navy,
+        foregroundColor: EngineRowingUI.textWhite,
         title: Text('${_cycle.name} - ${s.trainingCycles}'),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: _navy))
-          : ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              children: [
-                // ── شريط التنبيه والتحقق من مجموع تكرارات الدورتين ──
-                if (!isRepsValid)
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.red.shade300, width: 1.2),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.warning_amber_rounded,
-                            color: Colors.redAccent, size: 24),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            '${s.repsMismatchWarning}\n(مجموع التكرارات الحالي: ${_cycle.sumConfiguredReps} • المطلوب: $totalWeeks أسابيع بناءً على تواريخ السيكل)',
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              color: Colors.red.shade900,
-                              fontWeight: FontWeight.bold,
-                              height: 1.3,
-                            ),
-                          ),
+          ? const Center(child: CircularProgressIndicator(color: _gold))
+          : Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 850),
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  children: [
+                    // ── شريط التنبيه والتحقق من مجموع تكرارات الدورتين ──
+                    if (!isRepsValid)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF280B14),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFF5252), width: 1.2),
                         ),
-                      ],
+                        child: Row(
+                          children: [
+                            const Icon(Icons.warning_amber_rounded,
+                                color: Color(0xFFFF5252), size: 24),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                '${s.repsMismatchWarning}\n(مجموع التكرارات الحالي: ${_cycle.sumConfiguredReps} • المطلوب: $totalWeeks أسابيع بناءً على تواريخ السيكل)',
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  color: EngineRowingUI.textWhite,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    // ════════════════════════════════════════════════════════════
+                    // القسم الأول: الدورة التدريبية الأسبوعية الأساسية
+                    // ════════════════════════════════════════════════════════════
+                    _buildCycleSectionHeader(
+                      title: s.basicWeeklyCycleTitle,
+                      cycleType: 'basic',
+                      repsValue: _cycle.basicReps,
+                      onRepsChanged: (val) {
+                        setState(() => _cycle.basicReps = val);
+                        _updateCycleData();
+                      },
                     ),
-                  ),
+                    const SizedBox(height: 12),
 
-                // ════════════════════════════════════════════════════════════
-                // القسم الأول: الدورة التدريبية الأسبوعية الأساسية
-                // ════════════════════════════════════════════════════════════
-                _buildCycleSectionHeader(
-                  title: s.basicWeeklyCycleTitle,
-                  cycleType: 'basic',
-                  repsValue: _cycle.basicReps,
-                  onRepsChanged: (val) {
-                    setState(() => _cycle.basicReps = val);
-                    _updateCycleData();
-                  },
+                    // لوحات أيام الأسبوع السبعة للدورة الأساسية
+                    ...List.generate(7, (day) {
+                      return _buildDayPanel(
+                        dayOfWeek: day,
+                        cycleType: 'basic',
+                        repsMultiplier: _cycle.basicReps,
+                      );
+                    }),
+
+                    const SizedBox(height: 24),
+                    const Divider(thickness: 1.5, color: _gridLine),
+                    const SizedBox(height: 16),
+
+                    // ════════════════════════════════════════════════════════════
+                    // القسم الثاني: الدورة التدريبية الأسبوعية الفرعية
+                    // ════════════════════════════════════════════════════════════
+                    _buildCycleSectionHeader(
+                      title: s.secondaryWeeklyCycleTitle,
+                      cycleType: 'secondary',
+                      repsValue: _cycle.secondaryReps,
+                      onRepsChanged: (val) {
+                        setState(() => _cycle.secondaryReps = val);
+                        _updateCycleData();
+                      },
+                    ),
+                    const SizedBox(height: 12),
+
+                    // لوحات أيام الأسبوع السبعة للدورة الفرعية
+                    ...List.generate(7, (day) {
+                      return _buildDayPanel(
+                        dayOfWeek: day,
+                        cycleType: 'secondary',
+                        repsMultiplier: _cycle.secondaryReps,
+                      );
+                    }),
+                    const SizedBox(height: 30),
+                  ],
                 ),
-                const SizedBox(height: 12),
-
-                // لوحات أيام الأسبوع السبعة للدورة الأساسية
-                ...List.generate(7, (day) {
-                  return _buildDayPanel(
-                    dayOfWeek: day,
-                    cycleType: 'basic',
-                    repsMultiplier: _cycle.basicReps,
-                  );
-                }),
-
-                const SizedBox(height: 24),
-                const Divider(thickness: 2),
-                const SizedBox(height: 16),
-
-                // ════════════════════════════════════════════════════════════
-                // القسم الثاني: الدورة التدريبية الأسبوعية الفرعية
-                // ════════════════════════════════════════════════════════════
-                _buildCycleSectionHeader(
-                  title: s.secondaryWeeklyCycleTitle,
-                  cycleType: 'secondary',
-                  repsValue: _cycle.secondaryReps,
-                  onRepsChanged: (val) {
-                    setState(() => _cycle.secondaryReps = val);
-                    _updateCycleData();
-                  },
-                ),
-                const SizedBox(height: 12),
-
-                // لوحات أيام الأسبوع السبعة للدورة الفرعية
-                ...List.generate(7, (day) {
-                  return _buildDayPanel(
-                    dayOfWeek: day,
-                    cycleType: 'secondary',
-                    repsMultiplier: _cycle.secondaryReps,
-                  );
-                }),
-                const SizedBox(height: 30),
-              ],
+              ),
             ),
     );
   }
@@ -239,13 +252,14 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isBasic ? _navy : const Color(0xFF164B7A),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
+        color: _cardFill,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _gridLine, width: 1.2),
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
+            color: Colors.black26,
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -257,7 +271,7 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: _gold.withValues(alpha: 0.2),
+                  color: _gold.withAlpha(35),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -271,7 +285,7 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
                 child: Text(
                   title,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: EngineRowingUI.textWhite,
                     fontSize: 16.5,
                     fontWeight: FontWeight.bold,
                   ),
@@ -291,30 +305,39 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
                 width: 190,
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: EngineRowingUI.equationCardFill,
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: _gridLine),
                 ),
                 child: Row(
                   children: [
-                    Text(
+                    const Text(
                       'التكرارات:',
                       style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade800),
+                          color: EngineRowingUI.labelSlate),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<int>(
                           value: repsValue.clamp(1, 12),
+                          dropdownColor: _cardFill,
                           isDense: true,
                           items: List.generate(12, (i) => i + 1).map((val) {
                             return DropdownMenuItem(
                               value: val,
-                              child: Text('$val دورات',
+                              child: Directionality(
+                                textDirection: TextDirection.ltr,
+                                child: Text(
+                                  '${RowingNumberFormatter.toEnglishDigits(val.toString())} cycles',
                                   style: const TextStyle(
-                                      fontWeight: FontWeight.bold, fontSize: 13)),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                      color: EngineRowingUI.textWhite),
+                                ),
+                              ),
                             );
                           }).toList(),
                           onChanged: (val) {
@@ -332,19 +355,25 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
                 width: 250,
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: EngineRowingUI.equationCardFill,
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: _gridLine),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.place_outlined, size: 18, color: _navy),
+                    const Icon(Icons.place_outlined, size: 18, color: _gold),
                     const SizedBox(width: 6),
                     Expanded(
                       child: TextFormField(
                         initialValue: _cycle.location,
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: EngineRowingUI.textWhite),
                         decoration: InputDecoration(
                           hintText: s.trainingLocationHint,
+                          hintStyle: const TextStyle(
+                              fontSize: 12, color: EngineRowingUI.captionGrey),
                           border: InputBorder.none,
                           isDense: true,
                           contentPadding: EdgeInsets.zero,
@@ -395,14 +424,14 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade300, width: 1.2),
-        boxShadow: [
+        color: _cardFill,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _gridLine, width: 1.2),
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
+            color: Colors.black26,
             blurRadius: 14,
-            offset: const Offset(0, 5),
+            offset: Offset(0, 5),
           ),
         ],
       ),
@@ -412,10 +441,10 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
           // ── شريط رأس لوحة اليوم + زر (دخول) ──
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F3254),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(17)),
+            decoration: const BoxDecoration(
+              color: EngineRowingUI.equationCardFill,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
+              border: Border(bottom: BorderSide(color: _gridLine, width: 1.0)),
             ),
             child: Row(
               children: [
@@ -435,7 +464,7 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
                       Text(
                         dayName,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: EngineRowingUI.textWhite,
                           fontSize: 16.5,
                           fontWeight: FontWeight.bold,
                         ),
@@ -445,8 +474,9 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
+                          color: _navy,
                           borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: _gridLine),
                         ),
                         child: Text(
                           '$sessionCount ${sessionCount == 1 ? (s.isArabic ? "حصة" : "session") : (s.isArabic ? "حصص" : "sessions")}',
@@ -484,7 +514,7 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
                 // أيقونة التعليق
                 IconButton(
                   icon: const Icon(Icons.comment_outlined,
-                      color: Colors.white70, size: 20),
+                      color: EngineRowingUI.labelSlate, size: 20),
                   onPressed: () => _showCommentDialog(
                     'تعليق $dayName ($cycleType)',
                     '',
@@ -508,71 +538,78 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
                         '${s.dayDatesInCycle} (${dates.length}):',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade700,
+                          color: EngineRowingUI.labelSlate,
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: dates.map((date) {
-                          final isPast = date.isBefore(
-                              DateTime(today.year, today.month, today.day));
-                          final isToday = date.year == today.year &&
-                              date.month == today.month &&
-                              date.day == today.day;
+                      child: Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: dates.map((date) {
+                            final isPast = date.isBefore(
+                                DateTime(today.year, today.month, today.day));
+                            final isToday = date.year == today.year &&
+                                date.month == today.month &&
+                                date.day == today.day;
 
-                          return Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: isPast
-                                  ? Colors.grey.shade200
-                                  : (isToday ? _gold.withValues(alpha: 0.3) : _sky),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
                                 color: isPast
-                                    ? Colors.grey.shade400
-                                    : (isToday ? _navy : _navy.withValues(alpha: 0.3)),
-                                width: isToday ? 1.5 : 1,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  dstr(date),
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: isToday
-                                        ? FontWeight.bold
-                                        : FontWeight.w600,
-                                    color: isPast
-                                        ? Colors.grey.shade600
-                                        : _navy,
-                                    decoration: isPast
-                                        ? TextDecoration.lineThrough
-                                        : null,
-                                  ),
+                                    ? EngineRowingUI.equationCardFill.withAlpha(90)
+                                    : (isToday
+                                        ? _gold.withAlpha(35)
+                                        : EngineRowingUI.equationCardFill),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: isPast
+                                      ? _gridLine
+                                      : (isToday ? _gold : _gridLine),
+                                  width: isToday ? 1.5 : 1,
                                 ),
-                                if (isPast) ...[
-                                  const SizedBox(width: 4),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
                                   Text(
-                                    '(منقضي)',
+                                    RowingNumberFormatter.toEnglishDigits(dstr(date)),
                                     style: TextStyle(
-                                        fontSize: 9.5,
-                                        color: Colors.grey.shade600),
+                                      fontSize: 11,
+                                      fontWeight: isToday
+                                          ? FontWeight.bold
+                                          : FontWeight.w600,
+                                      color: isPast
+                                          ? EngineRowingUI.captionGrey
+                                          : (isToday
+                                              ? _gold
+                                              : EngineRowingUI.textWhite),
+                                      decoration: isPast
+                                          ? TextDecoration.lineThrough
+                                          : null,
+                                    ),
                                   ),
+                                  if (isPast) ...[
+                                    const SizedBox(width: 4),
+                                    const Text(
+                                      '(Past)',
+                                      style: TextStyle(
+                                          fontSize: 9.5,
+                                          color: EngineRowingUI.captionGrey),
+                                    ),
+                                  ],
                                 ],
-                              ],
-                            ),
-                          );
-                        }).toList(),
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
                   ],
@@ -594,7 +631,7 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
                             style: TextStyle(
                               fontSize: 11.5,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: EngineRowingUI.textWhite,
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -614,13 +651,13 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
                                         horizontal: 3, vertical: 6),
                                     decoration: BoxDecoration(
                                       color: isZero
-                                          ? Colors.grey.shade100
-                                          : color.withValues(alpha: 0.1),
+                                          ? EngineRowingUI.equationCardFill.withAlpha(120)
+                                          : color.withAlpha(35),
                                       borderRadius: BorderRadius.circular(6),
                                       border: Border.all(
                                         color: isZero
-                                            ? Colors.grey.shade300
-                                            : color.withValues(alpha: 0.7),
+                                            ? _gridLine
+                                            : color,
                                       ),
                                     ),
                                     child: Column(
@@ -632,7 +669,7 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
                                             fontSize: 9.5,
                                             fontWeight: FontWeight.bold,
                                             color: isZero
-                                                ? Colors.grey.shade400
+                                                ? EngineRowingUI.captionGrey
                                                 : color,
                                           ),
                                         ),
@@ -640,14 +677,18 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
                                         Text(
                                           isZero
                                               ? '-'
-                                              : ProgramService
-                                                  .formatDurationDetailed(secs),
+                                              : RowingNumberFormatter.toEnglishDigits(
+                                                  ProgramService
+                                                      .formatDurationDetailed(secs)),
                                           style: TextStyle(
                                             fontSize: 9.5,
                                             fontWeight: FontWeight.bold,
+                                            fontFeatures: const [
+                                              FontFeature.tabularFigures()
+                                            ],
                                             color: isZero
-                                                ? Colors.grey.shade400
-                                                : Colors.black87,
+                                                ? EngineRowingUI.captionGrey
+                                                : EngineRowingUI.textWhite,
                                           ),
                                         ),
                                       ],
@@ -668,36 +709,39 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
                       height: 52,
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
+                        color: EngineRowingUI.equationCardFill,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey.shade300),
+                        border: Border.all(color: _gridLine),
                       ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: kProgramZones.map((z) {
-                          final secs = dayZoneSeconds[z] ?? 0;
-                          final fraction = totalSecs > 0
-                              ? (secs / totalSecs).clamp(0.08, 1.0)
-                              : 0.08;
-                          final color = kZoneColors[z] ?? _navy;
+                      child: Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: kProgramZones.map((z) {
+                            final secs = dayZoneSeconds[z] ?? 0;
+                            final fraction = totalSecs > 0
+                                ? (secs / totalSecs).clamp(0.08, 1.0)
+                                : 0.08;
+                            final color = kZoneColors[z] ?? _navy;
 
-                          return Expanded(
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 1.5),
-                              child: Container(
-                                height: 44 * fraction,
-                                decoration: BoxDecoration(
-                                  color: secs > 0
-                                      ? color
-                                      : Colors.grey.shade300,
-                                  borderRadius: const BorderRadius.vertical(
-                                      top: Radius.circular(3)),
+                            return Expanded(
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 1.5),
+                                child: Container(
+                                  height: 44 * fraction,
+                                  decoration: BoxDecoration(
+                                    color: secs > 0
+                                        ? color
+                                        : _gridLine,
+                                    borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(3)),
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        }).toList(),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
                   ],

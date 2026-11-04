@@ -107,23 +107,23 @@ class HeartRateZones {
     }
   }
 
-  /// لون الشارة للزون:
-  /// Z1 Recovery أزرق، Z2 UT2 أخضر، Z3 UT1 أصفر، Z4 AT برتقالي، Z5 TR / Max أحمر
+  /// لون الشارة للزون المعتمد في الهوية البصرية الجديدة:
+  /// Z1 فسفوري خفيف (#B8F229)، Z2 أزرق متوسط (#2979FF)، Z3 برتقالي متوسط (#FF9100)، Z4 برتقالي غامق (#E65100)، Z5 أحمر خفيف (#FF5252)
   static Color zoneColor(String zone) {
     final clean = normalizeZoneKey(zone);
     switch (clean) {
       case 'Z1':
-        return const Color(0xFF1976D2); // أزرق
+        return const Color(0xFFB8F229); // فسفوري خفيف
       case 'Z2':
-        return const Color(0xFF388E3C); // أخضر
+        return const Color(0xFF2979FF); // أزرق متوسط
       case 'Z3':
-        return const Color(0xFFFBC02D); // أصفر
+        return const Color(0xFFFF9100); // برتقالي متوسط
       case 'Z4':
-        return const Color(0xFFF57C00); // برتقالي
+        return const Color(0xFFE65100); // برتقالي غامق
       case 'Z5':
-        return const Color(0xFFD32F2F); // أحمر
+        return const Color(0xFFFF5252); // أحمر خفيف
       default:
-        return const Color(0xFF1976D2);
+        return const Color(0xFFB8F229);
     }
   }
 

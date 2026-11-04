@@ -8,25 +8,25 @@ import 'app_strings.dart';
 import 'heart_rate_zones.dart';
 import 'power_calculations.dart';
 
-// ==================== ألوان التصميم الفاخرة (AI Modern Theme) ====================
-const Color _navyDeep = Color(0xFF07192C);
-const Color _navy = Color(0xFF0D3B66);
+// ==================== ألوان التصميم الفاخرة (الهوية الجديدة المعتمدة) ====================
+const Color _navyDeep = Color(0xFF0A1633);
+const Color _navy = Color(0xFF15264F);
 const Color _navyLight = Color(0xFF1B4D7E);
-const Color _cardSurface = Color(0xFF132A45);
-const Color _cardBorder = Color(0xFF1F426D);
-const Color _gold = Color(0xFFFFC93C);
-const Color _cyan = Color(0xFF00E5FF);
-const Color _emerald = Color(0xFF00E676);
-const Color _purple = Color(0xFFB388FF);
+const Color _cardSurface = Color(0xFF15264F);
+const Color _cardBorder = Color(0xFF11224A);
+const Color _gold = Color(0xFFB8F229);
+const Color _cyan = Color(0xFF2979FF);
+const Color _emerald = Color(0xFFB8F229);
+const Color _purple = Color(0xFFE65100);
 const Color _coral = Color(0xFFFF5252);
 
 /// الألوان المعتمدة للزونات الخمسة
 const Map<String, Color> _zoneColors = {
-  'Z1': Color(0xFF1976D2), // أزرق
-  'Z2': Color(0xFF388E3C), // أخضر
-  'Z3': Color(0xFFFBC02D), // أصفر
-  'Z4': Color(0xFFF57C00), // برتقالي
-  'Z5': Color(0xFFD32F2F), // أحمر
+  'Z1': Color(0xFFB8F229), // فسفوري خفيف
+  'Z2': Color(0xFF2979FF), // أزرق متوسط
+  'Z3': Color(0xFFFF9100), // برتقالي متوسط
+  'Z4': Color(0xFFE65100), // برتقالي غامق
+  'Z5': Color(0xFFFF5252), // أحمر خفيف
 };
 
 /// المسميات المعتمدة للزونات
