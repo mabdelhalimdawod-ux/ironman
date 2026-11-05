@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:ui';
 
 /// 1. محرك التجاوب والمرونة التلقائية مع جميع الشاشات (Responsive Scaling Engine)
 class RowingResponsive {
@@ -116,7 +115,7 @@ class EngineRowingUI {
           onPrimary: bgNavy,
           onSurface: textWhite,
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           color: cardFill,
           elevation: 0,
           shape: RoundedRectangleBorder(
@@ -136,7 +135,7 @@ class EngineRowingUI {
             letterSpacing: 0.5,
           ),
         ),
-        dialogTheme: DialogTheme(
+        dialogTheme: DialogThemeData(
           backgroundColor: cardFill,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
