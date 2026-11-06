@@ -250,8 +250,7 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
     // ════════════════════════════════════════
     // ██  المحتوى الرئيسي
     // ════════════════════════════════════════
-    final mainContent = Expanded(
-      child: Column(
+    final mainContentColumn = Column(
         children: [
           // ── AppBar ──
           Container(
@@ -310,8 +309,7 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
             ),
           ),
         ],
-      ),
-    );
+      );
 
     // ════════════════════════════════════════
     // ██  مقبض السحب (Drag Handle)
@@ -347,9 +345,182 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
             ),
           );
 
-    // ════════════════════════════════════════
-    // ██  الشريط الجانبي (Side Navigation)
-    // ════════════════════════════════════════
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 700;
+
+    Widget buildSideNavContainer(double width) {
+      return Container(
+        width: width,
+        decoration: BoxDecoration(
+          color: const Color(0xFF071126),
+          border: Border(
+            right: isArabic
+                ? BorderSide.none
+                : const BorderSide(color: EngineRowingUI.bgGridLine, width: 1),
+            left: isArabic
+                ? const BorderSide(color: EngineRowingUI.bgGridLine, width: 1)
+                : BorderSide.none,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(80),
+              blurRadius: 24,
+              offset: Offset(isArabic ? -4 : 4, 0),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            // ── منطقة الشعار وزر الإغلاق ──
+            Container(
+              height: 60,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              alignment: Alignment.center,
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded,
+                        color: yellow, size: 24),
+                    tooltip: s.close,
+                    onPressed: _toggleSideNav,
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.rowing_rounded,
+                            color: yellow, size: 24),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            'ENGINE ROWING',
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: yellow,
+                              fontSize: width > 240 ? 16 : 13,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // ── فاصل ──
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Divider(
+                color: Colors.white.withAlpha(30),
+                height: 1,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // ── عناصر التنقل ──
+            ...List.generate(navItems.length, (i) {
+              final item = navItems[i];
+              final isActive = _currentIndex == i;
+              return _SideNavItem(
+                icon: isActive ? item.activeIcon : item.icon,
+                label: item.label,
+                imageAsset: item.imageAsset,
+                isActive: isActive,
+                isCollapsed: false,
+                navWidth: width,
+                onTap: () {
+                  setState(() {
+                    _currentIndex = i;
+                    _navWidth = 0.0;
+                  });
+                },
+              );
+            }),
+
+            const Spacer(),
+
+            // ── فاصل سفلي ──
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Divider(
+                color: Colors.white.withAlpha(30),
+                height: 1,
+              ),
+            ),
+            const SizedBox(height: 6),
+
+            // ── زرار لوحة العمليات والتحكم ──
+            _SideNavItem(
+              icon: Icons.tune_rounded,
+              label: s.hamburgerTitle,
+              isActive: false,
+              isCollapsed: false,
+              navWidth: width,
+              onTap: () {
+                _openHamburgerHub(context, s);
+              },
+            ),
+
+            // ── زرار تسجيل الخروج ──
+            _SideNavItem(
+              icon: Icons.logout_rounded,
+              label: s.logout,
+              isActive: false,
+              isCollapsed: false,
+              navWidth: width,
+              onTap: () => _confirmLogout(context, s),
+            ),
+
+            const SizedBox(height: 12),
+          ],
+        ),
+      );
+    }
+
+    // ── على الموبايل: المحتوى يأخذ كامل الشاشة، والقائمة الجانبية تظهر كـ Overlay فوق الشاشة بدون ضغط المحتوى ──
+    if (isMobile) {
+      return Scaffold(
+        backgroundColor: EngineRowingUI.bgNavy,
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: mainContentColumn,
+            ),
+            if (_navWidth > 0)
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: _toggleSideNav,
+                  child: Container(
+                    color: Colors.black.withValues(alpha: 0.6),
+                  ),
+                ),
+              ),
+            AnimatedPositioned(
+              duration: _isResizing ? Duration.zero : const Duration(milliseconds: 250),
+              curve: Curves.easeOutCubic,
+              top: 0,
+              bottom: 0,
+              right: isArabic ? (_navWidth > 0 ? 0 : -270) : null,
+              left: isArabic ? null : (_navWidth > 0 ? 0 : -270),
+              width: 250,
+              child: Material(
+                color: Colors.transparent,
+                elevation: 16,
+                child: ClipRect(
+                  child: buildSideNavContainer(250),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // ── على الشاشات الكبيرة (كمبيوتر أو تابلت): المحتوى جنباً إلى جنب ──
+    final mainContent = Expanded(child: mainContentColumn);
     final sideNav = AnimatedContainer(
       duration: _isResizing ? Duration.zero : const Duration(milliseconds: 250),
       curve: Curves.easeOutCubic,
@@ -357,139 +528,10 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
       child: _navWidth <= 0
           ? const SizedBox.shrink()
           : ClipRect(
-              child: Container(
-                width: _navWidth,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF071126),
-                  border: Border(
-                    right: isArabic
-                        ? BorderSide.none
-                        : const BorderSide(color: EngineRowingUI.bgGridLine, width: 1),
-                    left: isArabic
-                        ? const BorderSide(color: EngineRowingUI.bgGridLine, width: 1)
-                        : BorderSide.none,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(80),
-                      blurRadius: 24,
-                      offset: Offset(isArabic ? -4 : 4, 0),
-                    ),
-                  ],
-                ),
-                child: Column(
-                children: [
-                  // ── منطقة الشعار وزر الإغلاق ──
-                  Container(
-                    height: 60,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    alignment: Alignment.center,
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.close_rounded,
-                              color: yellow, size: 24),
-                          tooltip: s.close,
-                          onPressed: _toggleSideNav,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.rowing_rounded,
-                                  color: yellow, size: 24),
-                              const SizedBox(width: 8),
-                              Flexible(
-                                child: Text(
-                                  'ENGINE ROWING',
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: yellow,
-                                    fontSize: _navWidth > 240 ? 16 : 13,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 1.2,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // ── فاصل ──
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    child: Divider(
-                      color: Colors.white.withAlpha(30),
-                      height: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // ── عناصر التنقل ──
-                  ...List.generate(navItems.length, (i) {
-                    final item = navItems[i];
-                    final isActive = _currentIndex == i;
-                    return _SideNavItem(
-                      icon: isActive ? item.activeIcon : item.icon,
-                      label: item.label,
-                      imageAsset: item.imageAsset,
-                      isActive: isActive,
-                      isCollapsed: false,
-                      navWidth: _navWidth,
-                      onTap: () {
-                        setState(() {
-                          _currentIndex = i;
-                          _navWidth = 0.0;
-                        });
-                      },
-                    );
-                  }),
-
-                  const Spacer(),
-
-                  // ── فاصل سفلي ──
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    child: Divider(
-                      color: Colors.white.withAlpha(30),
-                      height: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-
-                  // ── زرار لوحة العمليات والتحكم ──
-                  _SideNavItem(
-                    icon: Icons.tune_rounded,
-                    label: s.hamburgerTitle,
-                    isActive: false,
-                    isCollapsed: false,
-                    navWidth: _navWidth,
-                    onTap: () {
-                      _openHamburgerHub(context, s);
-                    },
-                  ),
-
-                  // ── زرار تسجيل الخروج ──
-                  _SideNavItem(
-                    icon: Icons.logout_rounded,
-                    label: s.logout,
-                    isActive: false,
-                    isCollapsed: false,
-                    navWidth: _navWidth,
-                    onTap: () => _confirmLogout(context, s),
-                  ),
-
-                  const SizedBox(height: 12),
-                ],
-              ),
+              child: buildSideNavContainer(_navWidth),
             ),
-          ),
     );
 
-    // الشريط الجانبي على اليمين في العربية، وعلى اليسار في الإنجليزية
     return Scaffold(
       backgroundColor: EngineRowingUI.bgNavy,
       body: Row(

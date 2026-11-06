@@ -542,10 +542,10 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
 
     return Card(
       elevation: 0,
-      color: EngineRowingUI.cardFill,
+      color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: EngineRowingUI.bgGridLine),
+        side: const BorderSide(color: Color(0xFFE2E8F0)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -560,7 +560,7 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                 drawVerticalLine: false,
                 horizontalInterval: ((maxY - minY) / 4).clamp(1, 50),
                 getDrawingHorizontalLine: (v) => const FlLine(
-                  color: EngineRowingUI.bgGridLine,
+                  color: Color(0xFFE2E8F0),
                   strokeWidth: 1,
                 ),
               ),
@@ -574,7 +574,11 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                     reservedSize: 40,
                     getTitlesWidget: (v, _) => Text(
                       '${v.round()}',
-                      style: const TextStyle(fontSize: 11, color: EngineRowingUI.labelSlate),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF334155),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),

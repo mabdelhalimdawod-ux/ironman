@@ -66,7 +66,7 @@ class EngineRowingUI {
   static const Color equationCardFill = Color(0xFF122147);
   static const Color toastBg = Color(0xFF050C1E);
 
-  static const Color neonLime = Color(0xFFB8F229);
+  static const Color neonLime = Color(0xFF9ED82E);
   static const Color textWhite = Color(0xFFF2F4F8);
   static const Color labelSlate = Color(0xFF8596B8);
   static const Color captionGrey = Color(0xFF637599);
@@ -74,7 +74,7 @@ class EngineRowingUI {
 
   // ألوان الزونات الجديدة المعتمدة
   // اللون الفسفوري الخفيف لـ zone1
-  static const Color zone1Color = Color(0xFFB8F229);
+  static const Color zone1Color = Color(0xFF9ED82E);
   // اللون الأزرق المتوسط لـ zone2
   static const Color zone2Color = Color(0xFF2979FF);
   // اللون البرتقالي المتوسط لـ zone3
@@ -343,7 +343,55 @@ class _GridPainter extends CustomPainter {
       oldDelegate.step != step;
 }
 
-/// 6. مستطيل المدخلات والمخرجات الرئيسي المرن (Responsive Metric Card - Forced English LTR)
+/// 6. مؤشر اتجاه وصعود وهبوط المعدلات (Rowing Trend Indicator)
+enum MetricTrendDirection {
+  up, // ارتفاع المعدل (أخضر فسفوري للأعلى)
+  down, // انخفاض المعدل (أحمر للأسفل)
+  neutral, // محايد / مستقر (خط أفقي رمادي)
+}
+
+class RowingTrendIndicator extends StatelessWidget {
+  final MetricTrendDirection direction;
+  final double size;
+
+  const RowingTrendIndicator({
+    super.key,
+    required this.direction,
+    this.size = 36.0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    switch (direction) {
+      case MetricTrendDirection.up:
+        return Icon(
+          Icons.change_history_rounded,
+          color: const Color(0xFFB8F229), // أخضر فسفوري مطابق لهوية التطبيق
+          size: size,
+        );
+      case MetricTrendDirection.down:
+        return Transform.rotate(
+          angle: 3.14159,
+          child: Icon(
+            Icons.change_history_rounded,
+            color: const Color(0xFFFF4D4D), // أحمر تحذيري للانخفاض
+            size: size,
+          ),
+        );
+      case MetricTrendDirection.neutral:
+        return Container(
+          width: size * 0.9,
+          height: size * 0.17,
+          decoration: BoxDecoration(
+            color: const Color(0xFF8596B8).withValues(alpha: 0.7),
+            borderRadius: BorderRadius.circular(3),
+          ),
+        );
+    }
+  }
+}
+
+/// مستطيل المدخلات والمخرجات الرئيسي المرن (Responsive Metric Card - Forced English LTR)
 enum MetricStatus { neutral, upArrow, fasterText }
 
 class RowingMetricCard extends StatelessWidget {
@@ -353,6 +401,8 @@ class RowingMetricCard extends StatelessWidget {
   final bool highlightLime;
   final MetricStatus status;
   final String? footnote;
+  final double? previousValue;
+  final MetricTrendDirection? trendDirection;
 
   const RowingMetricCard({
     super.key,
@@ -362,6 +412,8 @@ class RowingMetricCard extends StatelessWidget {
     this.highlightLime = false,
     this.status = MetricStatus.neutral,
     this.footnote,
+    this.previousValue,
+    this.trendDirection,
   });
 
   @override
@@ -437,33 +489,40 @@ class RowingMetricCard extends StatelessWidget {
   }
 
   Widget _buildStatusIndicator(BuildContext context) {
-    switch (status) {
-      case MetricStatus.upArrow:
-        return Icon(
-          Icons.change_history_rounded,
+    if (status == MetricStatus.fasterText) {
+      return Text(
+        'faster',
+        style: TextStyle(
+          fontFamily: EngineRowingUI.fontFamily,
+          fontSize: RowingResponsive.sp(context, 18),
+          fontWeight: FontWeight.w500,
           color: EngineRowingUI.neonLime,
-          size: RowingResponsive.dp(context, 36),
-        );
-      case MetricStatus.fasterText:
-        return Text(
-          'faster',
-          style: TextStyle(
-            fontFamily: EngineRowingUI.fontFamily,
-            fontSize: RowingResponsive.sp(context, 18),
-            fontWeight: FontWeight.w500,
-            color: EngineRowingUI.neonLime,
-          ),
-        );
-      case MetricStatus.neutral:
-        return Container(
-          width: RowingResponsive.dp(context, 32),
-          height: RowingResponsive.dp(context, 6),
-          decoration: BoxDecoration(
-            color: EngineRowingUI.labelSlate.withValues(alpha: 0.7),
-            borderRadius: BorderRadius.circular(RowingResponsive.dp(context, 3)),
-          ),
-        );
+        ),
+      );
     }
+
+    MetricTrendDirection direction = MetricTrendDirection.neutral;
+    if (trendDirection != null) {
+      direction = trendDirection!;
+    } else if (previousValue != null) {
+      final currentNum = double.tryParse(value.replaceAll(RegExp(r'[^0-9.]'), ''));
+      if (currentNum != null) {
+        if (currentNum > previousValue!) {
+          direction = MetricTrendDirection.up;
+        } else if (currentNum < previousValue!) {
+          direction = MetricTrendDirection.down;
+        } else {
+          direction = MetricTrendDirection.neutral;
+        }
+      }
+    } else if (status == MetricStatus.upArrow) {
+      direction = MetricTrendDirection.up;
+    }
+
+    return RowingTrendIndicator(
+      direction: direction,
+      size: RowingResponsive.dp(context, 32),
+    );
   }
 }
 
