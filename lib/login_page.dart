@@ -1450,7 +1450,7 @@ class _AuthFloatingTextFieldState extends State<_AuthFloatingTextField> {
           onTap: () => _focusNode.requestFocus(),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 220),
-            height: 60,
+            height: 64,
             decoration: BoxDecoration(
               color: EngineRowingUI.equationCardFill,
               borderRadius: BorderRadius.circular(14),
@@ -1484,7 +1484,7 @@ class _AuthFloatingTextFieldState extends State<_AuthFloatingTextField> {
                   right: Directionality.of(context) == TextDirection.rtl
                       ? (widget.prefixIcon != null ? 44.0 : 16.0)
                       : null,
-                  top: isFloated ? 7.0 : 19.0,
+                  top: isFloated ? 8.0 : 20.0,
                   child: IgnorePointer(
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -1498,7 +1498,8 @@ class _AuthFloatingTextFieldState extends State<_AuthFloatingTextField> {
                                     ? EngineRowingUI.neonLime
                                     : EngineRowingUI.labelSlate)
                                 : EngineRowingUI.labelSlate,
-                            fontSize: isFloated ? 11.5 : 15.0,
+                            fontSize: isFloated ? 12.0 : 15.0,
+                            height: 1.25,
                             fontWeight:
                                 isFloated ? FontWeight.w700 : FontWeight.normal,
                           ),
@@ -1527,7 +1528,7 @@ class _AuthFloatingTextFieldState extends State<_AuthFloatingTextField> {
                     padding: EdgeInsetsDirectional.only(
                       start: widget.prefixIcon != null ? 40 : 14,
                       end: widget.isPassword ? 40 : 14,
-                      top: isFloated ? 16 : 0,
+                      top: isFloated ? 22 : 0,
                     ),
                     child: TextFormField(
                       controller: widget.controller,
@@ -1548,7 +1549,7 @@ class _AuthFloatingTextFieldState extends State<_AuthFloatingTextField> {
                         focusedBorder: InputBorder.none,
                         errorBorder: InputBorder.none,
                         disabledBorder: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
+                        contentPadding: EdgeInsets.symmetric(vertical: 4),
                         isDense: true,
                       ),
                       onChanged: (_) {

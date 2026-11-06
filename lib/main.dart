@@ -354,30 +354,30 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
       duration: _isResizing ? Duration.zero : const Duration(milliseconds: 250),
       curve: Curves.easeOutCubic,
       width: _navWidth,
-      clipBehavior: Clip.antiAlias,
       child: _navWidth <= 0
           ? const SizedBox.shrink()
-          : Container(
-              width: _navWidth,
-              decoration: BoxDecoration(
-                color: const Color(0xFF071126),
-                border: Border(
-                  right: isArabic
-                      ? BorderSide.none
-                      : const BorderSide(color: EngineRowingUI.bgGridLine, width: 1),
-                  left: isArabic
-                      ? const BorderSide(color: EngineRowingUI.bgGridLine, width: 1)
-                      : BorderSide.none,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(80),
-                    blurRadius: 24,
-                    offset: Offset(isArabic ? -4 : 4, 0),
+          : ClipRect(
+              child: Container(
+                width: _navWidth,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF071126),
+                  border: Border(
+                    right: isArabic
+                        ? BorderSide.none
+                        : const BorderSide(color: EngineRowingUI.bgGridLine, width: 1),
+                    left: isArabic
+                        ? const BorderSide(color: EngineRowingUI.bgGridLine, width: 1)
+                        : BorderSide.none,
                   ),
-                ],
-              ),
-              child: Column(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(80),
+                      blurRadius: 24,
+                      offset: Offset(isArabic ? -4 : 4, 0),
+                    ),
+                  ],
+                ),
+                child: Column(
                 children: [
                   // ── منطقة الشعار وزر الإغلاق ──
                   Container(
@@ -486,6 +486,7 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
                 ],
               ),
             ),
+          ),
     );
 
     // الشريط الجانبي على اليمين في العربية، وعلى اليسار في الإنجليزية
