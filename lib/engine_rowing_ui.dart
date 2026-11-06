@@ -701,3 +701,392 @@ class RowingInsightBanner extends StatelessWidget {
   }
 }
 
+// ════════════════════════════════════════════════════════════════
+// 11. إعدادات حدة الإضاءة والألوان ومقياس التكبير العام
+// ════════════════════════════════════════════════════════════════
+
+enum DisplayIntensity { normal, bright, ultra }
+
+final ValueNotifier<DisplayIntensity> intensityNotifier =
+    ValueNotifier<DisplayIntensity>(DisplayIntensity.normal);
+
+final ValueNotifier<double> userScaleNotifier =
+    ValueNotifier<double>(1.0);
+
+/// إضاءة فسفورية خفيفة وواضحة على حدود اللوحات تستجيب لحدة الإضاءة
+BoxDecoration neonGlowBoxDecoration({
+  Color? fillColor,
+  Color borderColor = EngineRowingUI.neonLime,
+  double borderWidth = 1.0,
+  double borderRadius = 12.0,
+  DisplayIntensity intensity = DisplayIntensity.normal,
+  List<BoxShadow>? extraShadows,
+}) {
+  double blurRadius = 4.0;
+  double spreadRadius = 0.5;
+  Color glowColor = borderColor.withValues(alpha: 0.18);
+
+  switch (intensity) {
+    case DisplayIntensity.normal:
+      blurRadius = 4.0;
+      spreadRadius = 0.5;
+      glowColor = borderColor.withValues(alpha: 0.18);
+      break;
+    case DisplayIntensity.bright:
+      blurRadius = 8.0;
+      spreadRadius = 1.2;
+      glowColor = borderColor.withValues(alpha: 0.38);
+      break;
+    case DisplayIntensity.ultra:
+      blurRadius = 14.0;
+      spreadRadius = 2.2;
+      glowColor = borderColor.withValues(alpha: 0.68);
+      break;
+  }
+
+  return BoxDecoration(
+    color: fillColor ?? EngineRowingUI.cardFill,
+    borderRadius: BorderRadius.circular(borderRadius),
+    border: Border.all(
+      color: intensity == DisplayIntensity.ultra
+          ? borderColor
+          : (intensity == DisplayIntensity.bright
+              ? borderColor.withValues(alpha: 0.85)
+              : borderColor.withValues(alpha: 0.55)),
+      width: intensity == DisplayIntensity.ultra ? borderWidth * 1.4 : borderWidth,
+    ),
+    boxShadow: [
+      BoxShadow(
+        color: glowColor,
+        blurRadius: blurRadius,
+        spreadRadius: spreadRadius,
+      ),
+      if (extraShadows != null) ...extraShadows,
+    ],
+  );
+}
+
+/// 12. حاوية التكبير والتصغير بأصابع المستخدم (Pinch-to-Zoom Area)
+class PinchZoomArea extends StatelessWidget {
+  final Widget child;
+  final double minScale;
+  final double maxScale;
+
+  const PinchZoomArea({
+    super.key,
+    required this.child,
+    this.minScale = 0.8,
+    this.maxScale = 3.0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InteractiveViewer(
+      minScale: minScale,
+      maxScale: maxScale,
+      panEnabled: true,
+      scaleEnabled: true,
+      clipBehavior: Clip.none,
+      child: child,
+    );
+  }
+}
+
+/// 13. خانات توزيع أحمال الزونات المتجاوبة (RowingAdaptiveZoneBoxes)
+/// تمنع تماماً كسر الحروف رأسياً وتوزع الخانات أفقياً أو كشبكة حسب المساحة المتاحة
+/// مع جعل خلفية منحنيات الزونات باللون الأبيض النقي (#FFFFFF) مع الحفاظ على ألوان شرايط الزونات
+class RowingAdaptiveZoneBoxes extends StatelessWidget {
+  final Map<String, int> zoneSeconds;
+  final String? title;
+  final bool showCurveChart;
+  final double curveHeight;
+
+  const RowingAdaptiveZoneBoxes({
+    super.key,
+    required this.zoneSeconds,
+    this.title,
+    this.showCurveChart = true,
+    this.curveHeight = 72.0,
+  });
+
+  static const List<String> zones = [
+    'Z1',
+    'Z2',
+    'Z3',
+    'Z4',
+    'Threshold',
+    'Z5',
+  ];
+
+  static const Map<String, Color> zoneColorsMap = {
+    'Z1': Color(0xFFB8F229),
+    'Z2': Color(0xFF2979FF),
+    'Z3': Color(0xFFFF9100),
+    'Z4': Color(0xFFF4511E),
+    'Threshold': Color(0xFFE65100),
+    'Z5': Color(0xFFFF5252),
+  };
+
+  static String _formatSecs(int secs) {
+    if (secs <= 0) return '00:00';
+    final h = secs ~/ 3600;
+    final m = (secs % 3600) ~/ 60;
+    final s = secs % 60;
+    if (h > 0) {
+      return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    }
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final totalSecs = zones.fold<int>(0, (sum, z) => sum + (zoneSeconds[z] ?? 0));
+
+    return ValueListenableBuilder<DisplayIntensity>(
+      valueListenable: intensityNotifier,
+      builder: (context, intensity, _) {
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final w = constraints.maxWidth;
+            final isMobile = w < 620;
+
+            final boxes = _buildZoneBoxes(context, totalSecs, isMobile, w, intensity);
+            final curveWidget = showCurveChart
+                ? _buildCurveChart(totalSecs, intensity)
+                : null;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (title != null && title!.isNotEmpty) ...[
+                  Text(
+                    title!,
+                    style: TextStyle(
+                      fontSize: RowingResponsive.sp(context, 12),
+                      fontWeight: FontWeight.bold,
+                      color: EngineRowingUI.textWhite,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                if (!isMobile && curveWidget != null)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(flex: 5, child: boxes),
+                      const SizedBox(width: 12),
+                      curveWidget,
+                    ],
+                  )
+                else ...[
+                  boxes,
+                  if (curveWidget != null) ...[
+                    const SizedBox(height: 10),
+                    curveWidget,
+                  ],
+                ],
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildCurveChart(int totalSecs, DisplayIntensity intensity) {
+    return Container(
+      height: curveHeight,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: neonGlowBoxDecoration(
+        fillColor: Colors.white,
+        borderColor: const Color(0xFFD0D7DE),
+        borderWidth: 1.2,
+        borderRadius: 10,
+        intensity: intensity,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Icon(Icons.show_chart_rounded, size: 14, color: Color(0xFF1E293B)),
+              SizedBox(width: 4),
+              Text(
+                'منحنى توزيع الزونات',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Expanded(
+            child: Directionality(
+              textDirection: TextDirection.ltr,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: zones.map((z) {
+                  final secs = zoneSeconds[z] ?? 0;
+                  final fraction = totalSecs > 0
+                      ? (secs / totalSecs).clamp(0.08, 1.0)
+                      : 0.08;
+                  final color = zoneColorsMap[z] ?? const Color(0xFF0A1633);
+
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                      child: Tooltip(
+                        message:
+                            '$z: ${totalSecs > 0 ? ((secs / totalSecs) * 100).toStringAsFixed(1) : 0}%',
+                        child: Container(
+                          height: (curveHeight - 34) * fraction,
+                          decoration: BoxDecoration(
+                            color: secs > 0 ? color : const Color(0xFFE2E8F0),
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildZoneBoxes(
+    BuildContext context,
+    int totalSecs,
+    bool isMobile,
+    double maxWidth,
+    DisplayIntensity intensity,
+  ) {
+    if (!isMobile) {
+      return Directionality(
+        textDirection: TextDirection.ltr,
+        child: Row(
+          children: zones.map((z) {
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2.5),
+                child: _buildSingleBox(context, z, totalSecs, intensity),
+              ),
+            );
+          }).toList(),
+        ),
+      );
+    }
+
+    final cols = maxWidth < 380 ? 2 : 3;
+    final itemWidth = (maxWidth - ((cols - 1) * 8.0)) / cols;
+
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Wrap(
+        spacing: 8.0,
+        runSpacing: 8.0,
+        children: zones.map((z) {
+          return SizedBox(
+            width: itemWidth,
+            child: _buildSingleBox(context, z, totalSecs, intensity),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildSingleBox(
+    BuildContext context,
+    String zone,
+    int totalSecs,
+    DisplayIntensity intensity,
+  ) {
+    final secs = zoneSeconds[zone] ?? 0;
+    final isZero = secs == 0;
+    final color = zoneColorsMap[zone] ?? EngineRowingUI.neonLime;
+    final pct = totalSecs > 0 ? ((secs / totalSecs) * 100).toStringAsFixed(1) : '0';
+    final durationStr = isZero ? '-' : _formatSecs(secs);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+      decoration: neonGlowBoxDecoration(
+        fillColor: isZero
+            ? EngineRowingUI.equationCardFill.withAlpha(160)
+            : color.withAlpha(40),
+        borderColor: isZero ? EngineRowingUI.bgGridLine : color,
+        borderWidth: isZero ? 1.0 : 1.5,
+        borderRadius: 8.0,
+        intensity: intensity,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            height: 3,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: isZero ? Colors.transparent : color,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              zone,
+              maxLines: 1,
+              softWrap: false,
+              style: TextStyle(
+                fontFamily: EngineRowingUI.fontFamily,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: isZero ? EngineRowingUI.captionGrey : color,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+          const SizedBox(height: 3),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              durationStr,
+              maxLines: 1,
+              softWrap: false,
+              style: TextStyle(
+                fontFamily: EngineRowingUI.fontFamily,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                fontFeatures: const [FontFeature.tabularFigures()],
+                color: isZero ? EngineRowingUI.captionGrey : EngineRowingUI.textWhite,
+              ),
+            ),
+          ),
+          const SizedBox(height: 2),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              isZero ? '0%' : '$pct%',
+              maxLines: 1,
+              softWrap: false,
+              style: TextStyle(
+                fontFamily: EngineRowingUI.fontFamily,
+                fontSize: 9.5,
+                fontWeight: FontWeight.w600,
+                color: isZero ? EngineRowingUI.captionGrey.withValues(alpha: 0.7) : color,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+

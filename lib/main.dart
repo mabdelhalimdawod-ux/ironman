@@ -130,13 +130,13 @@ class MainNavigationScaffold extends StatefulWidget {
 
 class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
   int _currentIndex = 0;
-  double _navWidth = 200.0;
+  double _navWidth = 0.0;
   bool _isResizing = false;
 
   // ── أحجام الشريط الجانبي ──
-  static const double _minWidth = 72.0;   // أيقونات فقط
+  static const double _minWidth = 0.0;    // مخفي تماماً
   static const double _midWidth = 200.0;  // أيقونات + نصوص
-  static const double _maxWidth = 280.0;  // موسّع بالكامل
+  static const double _maxWidth = 260.0;  // موسّع بالكامل
 
   List<Widget> get _tabs => [
     DashboardTab(user: widget.user),
@@ -144,9 +144,23 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
     const WorkoutsTab(),
   ];
 
+  void _toggleSideNav() {
+    setState(() {
+      if (_navWidth > 0) {
+        _navWidth = 0.0;
+      } else {
+        _navWidth = 240.0;
+      }
+    });
+  }
+
   /// يرجع لأقرب حجم مسبق بعد انتهاء السحب
   void _snapToNearest() {
-    const presets = [_minWidth, _midWidth, _maxWidth];
+    if (_navWidth < 100) {
+      setState(() => _navWidth = 0.0);
+      return;
+    }
+    const presets = [_midWidth, _maxWidth];
     double closest = presets.reduce((a, b) =>
         (a - _navWidth).abs() < (b - _navWidth).abs() ? a : b);
     setState(() {
@@ -155,29 +169,17 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
     });
   }
 
-  /// التبديل بين الأحجام الثلاثة
+  /// التبديل بين الأحجام
   void _cycleSize() {
     setState(() {
-      if (_navWidth <= _minWidth + 30) {
+      if (_navWidth <= 0) {
         _navWidth = _midWidth;
-      } else if (_navWidth <= _midWidth + 30) {
+      } else if (_navWidth <= _midWidth + 20) {
         _navWidth = _maxWidth;
       } else {
-        _navWidth = _minWidth;
+        _navWidth = 0.0;
       }
     });
-  }
-
-  String _sizeLabel(AppStrings s) {
-    if (_navWidth <= _minWidth + 30) return s.isArabic ? 'مصغّر' : 'Compact';
-    if (_navWidth <= _midWidth + 30) return s.isArabic ? 'عادي' : 'Normal';
-    return s.isArabic ? 'موسّع' : 'Expanded';
-  }
-
-  IconData _cycleIcon() {
-    if (_navWidth <= _minWidth + 30) return Icons.chevron_left_rounded;
-    if (_navWidth <= _midWidth + 30) return Icons.chevron_left_rounded;
-    return Icons.chevron_right_rounded;
   }
 
   void _confirmLogout(BuildContext context, AppStrings s) {
@@ -232,7 +234,6 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
     final isArabic = AppLanguage.instance.isArabic;
-    final isCollapsed = _navWidth < 120;
 
     final navItems = [
       _SideNavItemData(Icons.home_outlined, Icons.home, s.tabHome),
@@ -261,20 +262,25 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
                 bottom: BorderSide(color: EngineRowingUI.bgGridLine, width: 1.0),
               ),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
             child: Row(
               children: [
                 IconButton(
                   icon: const Icon(Icons.menu_rounded, color: yellow, size: 28),
                   tooltip: s.hamburgerTitle,
+                  onPressed: _toggleSideNav,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.tune_rounded, color: yellow, size: 22),
+                  tooltip: s.hamburgerTitle,
                   onPressed: () => _openHamburgerHub(context, s),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     [s.tabHome, s.tabProgram, s.tabWorkouts][_currentIndex],
                     style: const TextStyle(
-                      fontSize: 20,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: EngineRowingUI.textWhite,
                       letterSpacing: 0.5,
@@ -287,9 +293,20 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
           ),
           // ── Body ──
           Expanded(
-            child: IndexedStack(
-              index: _currentIndex,
-              children: _tabs,
+            child: ValueListenableBuilder<double>(
+              valueListenable: userScaleNotifier,
+              builder: (context, scale, child) {
+                return Transform.scale(
+                  scale: scale,
+                  alignment: Alignment.topCenter,
+                  child: PinchZoomArea(
+                    child: IndexedStack(
+                      index: _currentIndex,
+                      children: _tabs,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ],
@@ -299,208 +316,176 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
     // ════════════════════════════════════════
     // ██  مقبض السحب (Drag Handle)
     // ════════════════════════════════════════
-    final dragHandle = GestureDetector(
-      onHorizontalDragStart: (_) => setState(() => _isResizing = true),
-      onHorizontalDragUpdate: (details) {
-        setState(() {
-          final delta = isArabic ? -details.delta.dx : details.delta.dx;
-          _navWidth = (_navWidth + delta).clamp(_minWidth, _maxWidth);
-        });
-      },
-      onHorizontalDragEnd: (_) => _snapToNearest(),
-      onDoubleTap: _cycleSize,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.resizeColumn,
-        child: Container(
-          width: 8,
-          color: Colors.transparent,
-          child: Center(
-            child: Container(
-              width: 3,
-              height: 48,
-              decoration: BoxDecoration(
-                color: EngineRowingUI.bgGridLine,
-                borderRadius: BorderRadius.circular(4),
+    final dragHandle = _navWidth <= 0
+        ? const SizedBox.shrink()
+        : GestureDetector(
+            onHorizontalDragStart: (_) => setState(() => _isResizing = true),
+            onHorizontalDragUpdate: (details) {
+              setState(() {
+                final delta = isArabic ? -details.delta.dx : details.delta.dx;
+                _navWidth = (_navWidth + delta).clamp(_minWidth, _maxWidth);
+              });
+            },
+            onHorizontalDragEnd: (_) => _snapToNearest(),
+            onDoubleTap: _cycleSize,
+            child: MouseRegion(
+              cursor: SystemMouseCursors.resizeColumn,
+              child: Container(
+                width: 8,
+                color: Colors.transparent,
+                child: Center(
+                  child: Container(
+                    width: 3,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: EngineRowingUI.bgGridLine,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
-      ),
-    );
+          );
 
     // ════════════════════════════════════════
     // ██  الشريط الجانبي (Side Navigation)
     // ════════════════════════════════════════
     final sideNav = AnimatedContainer(
-      duration: _isResizing ? Duration.zero : const Duration(milliseconds: 300),
+      duration: _isResizing ? Duration.zero : const Duration(milliseconds: 250),
       curve: Curves.easeOutCubic,
       width: _navWidth,
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: const Color(0xFF071126),
-        border: Border(
-          right: isArabic
-              ? BorderSide.none
-              : const BorderSide(color: EngineRowingUI.bgGridLine, width: 1),
-          left: isArabic
-              ? const BorderSide(color: EngineRowingUI.bgGridLine, width: 1)
-              : BorderSide.none,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(80),
-            blurRadius: 24,
-            offset: Offset(isArabic ? -4 : 4, 0),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // ── منطقة الشعار وزر الهمبرجر ──
-          Container(
-            height: 60,
-            padding: EdgeInsets.symmetric(horizontal: isCollapsed ? 4 : 10),
-            alignment: Alignment.center,
-            child: isCollapsed
-                ? IconButton(
-                    icon: const Icon(Icons.menu_rounded,
-                        color: yellow, size: 28),
-                    tooltip: s.hamburgerTitle,
-                    onPressed: () => _openHamburgerHub(context, s),
-                  )
-                : Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.menu_rounded,
-                            color: yellow, size: 24),
-                        tooltip: s.hamburgerTitle,
-                        onPressed: () => _openHamburgerHub(context, s),
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.rowing_rounded,
-                                color: yellow, size: 24),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Text(
-                                'ENGINE ROWING',
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: yellow,
-                                  fontSize: _navWidth > 240 ? 16 : 13,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.2,
+      child: _navWidth <= 0
+          ? const SizedBox.shrink()
+          : Container(
+              width: _navWidth,
+              decoration: BoxDecoration(
+                color: const Color(0xFF071126),
+                border: Border(
+                  right: isArabic
+                      ? BorderSide.none
+                      : const BorderSide(color: EngineRowingUI.bgGridLine, width: 1),
+                  left: isArabic
+                      ? const BorderSide(color: EngineRowingUI.bgGridLine, width: 1)
+                      : BorderSide.none,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(80),
+                    blurRadius: 24,
+                    offset: Offset(isArabic ? -4 : 4, 0),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // ── منطقة الشعار وزر الإغلاق ──
+                  Container(
+                    height: 60,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    alignment: Alignment.center,
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded,
+                              color: yellow, size: 24),
+                          tooltip: s.close,
+                          onPressed: _toggleSideNav,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.rowing_rounded,
+                                  color: yellow, size: 24),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  'ENGINE ROWING',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: yellow,
+                                    fontSize: _navWidth > 240 ? 16 : 13,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 1.2,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-          ),
-          // ── فاصل ──
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: isCollapsed ? 14 : 20),
-            child: Divider(
-              color: Colors.white.withAlpha(30),
-              height: 1,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // ── عناصر التنقل ──
-          ...List.generate(navItems.length, (i) {
-            final item = navItems[i];
-            final isActive = _currentIndex == i;
-            return _SideNavItem(
-              icon: isActive ? item.activeIcon : item.icon,
-              label: item.label,
-              imageAsset: item.imageAsset,
-              isActive: isActive,
-              isCollapsed: isCollapsed,
-              navWidth: _navWidth,
-              onTap: () => setState(() => _currentIndex = i),
-            );
-          }),
-
-          const Spacer(),
-
-          // ── فاصل سفلي ──
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: isCollapsed ? 14 : 20),
-            child: Divider(
-              color: Colors.white.withAlpha(30),
-              height: 1,
-            ),
-          ),
-          const SizedBox(height: 6),
-
-          // ── زرار تسجيل الخروج ──
-          _SideNavItem(
-            icon: Icons.logout_rounded,
-            label: s.logout,
-            isActive: false,
-            isCollapsed: isCollapsed,
-            navWidth: _navWidth,
-            onTap: () => _confirmLogout(context, s),
-          ),
-
-          const SizedBox(height: 4),
-
-          // ── زر تغيير الحجم ──
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            child: Material(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: _cycleSize,
-                hoverColor: Colors.white.withAlpha(20),
-                splashColor: yellow.withAlpha(40),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isCollapsed ? 0 : 14,
-                    vertical: 12,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: isCollapsed
-                        ? MainAxisAlignment.center
-                        : MainAxisAlignment.start,
-                    children: [
-                      Icon(
-                        _cycleIcon(),
-                        color: Colors.white54,
-                        size: 22,
-                      ),
-                      if (!isCollapsed) ...[
-                        const SizedBox(width: 12),
-                        Flexible(
-                          child: Text(
-                            _sizeLabel(s),
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white54,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w400,
-                            ),
+                            ],
                           ),
                         ),
                       ],
-                    ],
+                    ),
                   ),
-                ),
+                  // ── فاصل ──
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Divider(
+                      color: Colors.white.withAlpha(30),
+                      height: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── عناصر التنقل ──
+                  ...List.generate(navItems.length, (i) {
+                    final item = navItems[i];
+                    final isActive = _currentIndex == i;
+                    return _SideNavItem(
+                      icon: isActive ? item.activeIcon : item.icon,
+                      label: item.label,
+                      imageAsset: item.imageAsset,
+                      isActive: isActive,
+                      isCollapsed: false,
+                      navWidth: _navWidth,
+                      onTap: () {
+                        setState(() {
+                          _currentIndex = i;
+                          _navWidth = 0.0;
+                        });
+                      },
+                    );
+                  }),
+
+                  const Spacer(),
+
+                  // ── فاصل سفلي ──
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Divider(
+                      color: Colors.white.withAlpha(30),
+                      height: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+
+                  // ── زرار لوحة العمليات والتحكم ──
+                  _SideNavItem(
+                    icon: Icons.tune_rounded,
+                    label: s.hamburgerTitle,
+                    isActive: false,
+                    isCollapsed: false,
+                    navWidth: _navWidth,
+                    onTap: () {
+                      _openHamburgerHub(context, s);
+                    },
+                  ),
+
+                  // ── زرار تسجيل الخروج ──
+                  _SideNavItem(
+                    icon: Icons.logout_rounded,
+                    label: s.logout,
+                    isActive: false,
+                    isCollapsed: false,
+                    navWidth: _navWidth,
+                    onTap: () => _confirmLogout(context, s),
+                  ),
+
+                  const SizedBox(height: 12),
+                ],
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-        ],
-      ),
     );
 
     // الشريط الجانبي على اليمين في العربية، وعلى اليسار في الإنجليزية
@@ -795,6 +780,10 @@ class _HamburgerHubSheet extends StatelessWidget {
                   controller: scrollController,
                   padding: const EdgeInsets.all(18),
                   children: [
+                    // 0. مقياس الرؤية والتكبير وحدّة الإضاءة (Visual Scale & Intensity Controls)
+                    _buildVisualControlsCard(context, s),
+                    const SizedBox(height: 16),
+
                     // 1. الانتقال بين شاشات التحليل المعقدة (Multi-Dashboard Navigation)
                     _buildHubCard(
                       context: context,
@@ -1126,6 +1115,206 @@ class _HamburgerHubSheet extends StatelessWidget {
         ),
         backgroundColor: EngineRowingUI.toastBg,
         behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  Widget _buildVisualControlsCard(BuildContext context, AppStrings s) {
+    return _buildHubCard(
+      context: context,
+      title: s.displayScaleTitle,
+      icon: Icons.zoom_in_rounded,
+      iconColor: EngineRowingUI.neonLime,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.aspect_ratio_rounded,
+                      color: EngineRowingUI.neonLime, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      s.displayScaleDesc,
+                      style: const TextStyle(
+                        color: EngineRowingUI.textWhite,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              ValueListenableBuilder<double>(
+                valueListenable: userScaleNotifier,
+                builder: (context, currentScale, _) {
+                  return Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: EngineRowingUI.equationCardFill,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: EngineRowingUI.bgGridLine),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<double>(
+                        value: currentScale,
+                        dropdownColor: EngineRowingUI.bgNavy,
+                        isExpanded: true,
+                        icon: const Icon(Icons.arrow_drop_down,
+                            color: EngineRowingUI.neonLime),
+                        items: const [
+                          DropdownMenuItem(
+                              value: 0.80,
+                              child: Text('80% (تصغير)',
+                                  style: TextStyle(
+                                      color: EngineRowingUI.textWhite))),
+                          DropdownMenuItem(
+                              value: 0.90,
+                              child: Text('90%',
+                                  style: TextStyle(
+                                      color: EngineRowingUI.textWhite))),
+                          DropdownMenuItem(
+                              value: 1.00,
+                              child: Text('100% (الافتراضي)',
+                                  style: TextStyle(
+                                      color: EngineRowingUI.neonLime,
+                                      fontWeight: FontWeight.bold))),
+                          DropdownMenuItem(
+                              value: 1.10,
+                              child: Text('110%',
+                                  style: TextStyle(
+                                      color: EngineRowingUI.textWhite))),
+                          DropdownMenuItem(
+                              value: 1.25,
+                              child: Text('125% (تكبير متوسط)',
+                                  style: TextStyle(
+                                      color: EngineRowingUI.textWhite))),
+                          DropdownMenuItem(
+                              value: 1.50,
+                              child: Text('150% (تكبير فائق)',
+                                  style: TextStyle(
+                                      color: EngineRowingUI.textWhite))),
+                        ],
+                        onChanged: (newVal) {
+                          if (newVal != null) {
+                            userScaleNotifier.value = newVal;
+                          }
+                        },
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const Icon(Icons.wb_sunny_rounded,
+                      color: EngineRowingUI.neonLime, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      s.colorIntensityTitle,
+                      style: const TextStyle(
+                        color: EngineRowingUI.textWhite,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              ValueListenableBuilder<DisplayIntensity>(
+                valueListenable: intensityNotifier,
+                builder: (context, currentIntensity, _) {
+                  return Row(
+                    children: [
+                      _buildIntensityChip(
+                        label: s.intensityNormal,
+                        selected: currentIntensity == DisplayIntensity.normal,
+                        onTap: () =>
+                            intensityNotifier.value = DisplayIntensity.normal,
+                      ),
+                      const SizedBox(width: 8),
+                      _buildIntensityChip(
+                        label: s.intensityBright,
+                        selected: currentIntensity == DisplayIntensity.bright,
+                        onTap: () =>
+                            intensityNotifier.value = DisplayIntensity.bright,
+                      ),
+                      const SizedBox(width: 8),
+                      _buildIntensityChip(
+                        label: s.intensityUltra,
+                        selected: currentIntensity == DisplayIntensity.ultra,
+                        onTap: () =>
+                            intensityNotifier.value = DisplayIntensity.ultra,
+                      ),
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const Icon(Icons.pinch_rounded,
+                      color: EngineRowingUI.captionGrey, size: 16),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      s.pinchZoomHint,
+                      style: const TextStyle(
+                          color: EngineRowingUI.captionGrey, fontSize: 11),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIntensityChip({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: selected
+                ? EngineRowingUI.neonLime.withAlpha(50)
+                : EngineRowingUI.equationCardFill,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: selected
+                  ? EngineRowingUI.neonLime
+                  : EngineRowingUI.bgGridLine,
+              width: selected ? 1.5 : 1.0,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: selected
+                  ? EngineRowingUI.neonLime
+                  : EngineRowingUI.labelSlate,
+              fontSize: 11.5,
+              fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ),
       ),
     );
   }

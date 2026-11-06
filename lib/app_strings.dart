@@ -78,8 +78,8 @@ class AppStrings {
   String get teamReadiness => isArabic ? 'نسبة الجاهزية للفريق' : 'Team Readiness';
   String get readinessScore => isArabic ? 'مؤشر الجاهزية' : 'Readiness Index';
   String get teamReadinessDesc => isArabic ? 'متوسط جاهزية جميع اللاعبين للتدريب' : 'Average readiness of all athletes';
-  String get currentCycle => isArabic ? 'السيكل الحالي' : 'Current Cycle';
-  String get noActiveCycle => isArabic ? 'لا يوجد سيكل نشط حالياً' : 'No active cycle currently';
+  String get currentCycle => isArabic ? 'الدورة المرحلية الحالية' : 'Current Phase Cycle';
+  String get noActiveCycle => isArabic ? 'لا توجد دورة مرحلية نشطة حالياً' : 'No active phase cycle currently';
   String get nextSession => isArabic ? 'الحصة التدريبية القادمة' : 'Next Session';
   String get noUpcomingSessions => isArabic ? 'لا توجد حصص مجدولة لليوم' : 'No sessions scheduled for today';
   String get efTrendTitle => isArabic ? 'اتجاه كفاءة الأداء (EF) للفريق' : 'Team Efficiency Factor (EF) Trend';
@@ -93,38 +93,38 @@ class AppStrings {
   String get readyPlayers => isArabic ? 'جاهز' : 'Ready';
   String get tiredPlayers => isArabic ? 'إجهاد' : 'Fatigued';
   String get daysRemaining => isArabic ? 'يوم متبقي' : 'days left';
-  String get cycleProgress => isArabic ? 'تقدم السيكل' : 'Cycle Progress';
+  String get cycleProgress => isArabic ? 'تقدم الدورة المرحلية' : 'Phase Cycle Progress';
 
   // ==================== Program & Cycles Strings (المرحلة الثانية) ====================
-  String get trainingCycles => isArabic ? 'سيكلات التدريب' : 'Training Cycles';
-  String get cyclesSubtitle => isArabic ? 'نظام السيكلات التدريبية والدورات الأسبوعية' : 'Training Cycles & Weekly Microcycles';
-  String get cycleNumber => isArabic ? 'السيكل' : 'Cycle';
-  String cycleTitle(int num) => isArabic ? 'السيكل $num' : 'Cycle $num';
-  String get addCycle => isArabic ? 'إضافة سيكل جديد' : 'Add New Cycle';
-  String get deleteCycle => isArabic ? 'حذف السيكل' : 'Delete Cycle';
-  String get deleteCycleConfirm => isArabic ? 'هل أنت متأكد من حذف هذا السيكل؟' : 'Are you sure you want to delete this cycle?';
-  String get cannotDeleteLastCycle => isArabic ? 'لا يمكن حذف السيكل الوحيد المتبقي' : 'Cannot delete the only remaining cycle';
-  String get cycleAddedSuccess => isArabic ? 'تم إضافة سيكل جديد بنجاح' : 'New cycle added successfully';
-  String get activeCycleBadge => isArabic ? 'السيكل الشغال حالياً' : 'Currently Active Cycle';
+  String get trainingCycles => isArabic ? 'الدورات المرحلية للتدريب' : 'Training Phase Cycles';
+  String get cyclesSubtitle => isArabic ? 'نظام الدورات المرحلية والدورات الأسبوعية' : 'Training Phase Cycles & Weekly Microcycles';
+  String get cycleNumber => isArabic ? 'الدورة المرحلية' : 'Phase Cycle';
+  String cycleTitle(int num) => isArabic ? 'الدورة المرحلية $num' : 'Phase Cycle $num';
+  String get addCycle => isArabic ? 'إضافة دورة مرحلية جديدة' : 'Add New Phase Cycle';
+  String get deleteCycle => isArabic ? 'حذف الدورة المرحلية' : 'Delete Phase Cycle';
+  String get deleteCycleConfirm => isArabic ? 'هل أنت متأكد من حذف هذه الدورة المرحلية؟' : 'Are you sure you want to delete this phase cycle?';
+  String get cannotDeleteLastCycle => isArabic ? 'لا يمكن حذف الدورة المرحلية الوحيدة المتبقية' : 'Cannot delete the only remaining phase cycle';
+  String get cycleAddedSuccess => isArabic ? 'تم إضافة دورة مرحلية جديدة بنجاح' : 'New phase cycle added successfully';
+  String get activeCycleBadge => isArabic ? 'الدورة المرحلية الشغالة حالياً' : 'Currently Active Phase Cycle';
   String get cycleDuration => isArabic ? 'المدة' : 'Duration';
   String weeksCount(int count) => isArabic ? '$count أسابيع' : '$count weeks';
   String get startDate => isArabic ? 'تاريخ البداية' : 'Start Date';
   String get endDate => isArabic ? 'تاريخ النهاية' : 'End Date';
-  String get editCycleDates => isArabic ? 'تعديل تواريخ السيكل' : 'Edit Cycle Dates';
-  String get cycleDateConstraint => isArabic ? 'مدة السيكل المرنة من 2 إلى 6 أسابيع' : 'Flexible cycle duration: 2 to 6 weeks';
+  String get editCycleDates => isArabic ? 'تعديل تواريخ الدورة المرحلية' : 'Edit Phase Cycle Dates';
+  String get cycleDateConstraint => isArabic ? 'مدة الدورة المرحلية المرنة من 2 إلى 6 أسابيع' : 'Flexible phase cycle duration: 2 to 6 weeks';
   String get trainingLocation => isArabic ? 'منطقة أو مكان التدريب' : 'Training Location';
   String get trainingLocationHint => isArabic ? 'مثال: مجرى التجديف الدولي' : 'e.g. International Rowing Course';
   String get creationDate => isArabic ? 'تاريخ الإنشاء' : 'Created Date';
   String get lastEditDate => isArabic ? 'آخر تعديل' : 'Last Edit';
-  String get weeksCountCalculated => isArabic ? 'عدد الدورات الأسبوعية بالسيكل' : 'Total Weeks in Cycle';
+  String get weeksCountCalculated => isArabic ? 'عدد الدورات الأسبوعية بالدورة المرحلية' : 'Total Weeks in Phase Cycle';
   String get enterCycle => isArabic ? 'دخول' : 'Enter';
   String get comment => isArabic ? 'تعليق' : 'Comment';
   String get addComment => isArabic ? 'إضافة تعليق' : 'Add Comment';
   String get physiologicalNote => isArabic ? 'ملاحظة فسيولوجية' : 'Physiological Note';
   String get technicalNote => isArabic ? 'ملاحظة فنية' : 'Technical Note';
   String get addNote => isArabic ? 'إضافة ملاحظة' : 'Add Note';
-  String get testDatesTitle => isArabic ? 'تواريخ التستات المقررة للسيكل' : 'Scheduled Cycle Tests';
-  String get zoneParticipationTitle => isArabic ? 'نسب مشاركة الزونات بالسيكل' : 'Zone Distribution';
+  String get testDatesTitle => isArabic ? 'تواريخ التستات المقررة للدورة المرحلية' : 'Scheduled Phase Cycle Tests';
+  String get zoneParticipationTitle => isArabic ? 'نسب مشاركة الزونات بالدورة المرحلية' : 'Zone Distribution';
 
   // المستوى 2: الدورات الأسبوعية الأساسية والفرعية
   String get basicWeeklyCycleTitle => isArabic ? 'الدورة التدريبية الأسبوعية الأساسية' : 'Basic Weekly Training Cycle';
@@ -132,12 +132,12 @@ class AppStrings {
   String get basicRepsCount => isArabic ? 'عدد تكرارات الدورة الأساسية' : 'Basic Cycle Repetitions';
   String get secondaryRepsCount => isArabic ? 'عدد تكرارات الدورة الفرعية' : 'Secondary Cycle Repetitions';
   String get repsMismatchWarning => isArabic
-      ? 'تنبيه: مجموع تكرارات الدورة الأساسية والفرعية لا يساوي أسابيع السيكل الكلية!'
-      : 'Alert: Sum of basic and secondary cycle repetitions does not equal total cycle weeks!';
+      ? 'تنبيه: مجموع تكرارات الدورة الأساسية والفرعية لا يساوي أسابيع الدورة المرحلية الكلية!'
+      : 'Alert: Sum of basic and secondary cycle repetitions does not equal total phase cycle weeks!';
   String get dispatchScheduleTitle => isArabic ? 'موعد إرسال مضمون اليوم التدريبي للاعبين' : 'Weekly Schedule Dispatch';
   String get dispatchTime => isArabic ? 'وقت الإرسال' : 'Dispatch Time';
   String get dispatchDate => isArabic ? 'تاريخ الإرسال' : 'Dispatch Date';
-  String get dayDatesInCycle => isArabic ? 'تواريخ هذا اليوم داخل السيكل' : 'Dates in Cycle';
+  String get dayDatesInCycle => isArabic ? 'تواريخ هذا اليوم داخل الدورة المرحلية' : 'Dates in Phase Cycle';
   String get pastDateBadge => isArabic ? 'منقضي' : 'Past';
   String get sessionsCountLabel => isArabic ? 'عدد الحصص' : 'Sessions';
 
@@ -201,7 +201,7 @@ class AppStrings {
 
   // ==================== Workouts Tab Strings (المرحلة الثانية) ====================
   String get todaysWorkoutsHeader => isArabic ? 'تمارين اليوم' : "Today's Workouts";
-  String get todaysWorkoutsSubtitle => isArabic ? 'الحصص المجدولة لليوم من قالب السيكل النشط' : 'Sessions scheduled for today from active cycle';
+  String get todaysWorkoutsSubtitle => isArabic ? 'الحصص المجدولة لليوم من قالب الدورة المرحلية النشطة' : 'Sessions scheduled for today from active phase cycle';
   String get noWorkoutsToday => isArabic ? 'لا توجد تمارين مجدولة في برنامج اليوم (راحة)' : 'No workouts scheduled for today (Rest day)';
   String workoutTimeAndType(String time, String type) => isArabic ? '$type • الساعة $time' : '$type • $time';
   String get athletesListTitle => isArabic ? 'قائمة اللاعبين لتسجيل تمارين اليوم' : "Athletes List for Today's Workouts";
@@ -327,7 +327,7 @@ class AppStrings {
   String get arabic => isArabic ? 'العربية' : 'Arabic';
   String get english => isArabic ? 'الإنجليزية' : 'English';
   String get appArchitecture => isArabic ? 'بنية التطبيق' : 'App Architecture';
-  String get phase2Active => isArabic ? 'المرحلة الثانية: البرنامج وقوالب السيكلات، تمارين اليوم، وبوابة اللاعبين' : 'Phase 2: Program & Cycle Templates, Daily Workouts, Athletes Gateway';
+  String get phase2Active => isArabic ? 'المرحلة الثانية: البرنامج وقوالب الدورات المرحلية، تمارين اليوم، وبوابة اللاعبين' : 'Phase 2: Program & Phase Cycle Templates, Daily Workouts, Athletes Gateway';
   String get phase1Active => isArabic ? 'المرحلة الأولى: لوحة انجن روينج، التمارين، والإعدادات' : 'Phase 1: Engine Rowing Dashboard, Workouts & Settings';
   String get databaseStatus => isArabic ? 'حالة قاعدة البيانات: متصلة ونشطة' : 'Database Status: Connected & Active';
 
@@ -470,4 +470,15 @@ class AppStrings {
   String get exportToExcel => isArabic ? 'تحويل البيانات إلى ملف Excel' : 'Export Data to Excel (.xlsx)';
   String get exportToPdf => isArabic ? 'تحويل البيانات إلى تقرير PDF' : 'Export Report to PDF';
   String get shareReportAction => isArabic ? 'مشاركة التقرير عبر البريد أو الفريق' : 'Share Report via Email / Chat';
+
+  // ==================== Display Settings, Zoom & Intensity ====================
+  String get displayScaleTitle => isArabic ? 'مقياس الرؤية والتكبير' : 'Display Scale & Zoom';
+  String get displayScaleDesc => isArabic ? 'تكبير أو تصغير عناصر الواجهة للموبايل' : 'Scale UI elements for mobile';
+  String get colorIntensityTitle => isArabic ? 'حدة الألوان والإضاءة' : 'Color & Light Intensity';
+  String get colorIntensityDesc => isArabic ? 'التحكم في قوة إضاءة الخطوط والأرقام والحدود' : 'Control brightness & contrast of text & neon borders';
+  String get intensityNormal => isArabic ? 'عادي (متوازن)' : 'Normal';
+  String get intensityBright => isArabic ? 'ساطع (واضح)' : 'Bright';
+  String get intensityUltra => isArabic ? 'فائق الإضاءة (نيون)' : 'Ultra Neon';
+  String get pinchZoomHint => isArabic ? 'يمكنك التكبير والتصغير بأصابعك على الشاشة' : 'Pinch with two fingers to zoom anywhere';
+  String get defaultBoardName => isArabic ? 'إحماء' : 'Warm-up';
 }

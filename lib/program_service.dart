@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'db.dart';
@@ -286,7 +285,8 @@ class ProgramCycleTest {
         'is_completed': isCompleted ? 1 : 0,
       };
 
-  factory ProgramCycleTest.fromMap(Map<String, Object?> map) => ProgramCycleTest(
+  factory ProgramCycleTest.fromMap(Map<String, Object?> map) =>
+      ProgramCycleTest(
         cycleId: (map['cycle_id'] as num?)?.toInt() ?? 1,
         testType: map['test_type'] as String? ?? '500 m test',
         testDate: map['test_date'] as String? ?? '',
@@ -325,7 +325,8 @@ class ProgramDayConfig {
         'comment': comment,
       };
 
-  factory ProgramDayConfig.fromMap(Map<String, Object?> map) => ProgramDayConfig(
+  factory ProgramDayConfig.fromMap(Map<String, Object?> map) =>
+      ProgramDayConfig(
         cycleId: (map['cycle_id'] as num?)?.toInt() ?? 1,
         cycleType: map['cycle_type'] as String? ?? 'basic',
         dayOfWeek: (map['day_of_week'] as num?)?.toInt() ?? 0,
@@ -401,13 +402,15 @@ class ProgramCycle {
           Map<String, Object?> map, List<ProgramCycleTest> tests) =>
       ProgramCycle(
         id: map['id'] as int,
-        name: map['name'] as String? ?? 'السيكل 1',
+        name: map['name'] as String? ?? 'الدورة المرحلية 1',
         startDate: map['start_date'] as String? ?? dstr(DateTime.now()),
         endDate: map['end_date'] as String? ??
             dstr(DateTime.now().add(const Duration(days: 27))),
         location: map['location'] as String? ?? 'مجرى التجديف الدولي',
-        createdAt: map['created_at'] as String? ?? DateTime.now().toIso8601String(),
-        updatedAt: map['updated_at'] as String? ?? DateTime.now().toIso8601String(),
+        createdAt:
+            map['created_at'] as String? ?? DateTime.now().toIso8601String(),
+        updatedAt:
+            map['updated_at'] as String? ?? DateTime.now().toIso8601String(),
         basicReps: (map['basic_reps'] as num?)?.toInt() ?? 3,
         secondaryReps: (map['secondary_reps'] as num?)?.toInt() ?? 1,
         notesPhysio: map['notes_physio'] as String? ?? '',
@@ -545,7 +548,8 @@ class ProgramService {
     ''');
 
     try {
-      await database.execute('ALTER TABLE program_workout_items ADD COLUMN hr_range TEXT DEFAULT ""');
+      await database.execute(
+          'ALTER TABLE program_workout_items ADD COLUMN hr_range TEXT DEFAULT ""');
     } catch (_) {}
 
     // جدول sessions القديم للتوافق العكسي
@@ -562,7 +566,8 @@ class ProgramService {
   /// التأكد من وجود سيكل واحد فقط كبداية
   static Future<void> _ensureInitialCycleData() async {
     final database = await DB.db;
-    final rows = await database.rawQuery('SELECT * FROM program_cycles ORDER BY id ASC');
+    final rows =
+        await database.rawQuery('SELECT * FROM program_cycles ORDER BY id ASC');
 
     if (rows.isEmpty) {
       final now = DateTime.now();
@@ -570,7 +575,7 @@ class ProgramService {
       final end = start.add(const Duration(days: 27)); // 4 أسابيع
 
       final id = await database.insert('program_cycles', {
-        'name': 'السيكل 1',
+        'name': 'الدورة المرحلية 1',
         'start_date': dstr(start),
         'end_date': dstr(end),
         'location': 'مجرى التجديف الدولي',
@@ -578,8 +583,10 @@ class ProgramService {
         'updated_at': DateTime.now().toIso8601String(),
         'basic_reps': 3,
         'secondary_reps': 1,
-        'notes_physio': 'ملاحظة فسيولوجية: التركيز على تحسين قاعدة التحمل الهوائي العام.',
-        'notes_tech': 'ملاحظة فنية: تثبيت زاوية مسكة المجداف وديناميكية الدفع بالقدمين.',
+        'notes_physio':
+            'ملاحظة فسيولوجية: التركيز على تحسين قاعدة التحمل الهوائي العام.',
+        'notes_tech':
+            'ملاحظة فنية: تثبيت زاوية مسكة المجداف وديناميكية الدفع بالقدمين.',
         'comment': '',
       });
 
@@ -865,10 +872,11 @@ class ProgramService {
     final nextEnd = nextStart.add(const Duration(days: 27)); // 4 أسابيع
 
     final id = await database.insert('program_cycles', {
-      'name': 'السيكل $nextNum',
+      'name': 'الدورة المرحلية $nextNum',
       'start_date': dstr(nextStart),
       'end_date': dstr(nextEnd),
-      'location': existing.isNotEmpty ? existing.last.location : 'مجرى التجديف الدولي',
+      'location':
+          existing.isNotEmpty ? existing.last.location : 'مجرى التجديف الدولي',
       'created_at': DateTime.now().toIso8601String(),
       'updated_at': DateTime.now().toIso8601String(),
       'basic_reps': 3,
@@ -933,9 +941,12 @@ class ProgramService {
     final cycles = await getAllProgramCycles();
     if (cycles.length <= 1) return false;
 
-    await database.delete('program_cycles', where: 'id = ?', whereArgs: [cycleId]);
-    await database.delete('program_cycle_tests', where: 'cycle_id = ?', whereArgs: [cycleId]);
-    await database.delete('program_day_config', where: 'cycle_id = ?', whereArgs: [cycleId]);
+    await database
+        .delete('program_cycles', where: 'id = ?', whereArgs: [cycleId]);
+    await database.delete('program_cycle_tests',
+        where: 'cycle_id = ?', whereArgs: [cycleId]);
+    await database.delete('program_day_config',
+        where: 'cycle_id = ?', whereArgs: [cycleId]);
 
     final sessionRows = await database.rawQuery(
       'SELECT id FROM program_sessions WHERE cycle_id = ?',
@@ -943,9 +954,11 @@ class ProgramService {
     );
     for (final s in sessionRows) {
       final sId = s['id'] as int;
-      await database.delete('program_workout_items', where: 'session_id = ?', whereArgs: [sId]);
+      await database.delete('program_workout_items',
+          where: 'session_id = ?', whereArgs: [sId]);
     }
-    await database.delete('program_sessions', where: 'cycle_id = ?', whereArgs: [cycleId]);
+    await database.delete('program_sessions',
+        where: 'cycle_id = ?', whereArgs: [cycleId]);
 
     return true;
   }
@@ -961,7 +974,8 @@ class ProgramService {
     await ensureTables();
 
     // 1. حساب زونات الأسبوع للدورة الأساسية
-    final basicWeekZones = await calculateWeeklyCycleZoneSeconds(cycle.id, 'basic');
+    final basicWeekZones =
+        await calculateWeeklyCycleZoneSeconds(cycle.id, 'basic');
 
     // 2. حساب زونات الأسبوع للدورة الفرعية
     final secondaryWeekZones =
@@ -983,8 +997,8 @@ class ProgramService {
   // ============================================================================
 
   /// جلب إعدادات يوم معين
-  static Future<ProgramDayConfig> getDayConfig(
-      int cycleId, String cycleType, int dayOfWeek, String defaultLocation) async {
+  static Future<ProgramDayConfig> getDayConfig(int cycleId, String cycleType,
+      int dayOfWeek, String defaultLocation) async {
     await ensureTables();
     final database = await DB.db;
 
@@ -1021,7 +1035,8 @@ class ProgramService {
   static List<DateTime> getCycleDatesForDayOfWeek(
       String startStr, String endStr, int dayOfWeek) {
     final start = DateTime.tryParse(startStr) ?? DateTime.now();
-    final end = DateTime.tryParse(endStr) ?? start.add(const Duration(days: 27));
+    final end =
+        DateTime.tryParse(endStr) ?? start.add(const Duration(days: 27));
 
     final dates = <DateTime>[];
     DateTime cur = start;
@@ -1055,7 +1070,8 @@ class ProgramService {
   /// حساب مجموع ثواني الزونات ليوم واحد فقط
   static Future<Map<String, int>> calculateDayZoneSeconds(
       int cycleId, String cycleType, int dayOfWeek) async {
-    final sessions = await getDaySessionsDetailed(cycleId, cycleType, dayOfWeek);
+    final sessions =
+        await getDaySessionsDetailed(cycleId, cycleType, dayOfWeek);
     final dayMap = <String, int>{for (var z in kProgramZones) z: 0};
 
     for (final s in sessions) {
@@ -1164,8 +1180,8 @@ class ProgramService {
     await ensureTables();
     final database = await DB.db;
 
-    await database
-        .delete('program_workout_items', where: 'session_id = ?', whereArgs: [sessionId]);
+    await database.delete('program_workout_items',
+        where: 'session_id = ?', whereArgs: [sessionId]);
     await database
         .delete('program_sessions', where: 'id = ?', whereArgs: [sessionId]);
   }
@@ -1239,14 +1255,16 @@ class ProgramService {
   }
 
   /// مزامنة تمارين اليوم لجدول sessions التابع لشاشة اللاعبين
-  static Future<List<Map<String, Object?>>> syncSessionsForDate(DateTime date) async {
+  static Future<List<Map<String, Object?>>> syncSessionsForDate(
+      DateTime date) async {
     await ensureTables();
     final dateStr = dstr(date);
     final cycles = await getAllProgramCycles();
 
     ProgramCycle? activeCycle;
     for (final c in cycles) {
-      if (c.startDate.compareTo(dateStr) <= 0 && c.endDate.compareTo(dateStr) >= 0) {
+      if (c.startDate.compareTo(dateStr) <= 0 &&
+          c.endDate.compareTo(dateStr) >= 0) {
         activeCycle = c;
         break;
       }
@@ -1275,9 +1293,11 @@ class ProgramService {
         }
       }
 
-      if (currentSessions.isEmpty || currentSessions.length != flattenedWorkouts.length) {
+      if (currentSessions.isEmpty ||
+          currentSessions.length != flattenedWorkouts.length) {
         final database = await DB.db;
-        await database.delete('sessions', where: 'date = ?', whereArgs: [dateStr]);
+        await database
+            .delete('sessions', where: 'date = ?', whereArgs: [dateStr]);
 
         for (int i = 0; i < flattenedWorkouts.length; i++) {
           final item = flattenedWorkouts[i];
@@ -1295,7 +1315,8 @@ class ProgramService {
     return DB.sessions(dateStr);
   }
 
-  static Future<List<Map<String, Object?>>> getTodayWorkouts([DateTime? date]) async {
+  static Future<List<Map<String, Object?>>> getTodayWorkouts(
+      [DateTime? date]) async {
     return syncSessionsForDate(date ?? DateTime.now());
   }
 
@@ -1311,13 +1332,27 @@ class ProgramService {
         .toList();
   }
 
-  static bool isCycleActive(Map<String, Object?> cycle, [DateTime? targetDate]) {
+  static bool isCycleActive(Map<String, Object?> cycle,
+      [DateTime? targetDate]) {
     final now = targetDate ?? DateTime.now();
     final todayStr = dstr(now);
     final start = cycle['start'] as String? ?? '';
     final end = cycle['end'] as String? ?? '';
     if (start.isEmpty || end.isEmpty) return false;
     return start.compareTo(todayStr) <= 0 && end.compareTo(todayStr) >= 0;
+  }
+
+  /// توليد اسم اللوحة التالية عند الضغط على (+) مع تكرار الاسم وزيادة العدد الخاص بها
+  static String incrementBoardTitle(String currentTitle, int existingCount) {
+    final trimmed = currentTitle.trim();
+    if (trimmed.isEmpty) return 'لوحة ${existingCount + 1}';
+    final match = RegExp(r'^(.*?)\s*(\d+)$').firstMatch(trimmed);
+    if (match != null) {
+      final base = match.group(1)?.trim() ?? '';
+      final num = int.tryParse(match.group(2) ?? '1') ?? 1;
+      return '$base ${num + 1}';
+    }
+    return '$trimmed ${existingCount + 1}';
   }
 
   // --------------------------------------------------------------------------

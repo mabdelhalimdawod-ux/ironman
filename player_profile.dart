@@ -152,9 +152,11 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                             color: Colors.white)),
-                    Text('MHR: $mhr  •  الحالة: ${p['active'] == 1 ? 'نشط' : 'غير نشط'}',
+                    Text(
+                        'MHR: $mhr  •  الحالة: ${p['active'] == 1 ? 'نشط' : 'غير نشط'}',
                         style: TextStyle(
-                            fontSize: 16, color: Colors.white.withOpacity(0.8))),
+                            fontSize: 16,
+                            color: Colors.white.withValues(alpha: 0.8))),
                   ],
                 ),
               ),
@@ -180,12 +182,10 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
   Widget _statChip(String label, String value) => Column(children: [
         Text(value,
             style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: _yellow)),
+                fontSize: 22, fontWeight: FontWeight.bold, color: _yellow)),
         Text(label,
             style: TextStyle(
-                fontSize: 12, color: Colors.white.withOpacity(0.7))),
+                fontSize: 12, color: Colors.white.withValues(alpha: 0.7))),
       ]);
 
   // ==================== التنبيهات ====================
@@ -249,8 +249,7 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
                           color: color)),
-                  Text(text,
-                      style: TextStyle(fontSize: 16, color: color)),
+                  Text(text, style: TextStyle(fontSize: 16, color: color)),
                 ],
               ),
             ],
@@ -261,10 +260,10 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                 'المتوسط: ${baseline['avg_rhr']?.round() ?? '-'}'),
             _readinessDetail('تغير النبض', '${latest['hrv'] ?? '-'}',
                 'المتوسط: ${baseline['avg_hrv']?.round() ?? '-'}'),
-            _readinessDetail('الإرهاق',
-                fatigueLabels[latest['fatigue'] as int?] ?? '-', ''),
-            _readinessDetail('النوم',
-                '${latest['sleep_hours'] ?? '-'} ساعات', ''),
+            _readinessDetail(
+                'الإرهاق', fatigueLabels[latest['fatigue'] as int?] ?? '-', ''),
+            _readinessDetail(
+                'النوم', '${latest['sleep_hours'] ?? '-'} ساعات', ''),
           ],
         ]),
       ),
@@ -278,12 +277,10 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
             child: Text(label,
                 style: const TextStyle(fontSize: 16, color: Colors.grey))),
         Text(value,
-            style:
-                const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         if (sub.isNotEmpty) ...[
           const SizedBox(width: 8),
-          Text(sub,
-              style: const TextStyle(fontSize: 13, color: Colors.grey)),
+          Text(sub, style: const TextStyle(fontSize: 13, color: Colors.grey)),
         ],
       ]));
 
@@ -315,26 +312,19 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
             child: RadarChart(
               RadarChartData(
                 radarShape: RadarShape.polygon,
-                radarBorderData:
-                    const BorderSide(color: Colors.transparent),
+                radarBorderData: const BorderSide(color: Colors.transparent),
                 gridBorderData:
                     BorderSide(color: Colors.grey.shade300, width: 1),
-                tickBorderData:
-                    const BorderSide(color: Colors.transparent),
+                tickBorderData: const BorderSide(color: Colors.transparent),
                 tickCount: 4,
                 ticksTextStyle: const TextStyle(fontSize: 0),
                 titleTextStyle: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: _navy),
-                getTitle: (i, _) =>
-                    RadarChartTitle(text: keys[i]),
+                    fontSize: 13, fontWeight: FontWeight.bold, color: _navy),
+                getTitle: (i, _) => RadarChartTitle(text: keys[i]),
                 dataSets: [
                   RadarDataSet(
-                    dataEntries: [
-                      for (final v in values) RadarEntry(value: v)
-                    ],
-                    fillColor: _navy.withOpacity(0.15),
+                    dataEntries: [for (final v in values) RadarEntry(value: v)],
+                    fillColor: _navy.withValues(alpha: 0.15),
                     borderColor: _navy,
                     borderWidth: 2.5,
                     entryRadius: 4,
@@ -353,8 +343,8 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                 Chip(
                   label: Text('${keys[i]}: ${values[i].round()}%',
                       style: const TextStyle(fontSize: 12)),
-                  backgroundColor: Color(readinessColor(values[i]))
-                      .withOpacity(0.2),
+                  backgroundColor:
+                      Color(readinessColor(values[i])).withValues(alpha: 0.2),
                 ),
             ],
           ),
@@ -393,23 +383,23 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                 show: true,
                 drawVerticalLine: false,
                 horizontalInterval: ((maxY - minY) / 4).clamp(1, 50),
-                getDrawingHorizontalLine: (v) => FlLine(
-                    color: Colors.grey.shade200, strokeWidth: 1),
+                getDrawingHorizontalLine: (v) =>
+                    FlLine(color: Colors.grey.shade200, strokeWidth: 1),
               ),
               titlesData: FlTitlesData(
-                topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false)),
-                rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false)),
-                bottomTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false)),
+                topTitles:
+                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles:
+                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                bottomTitles:
+                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
                     reservedSize: 40,
                     getTitlesWidget: (v, _) => Text('${v.round()}',
-                        style: const TextStyle(
-                            fontSize: 11, color: Colors.grey)),
+                        style:
+                            const TextStyle(fontSize: 11, color: Colors.grey)),
                   ),
                 ),
               ),
@@ -418,14 +408,14 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                   ? ExtraLinesData(horizontalLines: [
                       HorizontalLine(
                         y: refLine,
-                        color: Colors.red.withOpacity(0.5),
+                        color: Colors.red.withValues(alpha: 0.5),
                         strokeWidth: 1.5,
                         dashArray: [8, 4],
                         label: HorizontalLineLabel(
                           show: true,
                           labelResolver: (_) => refLabel ?? '',
-                          style: const TextStyle(
-                              fontSize: 11, color: Colors.red),
+                          style:
+                              const TextStyle(fontSize: 11, color: Colors.red),
                         ),
                       ),
                     ])
@@ -439,15 +429,12 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                   barWidth: 3,
                   dotData: FlDotData(
                     show: spots.length <= 20,
-                    getDotPainter: (_, __, ___, ____) =>
-                        FlDotCirclePainter(
-                            radius: 3,
-                            color: color,
-                            strokeWidth: 0),
+                    getDotPainter: (_, __, ___, ____) => FlDotCirclePainter(
+                        radius: 3, color: color, strokeWidth: 0),
                   ),
                   belowBarData: BarAreaData(
                     show: true,
-                    color: color.withOpacity(0.1),
+                    color: color.withValues(alpha: 0.1),
                   ),
                 ),
               ],
@@ -473,11 +460,8 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
 
   // ==================== نبض الراحة ====================
   Widget _rhrChart() {
-    final rhrLogs = logs
-        .where((l) => l['rhr'] != null)
-        .toList()
-        .reversed
-        .toList();
+    final rhrLogs =
+        logs.where((l) => l['rhr'] != null).toList().reversed.toList();
 
     final spots = <FlSpot>[];
     for (int i = 0; i < rhrLogs.length; i++) {
@@ -494,11 +478,8 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
 
   // ==================== تغير النبض ====================
   Widget _hrvChart() {
-    final hrvLogs = logs
-        .where((l) => l['hrv'] != null)
-        .toList()
-        .reversed
-        .toList();
+    final hrvLogs =
+        logs.where((l) => l['hrv'] != null).toList().reversed.toList();
 
     final spots = <FlSpot>[];
     for (int i = 0; i < hrvLogs.length; i++) {
@@ -546,16 +527,12 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
 
   // ==================== الوزن ====================
   Widget _weightChart() {
-    final wLogs = logs
-        .where((l) => l['weight'] != null)
-        .toList()
-        .reversed
-        .toList();
+    final wLogs =
+        logs.where((l) => l['weight'] != null).toList().reversed.toList();
 
     final spots = <FlSpot>[];
     for (int i = 0; i < wLogs.length; i++) {
-      spots.add(
-          FlSpot(i.toDouble(), (wLogs[i]['weight'] as num).toDouble()));
+      spots.add(FlSpot(i.toDouble(), (wLogs[i]['weight'] as num).toDouble()));
     }
 
     return _lineChartCard(
@@ -583,8 +560,7 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
       Colors.purple.shade300,
     ];
 
-    final totalSessions =
-        zonesDist.values.fold<int>(0, (a, b) => a + b);
+    final totalSessions = zonesDist.values.fold<int>(0, (a, b) => a + b);
 
     return Card(
       child: Padding(
@@ -661,35 +637,60 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
           headingRowColor: WidgetStateProperty.all(_sky),
           columnSpacing: 14,
           columns: const [
-            DataColumn(label: Text('التاريخ', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('النوع', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('RHR', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('HRV', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('النبض', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('أقصى', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('بعد', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('دقيقة', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('الوزن', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('إرهاق', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(
+                label: Text('التاريخ',
+                    style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(
+                label: Text('النوع',
+                    style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(
+                label:
+                    Text('RHR', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(
+                label:
+                    Text('HRV', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(
+                label: Text('النبض',
+                    style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(
+                label: Text('أقصى',
+                    style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(
+                label:
+                    Text('بعد', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(
+                label: Text('دقيقة',
+                    style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(
+                label: Text('الوزن',
+                    style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(
+                label: Text('إرهاق',
+                    style: TextStyle(fontWeight: FontWeight.bold))),
           ],
           rows: [
             for (final l in recentLogs)
               DataRow(cells: [
-                DataCell(Text('${l['date'] ?? ''}', style: const TextStyle(fontSize: 13))),
-                DataCell(Text('${l['kind'] ?? '-'}', style: const TextStyle(fontSize: 13))),
+                DataCell(Text('${l['date'] ?? ''}',
+                    style: const TextStyle(fontSize: 13))),
+                DataCell(Text('${l['kind'] ?? '-'}',
+                    style: const TextStyle(fontSize: 13))),
                 DataCell(_hrCell(l['rhr'] as int?)),
-                DataCell(Text('${l['hrv'] ?? '-'}', style: const TextStyle(fontSize: 13))),
+                DataCell(Text('${l['hrv'] ?? '-'}',
+                    style: const TextStyle(fontSize: 13))),
                 DataCell(_hrCell(l['hr'] as int?, zone: l['zone'] as String?)),
-                DataCell(Text('${l['hr_max'] ?? '-'}', style: const TextStyle(fontSize: 13))),
-                DataCell(Text('${l['hr_post'] ?? '-'}', style: const TextStyle(fontSize: 13))),
-                DataCell(Text('${l['hr_1min'] ?? '-'}', style: const TextStyle(fontSize: 13))),
+                DataCell(Text('${l['hr_max'] ?? '-'}',
+                    style: const TextStyle(fontSize: 13))),
+                DataCell(Text('${l['hr_post'] ?? '-'}',
+                    style: const TextStyle(fontSize: 13))),
+                DataCell(Text('${l['hr_1min'] ?? '-'}',
+                    style: const TextStyle(fontSize: 13))),
                 DataCell(Text(
                     l['weight'] != null
                         ? (l['weight'] as num).toStringAsFixed(1)
                         : '-',
                     style: const TextStyle(fontSize: 13))),
-                DataCell(Text(
-                    fatigueLabels[l['fatigue'] as int?] ?? '-',
+                DataCell(Text(fatigueLabels[l['fatigue'] as int?] ?? '-',
                     style: const TextStyle(fontSize: 13))),
               ]),
           ],

@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rowing_app/heart_rate_zones.dart';
-import 'package:rowing_app/power_calculations.dart';
 
 void main() {
   group('Zone Curve & Karvonen Calculations Tests', () {
@@ -14,11 +13,16 @@ void main() {
       // Z4: 80% to < 90% -> 170 to < 185
       // Z5: >= 90% -> >= 185
 
-      expect(HeartRateZones.determineZone(hr: 130, mhr: mhr, rhr: rhr), equals('Z1'));
-      expect(HeartRateZones.determineZone(hr: 145, mhr: mhr, rhr: rhr), equals('Z2'));
-      expect(HeartRateZones.determineZone(hr: 160, mhr: mhr, rhr: rhr), equals('Z3'));
-      expect(HeartRateZones.determineZone(hr: 175, mhr: mhr, rhr: rhr), equals('Z4'));
-      expect(HeartRateZones.determineZone(hr: 190, mhr: mhr, rhr: rhr), equals('Z5'));
+      expect(HeartRateZones.determineZone(hr: 130, mhr: mhr, rhr: rhr),
+          equals('Z1'));
+      expect(HeartRateZones.determineZone(hr: 145, mhr: mhr, rhr: rhr),
+          equals('Z2'));
+      expect(HeartRateZones.determineZone(hr: 160, mhr: mhr, rhr: rhr),
+          equals('Z3'));
+      expect(HeartRateZones.determineZone(hr: 175, mhr: mhr, rhr: rhr),
+          equals('Z4'));
+      expect(HeartRateZones.determineZone(hr: 190, mhr: mhr, rhr: rhr),
+          equals('Z5'));
     });
 
     test('Daily aggregation for same zone averages watts correctly', () {

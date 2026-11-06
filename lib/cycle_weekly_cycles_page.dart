@@ -149,38 +149,39 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
           : Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 850),
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  children: [
-                    // ── شريط التنبيه والتحقق من مجموع تكرارات الدورتين ──
-                    if (!isRepsValid)
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF280B14),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFFF5252), width: 1.2),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.warning_amber_rounded,
-                                color: Color(0xFFFF5252), size: 24),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                '${s.repsMismatchWarning}\n(مجموع التكرارات الحالي: ${_cycle.sumConfiguredReps} • المطلوب: $totalWeeks أسابيع بناءً على تواريخ السيكل)',
-                                style: const TextStyle(
-                                  fontSize: 12.5,
-                                  color: EngineRowingUI.textWhite,
-                                  fontWeight: FontWeight.bold,
-                                  height: 1.3,
+                child: PinchZoomArea(
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    children: [
+                      // ── شريط التنبيه والتحقق من مجموع تكرارات الدورتين ──
+                      if (!isRepsValid)
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF280B14),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFFF5252), width: 1.2),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.warning_amber_rounded,
+                                  color: Color(0xFFFF5252), size: 24),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  '${s.repsMismatchWarning}\n(مجموع التكرارات الحالي: ${_cycle.sumConfiguredReps} • المطلوب: $totalWeeks أسابيع بناءً على تواريخ الدورة المرحلية)',
+                                  style: const TextStyle(
+                                    fontSize: 12.5,
+                                    color: EngineRowingUI.textWhite,
+                                    fontWeight: FontWeight.bold,
+                                    height: 1.3,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
 
                     // ════════════════════════════════════════════════════════════
                     // القسم الأول: الدورة التدريبية الأسبوعية الأساسية
@@ -236,6 +237,7 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
                 ),
               ),
             ),
+          ),
     );
   }
 
@@ -417,9 +419,6 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
     );
 
     final today = DateTime.now();
-
-    // إجمالي ثواني اليوم لحساب نسب المنحنى الشريطي
-    final totalSecs = dayZoneSeconds.values.fold<int>(0, (a, b) => a + b);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -616,135 +615,13 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
                 ),
                 const SizedBox(height: 14),
 
-                // ── الخانات الـ 6 المتجاورة لتوزيع الأحمال في الأسبوع الواحد ──
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    // الخانات الـ 6
-                    Expanded(
-                      flex: 4,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'أحمال الأسبوع الواحد (ثواني، دقائق، ساعات):',
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.bold,
-                              color: EngineRowingUI.textWhite,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Directionality(
-                            textDirection: TextDirection.ltr,
-                            child: Row(
-                              children: kProgramZones.map((z) {
-                                final secs = dayZoneSeconds[z] ?? 0;
-                                final color = kZoneColors[z] ?? _navy;
-                                final isZero = secs == 0;
-
-                                return Expanded(
-                                  child: Container(
-                                    margin: const EdgeInsets.symmetric(
-                                        horizontal: 2),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 3, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: isZero
-                                          ? EngineRowingUI.equationCardFill.withAlpha(120)
-                                          : color.withAlpha(35),
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(
-                                        color: isZero
-                                            ? _gridLine
-                                            : color,
-                                      ),
-                                    ),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          z,
-                                          style: TextStyle(
-                                            fontSize: 9.5,
-                                            fontWeight: FontWeight.bold,
-                                            color: isZero
-                                                ? EngineRowingUI.captionGrey
-                                                : color,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 3),
-                                        Text(
-                                          isZero
-                                              ? '-'
-                                              : RowingNumberFormatter.toEnglishDigits(
-                                                  ProgramService
-                                                      .formatDurationDetailed(secs)),
-                                          style: TextStyle(
-                                            fontSize: 9.5,
-                                            fontWeight: FontWeight.bold,
-                                            fontFeatures: const [
-                                              FontFeature.tabularFigures()
-                                            ],
-                                            color: isZero
-                                                ? EngineRowingUI.captionGrey
-                                                : EngineRowingUI.textWhite,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-
-                    // ── منحنى شريطي رأسي ملون لنسب الزونات ──
-                    Container(
-                      width: 100,
-                      height: 52,
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: EngineRowingUI.equationCardFill,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: _gridLine),
-                      ),
-                      child: Directionality(
-                        textDirection: TextDirection.ltr,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: kProgramZones.map((z) {
-                            final secs = dayZoneSeconds[z] ?? 0;
-                            final fraction = totalSecs > 0
-                                ? (secs / totalSecs).clamp(0.08, 1.0)
-                                : 0.08;
-                            final color = kZoneColors[z] ?? _navy;
-
-                            return Expanded(
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 1.5),
-                                child: Container(
-                                  height: 44 * fraction,
-                                  decoration: BoxDecoration(
-                                    color: secs > 0
-                                        ? color
-                                        : _gridLine,
-                                    borderRadius: const BorderRadius.vertical(
-                                        top: Radius.circular(3)),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ),
-                  ],
+                // ── الخانات المتجاوبة لتوزيع أحمال الزونات والمنحنى بالخلفية البيضاء (RowingAdaptiveZoneBoxes) ──
+                RowingAdaptiveZoneBoxes(
+                  zoneSeconds: dayZoneSeconds,
+                  title: s.isArabic
+                      ? 'أحمال الأسبوع الواحد (ثواني، دقائق، ساعات):'
+                      : 'Weekly Loads:',
+                  showCurveChart: true,
                 ),
               ],
             ),
