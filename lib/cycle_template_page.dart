@@ -27,7 +27,7 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
   final Map<int, List<WorkoutSlot>> _weekSlots = {};
 
   int get _cycleId => (widget.cycle['id'] as num?)?.toInt() ?? 1;
-  String get _cycleName => widget.cycle['name'] as String? ?? 'السيكل $_cycleId';
+  String get _cycleName => widget.cycle['name'] as String? ?? 'الدورة المرحلية $_cycleId';
 
   @override
   void initState() {
@@ -272,29 +272,31 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
             : Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 850),
-                  child: Column(
-                    children: [
-                      // رأس تعريفي بالسيكل
-                      _buildCycleSummaryHeader(s),
+                  child: PinchZoomArea(
+                    child: Column(
+                      children: [
+                        // رأس تعريفي بالدورة المرحلية
+                        _buildCycleSummaryHeader(s),
 
-                      // شريط اختيار أيام الأسبوع (السبت - الجمعة)
-                      _buildDaySelector(s),
+                        // شريط اختيار أيام الأسبوع (السبت - الجمعة)
+                        _buildDaySelector(s),
 
-                      // قائمة خانات التمرين لهذا اليوم (حتى 6 خانات)
-                      Expanded(
-                        child: currentDaySlots.isEmpty
-                            ? _buildEmptyDayState(s)
-                            : ListView.separated(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                itemCount: currentDaySlots.length,
-                                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                                itemBuilder: (ctx, idx) => _buildSlotCard(s, idx, currentDaySlots[idx]),
-                              ),
-                      ),
+                        // قائمة خانات التمرين لهذا اليوم (حتى 6 خانات)
+                        Expanded(
+                          child: currentDaySlots.isEmpty
+                              ? _buildEmptyDayState(s)
+                              : ListView.separated(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  itemCount: currentDaySlots.length,
+                                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                                  itemBuilder: (ctx, idx) => _buildSlotCard(s, idx, currentDaySlots[idx]),
+                                ),
+                        ),
 
-                      // شريط الإجراءات السفلي (إضافة خانة + حفظ)
-                      _buildBottomActionBar(s, currentDaySlots.length),
-                    ],
+                        // شريط الإجراءات السفلي (إضافة خانة + حفظ)
+                        _buildBottomActionBar(s, currentDaySlots.length),
+                      ],
+                    ),
                   ),
                 ),
               ),

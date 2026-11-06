@@ -243,9 +243,10 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
           : Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 850),
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  children: [
+                child: PinchZoomArea(
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    children: [
                     // هيدر توضيحي
                     Container(
                       padding: const EdgeInsets.all(12),
@@ -304,6 +305,7 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
                 ),
               ),
             ),
+          ),
     );
   }
 
@@ -313,17 +315,10 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
-      decoration: BoxDecoration(
-        color: _cardFill,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _gridLine, width: 1.2),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 16,
-            offset: Offset(0, 6),
-          ),
-        ],
+      decoration: EngineRowingUI.neonGlowBoxDecoration(
+        backgroundColor: _cardFill,
+        borderColor: _gridLine,
+        borderRadius: 14,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -442,75 +437,15 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
 
                 // ── الخانات الـ 6 المتجاورة أسفل لوحة الحصة (Z1 - Z5 + Threshold) ──
                 // تبدأ من اليسار: zone1, zone2, zone3, zone4, Threshold, zone5
-                const Text(
-                  'أحمال الزونات لهذه الحصة (تحسب تلقائياً من التمارين):',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: EngineRowingUI.textWhite,
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                Directionality(
-                  textDirection: TextDirection.ltr,
-                  child: Row(
-                    children: kProgramZones.map((z) {
-                      final secs = zoneDurations[z] ?? 0;
-                      final isZero = secs == 0;
-                      final color = kZoneColors[z] ?? _navy;
-
-                      return Expanded(
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 2.5),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 4, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: isZero
-                                ? EngineRowingUI.equationCardFill.withAlpha(120)
-                                : color.withAlpha(35),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: isZero
-                                  ? _gridLine
-                                  : color,
-                              width: isZero ? 1 : 1.5,
-                            ),
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                z,
-                                style: TextStyle(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: isZero ? EngineRowingUI.captionGrey : color,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                isZero
-                                    ? '-'
-                                    : RowingNumberFormatter.toEnglishDigits(
-                                        ProgramService.formatDurationDetailed(secs)),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  fontFeatures: const [
-                                    FontFeature.tabularFigures()
-                                  ],
-                                  color: isZero
-                                      ? EngineRowingUI.captionGrey
-                                      : EngineRowingUI.textWhite,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
+                // ── لوحة الزونات والكيرف المتجاوبة بالكامل لجميع الشاشات والموبايل مع الخلفية البيضاء ──
+                RowingAdaptiveZoneBoxes(
+                  zoneTotals: zoneDurations,
+                  title: s.isArabic
+                      ? 'أحمال الزونات لهذه الحصة (تحسب تلقائياً من التمارين):'
+                      : 'Session Zone Distribution:',
+                  curveTitle: s.zoneParticipationTitle,
+                  formatDuration: (secs) =>
+                      ProgramService.formatDurationDetailed(secs),
                 ),
                 const SizedBox(height: 16),
                 const Divider(height: 1, color: _gridLine),

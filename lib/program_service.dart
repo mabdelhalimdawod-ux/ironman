@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'db.dart';
@@ -401,7 +400,7 @@ class ProgramCycle {
           Map<String, Object?> map, List<ProgramCycleTest> tests) =>
       ProgramCycle(
         id: map['id'] as int,
-        name: map['name'] as String? ?? 'السيكل 1',
+        name: map['name'] as String? ?? 'الدورة المرحلية 1',
         startDate: map['start_date'] as String? ?? dstr(DateTime.now()),
         endDate: map['end_date'] as String? ??
             dstr(DateTime.now().add(const Duration(days: 27))),
@@ -570,7 +569,7 @@ class ProgramService {
       final end = start.add(const Duration(days: 27)); // 4 أسابيع
 
       final id = await database.insert('program_cycles', {
-        'name': 'السيكل 1',
+        'name': 'الدورة المرحلية 1',
         'start_date': dstr(start),
         'end_date': dstr(end),
         'location': 'مجرى التجديف الدولي',
@@ -865,7 +864,7 @@ class ProgramService {
     final nextEnd = nextStart.add(const Duration(days: 27)); // 4 أسابيع
 
     final id = await database.insert('program_cycles', {
-      'name': 'السيكل $nextNum',
+      'name': 'الدورة المرحلية $nextNum',
       'start_date': dstr(nextStart),
       'end_date': dstr(nextEnd),
       'location': existing.isNotEmpty ? existing.last.location : 'مجرى التجديف الدولي',
@@ -1098,7 +1097,23 @@ class ProgramService {
     return sessions;
   }
 
-  /// إضافة حصة تدريبية جديدة لليوم
+  /// تكرار اسم اللوحة السابقة مع زيادة رقمها التسلسلي (مثال: إحماء 1 -> إحماء 2 أو الحصة 1 -> الحصة 2)
+  static String incrementBoardTitle(String? prevTitle, String defaultPrefix, int targetIndex) {
+    if (prevTitle == null || prevTitle.trim().isEmpty) {
+      return '$defaultPrefix $targetIndex';
+    }
+    final trimmed = prevTitle.trim();
+    final regex = RegExp(r'^(.*?)\s*(\d+)$');
+    final match = regex.firstMatch(trimmed);
+    if (match != null) {
+      final prefix = match.group(1)!.trim();
+      final number = int.tryParse(match.group(2)!) ?? (targetIndex - 1);
+      return '$prefix ${number + 1}';
+    }
+    return '$trimmed $targetIndex';
+  }
+
+  /// إضافة حصة تدريبية جديدة لليوم مع تكرار اسم الحصة السابقة وزيادة رقمها
   static Future<ProgramDaySession> addDaySessionDetailed(
       int cycleId, String cycleType, int dayOfWeek) async {
     await ensureTables();
@@ -1108,9 +1123,14 @@ class ProgramService {
     final newIdx = current.length;
     final defaultTimes = ['07:00', '16:30', '11:00', '19:00'];
     final time = defaultTimes[newIdx.clamp(0, defaultTimes.length - 1)];
-    final name = newIdx == 0
-        ? 'الحصة الصباحية'
-        : (newIdx == 1 ? 'الحصة المسائية' : 'الحصة ${newIdx + 1}');
+    final String name;
+    if (current.isNotEmpty) {
+      name = incrementBoardTitle(current.last.name, 'الحصة', newIdx + 1);
+    } else {
+      name = newIdx == 0
+          ? 'الحصة الصباحية'
+          : (newIdx == 1 ? 'الحصة المسائية' : 'الحصة ${newIdx + 1}');
+    }
 
     final sId = await database.insert('program_sessions', {
       'cycle_id': cycleId,

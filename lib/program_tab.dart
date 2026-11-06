@@ -118,6 +118,7 @@ class _ProgramTabState extends State<ProgramTab> {
   }
 
   Future<void> _pickCycleDates(ProgramCycle cycle) async {
+    final s = AppStrings.of(context);
     DateTime selectedStart = DateTime.tryParse(cycle.startDate) ?? DateTime.now();
     DateTime selectedEnd =
         DateTime.tryParse(cycle.endDate) ?? selectedStart.add(const Duration(days: 27));
@@ -145,8 +146,10 @@ class _ProgramTabState extends State<ProgramTab> {
       if (days < 14 || days > 84) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('مدة السيكل يجب ألا تقل عن أسبوعين (14 يوم)'),
+          SnackBar(
+            content: Text(s.isArabic
+                ? 'مدة الدورة المرحلية يجب ألا تقل عن أسبوعين (14 يوم)'
+                : 'Phase cycle duration must be at least 2 weeks (14 days)'),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -184,10 +187,12 @@ class _ProgramTabState extends State<ProgramTab> {
           controller: ctrl,
           maxLines: 4,
           style: const TextStyle(color: EngineRowingUI.textWhite),
-          decoration: const InputDecoration(
-            hintText: 'اكتب تعليق أو ملاحظات عامة حول هذا السيكل...',
-            hintStyle: TextStyle(color: EngineRowingUI.labelSlate),
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            hintText: s.isArabic
+                ? 'اكتب تعليق أو ملاحظات عامة حول هذه الدورة المرحلية...'
+                : 'Write a comment or notes about this phase cycle...',
+            hintStyle: const TextStyle(color: EngineRowingUI.labelSlate),
+            border: const OutlineInputBorder(),
           ),
         ),
         actions: [
@@ -294,17 +299,19 @@ class _ProgramTabState extends State<ProgramTab> {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 850),
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              children: [
-                // ── شريط رأس تاب Program مع زرار (+) لإضافة سيكل جديد ──
-                _buildHeaderBar(s),
-                const SizedBox(height: 18),
+            child: PinchZoomArea(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                children: [
+                  // ── شريط رأس تاب Program مع زرار (+) لإضافة دورة مرحلية جديدة ──
+                  _buildHeaderBar(s),
+                  const SizedBox(height: 18),
 
-                // ── كروت السيكلات المجسمة ──
-                ..._cycles.map((c) => _buildCyclePanel(s, c)),
-                const SizedBox(height: 24),
-              ],
+                  // ── كروت الدورات المرحلية المجسمة ──
+                  ..._cycles.map((c) => _buildCyclePanel(s, c)),
+                  const SizedBox(height: 24),
+                ],
+              ),
             ),
           ),
         ),
@@ -387,9 +394,11 @@ class _ProgramTabState extends State<ProgramTab> {
                   ],
                 ),
                 const SizedBox(height: 3),
-                const Text(
-                  'تخطيط السيكلات والدورات التدريبية وحسابات الزونات الستة والتستات',
-                  style: TextStyle(fontSize: 12.5, color: EngineRowingUI.labelSlate),
+                Text(
+                  s.isArabic
+                      ? 'تخطيط الدورات المرحلية والدورات التدريبية وحسابات الزونات الستة والتستات'
+                      : 'Planning phase cycles, microcycles, 6 zones & testing dates',
+                  style: const TextStyle(fontSize: 12.5, color: EngineRowingUI.labelSlate),
                 ),
               ],
             ),
@@ -417,12 +426,10 @@ class _ProgramTabState extends State<ProgramTab> {
     );
   }
 
-  /// كارت لوحة السيكل المجسمة بعرض الشاشة بكامل مواصفات الوصف
+  /// كارت لوحة الدورة المرحلية المجسمة بعرض الشاشة
   Widget _buildCyclePanel(AppStrings s, ProgramCycle cycle) {
     final zoneTotals = _cycleZoneTotals[cycle.id] ??
         {for (var z in kProgramZones) z: 0};
-    final totalAllSecs =
-        zoneTotals.values.fold<int>(0, (a, b) => a + b);
 
     final createdDateStr = cycle.createdAt.length >= 10
         ? cycle.createdAt.substring(0, 10)
@@ -433,17 +440,10 @@ class _ProgramTabState extends State<ProgramTab> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 22),
-      decoration: BoxDecoration(
-        color: _cardFill,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _gridLine, width: 1.2),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black45,
-            blurRadius: 18,
-            offset: Offset(0, 6),
-          ),
-        ],
+      decoration: EngineRowingUI.neonGlowBoxDecoration(
+        backgroundColor: _cardFill,
+        borderColor: _gold,
+        borderRadius: 14,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -658,269 +658,137 @@ class _ProgramTabState extends State<ProgramTab> {
                       color: _gold),
                 ),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 8,
-                  children: kProgramTestTypes.map((testType) {
-                    final testItem = cycle.tests.firstWhere(
-                      (t) => t.testType == testType,
-                      orElse: () => ProgramCycleTest(
-                        cycleId: cycle.id,
-                        testType: testType,
-                        testDate: cycle.endDate,
-                        targetValue: '',
-                        isCompleted: false,
-                      ),
-                    );
+                LayoutBuilder(
+                  builder: (context, testConstraints) {
+                    final itemWidth = testConstraints.maxWidth < 500
+                        ? ((testConstraints.maxWidth - 12) / 2).clamp(135.0, 300.0)
+                        : 175.0;
 
-                    return Container(
-                      width: 175,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: EngineRowingUI.equationCardFill,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: testItem.isCompleted
-                              ? _gold
-                              : _gridLine,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                    return Wrap(
+                      spacing: 10,
+                      runSpacing: 8,
+                      children: kProgramTestTypes.map((testType) {
+                        final testItem = cycle.tests.firstWhere(
+                          (t) => t.testType == testType,
+                          orElse: () => ProgramCycleTest(
+                            cycleId: cycle.id,
+                            testType: testType,
+                            testDate: cycle.endDate,
+                            targetValue: '',
+                            isCompleted: false,
+                          ),
+                        );
+
+                        return Container(
+                          width: itemWidth,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: EngineRowingUI.equationCardFill,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: testItem.isCompleted
+                                  ? _gold
+                                  : _gridLine,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: Checkbox(
-                                  value: testItem.isCompleted,
-                                  activeColor: _gold,
-                                  checkColor: _navy,
-                                  side: const BorderSide(color: EngineRowingUI.labelSlate),
+                              Row(
+                                children: [
+                                  SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: Checkbox(
+                                      value: testItem.isCompleted,
+                                      activeColor: _gold,
+                                      checkColor: _navy,
+                                      side: const BorderSide(color: EngineRowingUI.labelSlate),
+                                      onChanged: (val) {
+                                        setState(() {
+                                          testItem.isCompleted = val ?? false;
+                                        });
+                                        ProgramService.updateProgramCycle(cycle);
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Directionality(
+                                      textDirection: TextDirection.ltr,
+                                      child: Text(
+                                        testType,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 11.5,
+                                          color: testItem.isCompleted
+                                              ? _gold
+                                              : EngineRowingUI.textWhite,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              // إدخال قيمة التست المستهدفة
+                              Directionality(
+                                textDirection: TextDirection.ltr,
+                                child: TextFormField(
+                                  initialValue: testItem.targetValue,
+                                  textAlign: TextAlign.left,
+                                  inputFormatters: [
+                                    RowingNumberFormatter.englishDigitsInputFormatter,
+                                  ],
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: EngineRowingUI.textWhite,
+                                    fontFeatures: [FontFeature.tabularFigures()],
+                                  ),
+                                  decoration: const InputDecoration(
+                                    hintText: 'Target split or W...',
+                                    hintStyle: TextStyle(
+                                        fontSize: 10,
+                                        color: EngineRowingUI.captionGrey),
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 4),
+                                    border: OutlineInputBorder(
+                                      borderSide: BorderSide(color: _gridLine),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: _gridLine),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: _gold),
+                                    ),
+                                  ),
                                   onChanged: (val) {
-                                    setState(() {
-                                      testItem.isCompleted = val ?? false;
-                                    });
+                                    testItem.targetValue =
+                                        RowingNumberFormatter.toEnglishDigits(val.trim());
                                     ProgramService.updateProgramCycle(cycle);
                                   },
                                 ),
                               ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Directionality(
-                                  textDirection: TextDirection.ltr,
-                                  child: Text(
-                                    testType,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 11.5,
-                                      color: testItem.isCompleted
-                                          ? _gold
-                                          : EngineRowingUI.textWhite,
-                                    ),
-                                  ),
-                                ),
-                              ),
                             ],
                           ),
-                          const SizedBox(height: 4),
-                          // إدخال قيمة التست المستهدفة
-                          Directionality(
-                            textDirection: TextDirection.ltr,
-                            child: TextFormField(
-                              initialValue: testItem.targetValue,
-                              textAlign: TextAlign.left,
-                              inputFormatters: [
-                                RowingNumberFormatter.englishDigitsInputFormatter,
-                              ],
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: EngineRowingUI.textWhite,
-                                fontFeatures: [FontFeature.tabularFigures()],
-                              ),
-                              decoration: const InputDecoration(
-                                hintText: 'Target split or W...',
-                                hintStyle: TextStyle(
-                                    fontSize: 10,
-                                    color: EngineRowingUI.captionGrey),
-                                isDense: true,
-                                contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 4),
-                                border: OutlineInputBorder(
-                                  borderSide: BorderSide(color: _gridLine),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: _gridLine),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: _gold),
-                                ),
-                              ),
-                              onChanged: (val) {
-                                testItem.targetValue =
-                                    RowingNumberFormatter.toEnglishDigits(val.trim());
-                                ProgramService.updateProgramCycle(cycle);
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
+                        );
+                      }).toList(),
                     );
-                  }).toList(),
+                  },
                 ),
                 const SizedBox(height: 18),
 
-                // ── 3. الـ 6 خانات للزونات + المنحنى الشريطي الرأسي لنسب المشاركة ──
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    // الـ 6 خانات متجاورة تبدأ من اليسار (Z1, Z2, Z3, Z4, Threshold, Z5)
-                    Expanded(
-                      flex: 4,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'إجمالي أحمال الزونات بالسيكل (أساسي × تكرارات + فرعي):',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: EngineRowingUI.textWhite,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-
-                          Directionality(
-                            textDirection: TextDirection.ltr,
-                            child: Row(
-                              children: kProgramZones.map((z) {
-                                final secs = zoneTotals[z] ?? 0;
-                                final color = kZoneColors[z] ?? _navy;
-                                final isZero = secs == 0;
-
-                                return Expanded(
-                                  child: Container(
-                                    margin: const EdgeInsets.symmetric(
-                                        horizontal: 2.5),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 4, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: isZero
-                                          ? EngineRowingUI.equationCardFill.withAlpha(120)
-                                          : color.withAlpha(35),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: isZero
-                                            ? _gridLine
-                                            : color,
-                                        width: isZero ? 1 : 1.5,
-                                      ),
-                                    ),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          z,
-                                          style: TextStyle(
-                                            fontSize: 10.5,
-                                            fontWeight: FontWeight.bold,
-                                            color: isZero
-                                                ? EngineRowingUI.captionGrey
-                                                : color,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          isZero
-                                              ? '-'
-                                              : RowingNumberFormatter.toEnglishDigits(
-                                                  ProgramService
-                                                      .formatDurationDetailed(secs)),
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                            fontFeatures: const [
-                                              FontFeature.tabularFigures()
-                                            ],
-                                            color: isZero
-                                                ? EngineRowingUI.captionGrey
-                                                : EngineRowingUI.textWhite,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-
-                    // ── المنحنى الرسومي الشريطي الرأسي الملون لكل زون (على الجانب الأيسر) ──
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          s.zoneParticipationTitle,
-                          style: const TextStyle(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.bold,
-                              color: EngineRowingUI.labelSlate),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          width: 120,
-                          height: 64,
-                          padding: const EdgeInsets.all(5),
-                          decoration: BoxDecoration(
-                            color: EngineRowingUI.equationCardFill,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: _gridLine),
-                          ),
-                          child: Directionality(
-                            textDirection: TextDirection.ltr,
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: kProgramZones.map((z) {
-                                final secs = zoneTotals[z] ?? 0;
-                                final fraction = totalAllSecs > 0
-                                    ? (secs / totalAllSecs).clamp(0.08, 1.0)
-                                    : 0.08;
-                                final color = kZoneColors[z] ?? _navy;
-
-                                return Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 1.5),
-                                    child: Tooltip(
-                                      message:
-                                          '$z: ${totalAllSecs > 0 ? ((secs / totalAllSecs) * 100).toStringAsFixed(1) : 0}%',
-                                      child: Container(
-                                        height: 52 * fraction,
-                                        decoration: BoxDecoration(
-                                          color: secs > 0
-                                              ? color
-                                              : _gridLine,
-                                          borderRadius:
-                                              const BorderRadius.vertical(
-                                                  top: Radius.circular(3)),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                // ── 3. الـ 6 خانات للزونات + المنحنى الشريطي الرأسي ذو الخلفية البيضاء ──
+                RowingAdaptiveZoneBoxes(
+                  zoneTotals: zoneTotals,
+                  title: s.isArabic
+                      ? 'إجمالي أحمال الزونات بالدورة المرحلية (أساسي × تكرارات + فرعي):'
+                      : 'Total Phase Cycle Zone Distribution (Basic × Reps + Secondary):',
+                  curveTitle: s.zoneParticipationTitle,
+                  formatDuration: (secs) =>
+                      ProgramService.formatDurationDetailed(secs),
                 ),
                 const SizedBox(height: 18),
 

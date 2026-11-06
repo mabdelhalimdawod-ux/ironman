@@ -52,6 +52,12 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
       final prevItems =
           _session.workouts.where((w) => w.section == section).toList();
       final last = template ?? (prevItems.isNotEmpty ? prevItems.last : null);
+      final defaultPrefix = section == 'warmup'
+          ? 'إحماء'
+          : (section == 'main' ? 'تمرين' : 'تهدئة');
+      final nextIdx = prevItems.length + 1;
+      final newName = ProgramService.incrementBoardTitle(
+          last?.details, defaultPrefix, nextIdx);
 
       _session.workouts.add(ProgramWorkoutItem(
         sessionId: _session.id ?? 0,
@@ -75,7 +81,7 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
             (section == 'main'
                 ? 'zone3 = 75%:85%'
                 : 'zone1 = 55%:65%'),
-        details: '',
+        details: newName,
       ));
     });
   }
@@ -288,47 +294,49 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
             ),
           ),
 
-          // قائمة الصفوف الثلاثة: 1. الإحماء 2. الرئيسي 3. التهدئة
+          // قائمة الصفوف الثلاثة: 1. الإحماء 2. الرئيسي 3. التهدئة مع التكبير بالأصابع
           Expanded(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 850),
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    // ── 1. الصف الأول: الإحماء ──
-                    _buildSectionCard(
-                      title: s.warmupSection,
-                      icon: Icons.directions_walk_rounded,
-                      section: 'warmup',
-                      items: _session.warmupItems,
-                      badgeColor: const Color(0xFFFF9100),
-                      onAdd: () => _addWorkoutRow('warmup'),
-                    ),
-                    const SizedBox(height: 18),
+            child: PinchZoomArea(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 850),
+                  child: ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      // ── 1. الصف الأول: الإحماء ──
+                      _buildSectionCard(
+                        title: s.warmupSection,
+                        icon: Icons.directions_walk_rounded,
+                        section: 'warmup',
+                        items: _session.warmupItems,
+                        badgeColor: const Color(0xFFFF9100),
+                        onAdd: () => _addWorkoutRow('warmup'),
+                      ),
+                      const SizedBox(height: 18),
 
-                    // ── 2. الصف الثاني: التمرين الرئيسي ──
-                    _buildSectionCard(
-                      title: s.mainWorkoutSection,
-                      icon: Icons.fitness_center_rounded,
-                      section: 'main',
-                      items: _session.mainItems,
-                      badgeColor: _gold,
-                      onAdd: () => _addWorkoutRow('main'),
-                    ),
-                    const SizedBox(height: 18),
+                      // ── 2. الصف الثاني: التمرين الرئيسي ──
+                      _buildSectionCard(
+                        title: s.mainWorkoutSection,
+                        icon: Icons.fitness_center_rounded,
+                        section: 'main',
+                        items: _session.mainItems,
+                        badgeColor: _gold,
+                        onAdd: () => _addWorkoutRow('main'),
+                      ),
+                      const SizedBox(height: 18),
 
-                    // ── 3. الصف الثالث: التهدئة ──
-                    _buildSectionCard(
-                      title: s.cooldownSection,
-                      icon: Icons.self_improvement_rounded,
-                      section: 'cooldown',
-                      items: _session.cooldownItems,
-                      badgeColor: const Color(0xFF2979FF),
-                      onAdd: () => _addWorkoutRow('cooldown'),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
+                      // ── 3. الصف الثالث: التهدئة ──
+                      _buildSectionCard(
+                        title: s.cooldownSection,
+                        icon: Icons.self_improvement_rounded,
+                        section: 'cooldown',
+                        items: _session.cooldownItems,
+                        badgeColor: const Color(0xFF2979FF),
+                        onAdd: () => _addWorkoutRow('cooldown'),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -464,9 +472,9 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
                         borderRadius: BorderRadius.circular(8)),
                   ),
                   icon: const Icon(Icons.add_rounded, size: 18),
-                  label: const Text('إضافة تمرين',
+                  label: Text('إضافة ${section == 'warmup' ? 'إحماء' : (section == 'main' ? 'تمرين' : 'تهدئة')} (+)',
                       style:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                   onPressed: onAdd,
                 ),
               ],
@@ -577,37 +585,41 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
     final currentDetailedZone = formatZoneToDetailed(widget.item.zone);
     final normZone = normalizeZoneKey(currentDetailedZone);
     final zoneColor = kZoneColors[normZone] ?? _gold;
+    final defaultPrefix = widget.item.section == 'warmup'
+        ? 'إحماء'
+        : (widget.item.section == 'main' ? 'تمرين' : 'تهدئة');
+    final boardTitle = widget.item.details.isNotEmpty
+        ? widget.item.details
+        : '$defaultPrefix ${widget.index + 1}';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: EngineRowingUI.equationCardFill,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _gridLine),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
+      decoration: EngineRowingUI.neonGlowBoxDecoration(
+        backgroundColor: EngineRowingUI.equationCardFill,
+        borderColor: zoneColor,
+        borderRadius: 12,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── الشريط العلوي للخانة: رقم التمرين + وقت التمرين + زر (+) بجوار الخانات + زر الحذف ──
+          // ── الشريط العلوي للخانة: اسم اللوحة المتكرر + رقم التمرين + وقت التمرين + زر (+) + زر الحذف ──
           Row(
             children: [
-              CircleAvatar(
-                radius: 12,
-                backgroundColor: _gold,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _gold.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: _gold, width: 1.2),
+                ),
                 child: Text(
-                  '${widget.index + 1}',
+                  boardTitle,
                   style: const TextStyle(
-                      color: _navy,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold),
+                    color: _gold,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -648,7 +660,7 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
               ),
               const Spacer(),
 
-              // زر (+) بجوار الخانات لإضافة تمرين جديد بنفس المواصفات
+              // زر (+) بجوار الخانات لإضافة تمرين جديد بنفس المواصفات مع زيادة الرقم
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _gold,
@@ -660,9 +672,9 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                 ),
                 icon: const Icon(Icons.add_circle_outline_rounded,
                     size: 16, color: _gold),
-                label: const Text(
-                  'إضافة تمرين (+)',
-                  style: TextStyle(
+                label: Text(
+                  'إضافة $defaultPrefix (+)',
+                  style: const TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.bold,
                       color: _gold),

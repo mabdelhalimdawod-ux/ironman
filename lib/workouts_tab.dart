@@ -10,7 +10,6 @@ const Color _navy = EngineRowingUI.bgNavy;
 const Color _cardFill = EngineRowingUI.cardFill;
 const Color _gold = EngineRowingUI.neonLime;
 const Color _gridLine = EngineRowingUI.bgGridLine;
-const Color _green = EngineRowingUI.neonLime;
 
 /// تاب "التمارين" (Workouts Tab):
 /// - هيدر علوي يعرض كل تمارين اليوم الجاية من تاب البرنامج بمواعيدها ونوعها
@@ -130,28 +129,30 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 850),
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              children: [
-                // ══════════════════════════════════════════════════
-                // الهيدر العلوي: يعرض كل تمارين اليوم الجاية من تاب البرنامج بمواعيدها
-                // ══════════════════════════════════════════════════
-                _buildTodayWorkoutsHeader(s, dateStr),
-                const SizedBox(height: 16),
+            child: PinchZoomArea(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                children: [
+                  // ══════════════════════════════════════════════════
+                  // الهيدر العلوي: يعرض كل تمارين اليوم الجاية من تاب البرنامج بمواعيدها
+                  // ══════════════════════════════════════════════════
+                  _buildTodayWorkoutsHeader(s, dateStr),
+                  const SizedBox(height: 16),
 
-                // ══════════════════════════════════════════════════
-                // قائمة أسماء اللاعبين
-                // ══════════════════════════════════════════════════
-                _buildPlayersSectionHeader(s, totalSessionsCount),
-                const SizedBox(height: 10),
+                  // ══════════════════════════════════════════════════
+                  // قائمة أسماء اللاعبين
+                  // ══════════════════════════════════════════════════
+                  _buildPlayersSectionHeader(s, totalSessionsCount),
+                  const SizedBox(height: 10),
 
-                if (_players.isEmpty)
-                  _buildNoPlayersCard(s)
-                else
-                  ..._players.map((p) => _buildPlayerItem(s, p, totalSessionsCount)),
+                  if (_players.isEmpty)
+                    _buildNoPlayersCard(s)
+                  else
+                    ..._players.map((p) => _buildPlayerItem(s, p, totalSessionsCount)),
 
-                const SizedBox(height: 24),
-              ],
+                  const SizedBox(height: 24),
+                ],
+              ),
             ),
           ),
         ),
