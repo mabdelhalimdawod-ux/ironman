@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:crypto/crypto.dart';
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'db.dart';
 
@@ -73,14 +72,14 @@ class AuthService {
   // SECURITY NOTICE: The following test credentials are for local debug development only.
   // Never seed or use in production release mode. Must be removed before release.
   // ============================================================================
-  static const String devAdminEmail = 'admin@engine.rowing';
-  static const String devAdminPassword = 'Dev#Admin@2026';
+  static const String devAdminEmail = 'admin.mabdelhalimdawod@engine.rowing';
+  static const String devAdminPassword = 'mahmoud@76Mm';
 
-  static const String devCoachEmail = 'coach@engine.rowing';
-  static const String devCoachPassword = 'Dev#Coach@2026';
+  static const String devCoachEmail = 'mabdelhalimdawod@engine.rowing';
+  static const String devCoachPassword = 'mahmoud@76Mm';
 
-  static const String devAthleteEmail = 'athlete@engine.rowing';
-  static const String devAthletePassword = 'Dev#Athlete@2026';
+  static const String devAthleteEmail = 'athlete.mabdelhalimdawod@engine.rowing';
+  static const String devAthletePassword = 'mahmoud@76Mm';
 
   /// توليد قيمة Salt عشوائية مشفرة باستخدام Random.secure
   static String generateSalt([int length = 16]) {
@@ -212,57 +211,53 @@ class AuthService {
     ''');
   }
 
-  /// زرع المستخدمين الافتراضيين للتطوير والتجربة في وضع kDebugMode فقط.
-  /// في وضع Release Mode، لا يتم زرع أي حساب إطلاقاً!
+  /// زرع وتحديث حسابات المستخدمين الثلاثة المعتمدة (الأدمن، المدرب، اللاعب)
   static Future<void> seedInitialData() async {
     await ensureTables();
-
-    // في وضع Release لا نزرع أي حساب نهائياً
-    if (!kDebugMode) {
-      return;
-    }
-
     final database = await DB.db;
 
-    // ============================================================================
-    // تحذير أمني: الحسابات الـ 3 التالية مخصصة لبيئة التطوير والاختبار المحلي فقط (DEBUG ONLY)
-    // - حساب الأدمن: admin@engine.rowing
-    // - حساب المدرب: coach@engine.rowing
-    // - حساب اللاعب: athlete@engine.rowing (مربوط بلاعب حقيقي في players وتابع للمدرب)
-    // يجب إزالة هذه الحسابات التجريبية بالكامل قبل طرح التطبيق للإنتاج (Release).
-    // ============================================================================
-
-    // 1. حساب الأدمن التجريبي
+    // 1. حساب الأدمن
+    final adminSalt = generateSalt();
+    final adminHash = hashPassword(devAdminPassword, adminSalt);
     final adminRows = await database.rawQuery(
-      "SELECT id, salt FROM users WHERE role = 'admin' LIMIT 1",
+      "SELECT id FROM users WHERE role = 'admin' LIMIT 1",
     );
     if (adminRows.isEmpty) {
-      final salt = generateSalt();
       await database.insert('users', {
         'email': devAdminEmail,
-        'password_hash': hashPassword(devAdminPassword, salt),
-        'salt': salt,
-        'name': 'System Admin (Dev)',
+        'password_hash': adminHash,
+        'salt': adminSalt,
+        'name': 'محمود عبد الحليم (الأدمن)',
         'role': 'admin',
         'coach_id': null,
         'subscription_active': 1,
         'player_id': null,
         'created_at': DateTime.now().toIso8601String(),
       });
+    } else {
+      final adminId = adminRows.first['id'] as int;
+      await database.update('users', {
+        'email': devAdminEmail,
+        'password_hash': adminHash,
+        'salt': adminSalt,
+        'name': 'محمود عبد الحليم (الأدمن)',
+        'subscription_active': 1,
+      }, where: 'id = ?', whereArgs: [adminId]);
     }
 
-    // 2. حساب المدرب التجريبي
-    final coachRows = await database.rawQuery(
-      "SELECT id, salt FROM users WHERE role = 'coach' LIMIT 1",
-    );
+    // 2. حساب المدرب (الأساسي بـ mabdelhalimdawod@engine.rowing)
     int coachId;
+    final coachSalt = generateSalt();
+    final coachHash = hashPassword(devCoachPassword, coachSalt);
+    final coachRows = await database.rawQuery(
+      "SELECT id FROM users WHERE role = 'coach' LIMIT 1",
+    );
     if (coachRows.isEmpty) {
-      final salt = generateSalt();
       coachId = await database.insert('users', {
         'email': devCoachEmail,
-        'password_hash': hashPassword(devCoachPassword, salt),
-        'salt': salt,
-        'name': 'Coach Tamer (Dev)',
+        'password_hash': coachHash,
+        'salt': coachSalt,
+        'name': 'كابتن محمود عبد الحليم',
         'role': 'coach',
         'coach_id': null,
         'subscription_active': 1,
@@ -271,80 +266,106 @@ class AuthService {
       });
     } else {
       coachId = coachRows.first['id'] as int;
+      await database.update('users', {
+        'email': devCoachEmail,
+        'password_hash': coachHash,
+        'salt': coachSalt,
+        'name': 'كابتن محمود عبد الحليم',
+        'subscription_active': 1,
+      }, where: 'id = ?', whereArgs: [coachId]);
     }
 
-    // 3. حساب اللاعب التجريبي (مربوط بلاعب في جدول players ومتبع للمدرب)
+    // 3. حساب اللاعب (مربوط بالمدرب)
+    final athleteSalt = generateSalt();
+    final athleteHash = hashPassword(devAthletePassword, athleteSalt);
     final athleteRows = await database.rawQuery(
-      "SELECT id, salt FROM users WHERE role = 'athlete' LIMIT 1",
+      "SELECT id FROM users WHERE role = 'athlete' LIMIT 1",
     );
     if (athleteRows.isEmpty) {
-      // التأكد من وجود لاعب في جدول players لربطه به
       final existingPlayers = await database.rawQuery('SELECT id, name FROM players LIMIT 1');
       int linkedPlayerId;
-      String athleteName = 'Ziad (Dev)';
+      String athleteName = 'محمود عبد الحليم (لاعب)';
 
       if (existingPlayers.isNotEmpty) {
         linkedPlayerId = existingPlayers.first['id'] as int;
-        athleteName = (existingPlayers.first['name'] as String?) ?? athleteName;
       } else {
-        // إنشاء لاعب في جدول players لضمان اكتمال الربط
         linkedPlayerId = await database.insert('players', {
-          'name': 'Ziad (Dev Player)',
+          'name': 'محمود عبد الحليم (لاعب)',
           'mhr': 195,
           'active': 1,
         });
       }
 
-      final salt = generateSalt();
       final athleteId = await database.insert('users', {
         'email': devAthleteEmail,
-        'password_hash': hashPassword(devAthletePassword, salt),
-        'salt': salt,
+        'password_hash': athleteHash,
+        'salt': athleteSalt,
         'name': athleteName,
         'role': 'athlete',
-        'coach_id': coachId, // متبع للمدرب
+        'coach_id': coachId,
         'subscription_active': 1,
-        'player_id': linkedPlayerId, // مربوط بلاعب موجود في جدول players
+        'player_id': linkedPlayerId,
         'created_at': DateTime.now().toIso8601String(),
       });
 
-      // زرع رسالة ترحيبية تجريبية من المدرب للاعب
+      // زرع رسالة ترحيبية من المدرب للاعب
       await database.insert('coach_messages', {
         'athlete_id': athleteId,
         'coach_id': coachId,
-        'message': 'أهلاً بك في سيكل التدريب الجديد! ركّز اليوم على الإوقاع الثابت في الزون 2.',
+        'message': 'أهلاً بك في الدورة التدريبية الجديدة! ركّز اليوم على الإيقاع الثابت في الزون 2.',
         'date': DateTime.now().toIso8601String().substring(0, 10),
         'is_read': 0,
       });
-
-      // زرع موعد اختبار قادم تجريبي
-      final futureDate = DateTime.now().add(const Duration(days: 4));
-      final testDateStr =
-          '${futureDate.year}-${futureDate.month.toString().padLeft(2, '0')}-${futureDate.day.toString().padLeft(2, '0')}';
-      final testId = await database.insert('testing_dates', {
-        'coach_id': coachId,
-        'test_name': '2000m Critical Power Erg Test',
-        'test_date': testDateStr,
-        'created_at': DateTime.now().toIso8601String(),
-      });
-
-      await database.insert('testing_date_recipients', {
-        'testing_date_id': testId,
-        'athlete_id': athleteId,
-      });
+    } else {
+      final athleteId = athleteRows.first['id'] as int;
+      await database.update('users', {
+        'email': devAthleteEmail,
+        'password_hash': athleteHash,
+        'salt': athleteSalt,
+        'subscription_active': 1,
+      }, where: 'id = ?', whereArgs: [athleteId]);
     }
   }
 
-  /// تسجيل الدخول والتحقق من كلمة السر والـ Salt والاشتراك
-  static Future<LoginResult> login(String email, String password) async {
+  /// تسجيل الدخول والتحقق من كلمة السر والـ Salt والاشتراك مع دعم تحديد الدور
+  static Future<LoginResult> login(String email, String password, [String? role]) async {
     await ensureTables();
     final cleanEmail = email.trim().toLowerCase();
-
     final database = await DB.db;
-    final rows = await database.rawQuery(
-      'SELECT * FROM users WHERE LOWER(email) = ?',
-      [cleanEmail],
-    );
+
+    List<Map<String, Object?>> rows = [];
+
+    // إذا كان الإيميل المدخل mabdelhalimdawod@engine.rowing
+    if (cleanEmail == 'mabdelhalimdawod@engine.rowing') {
+      if (role == 'admin') {
+        rows = await database.rawQuery(
+          "SELECT * FROM users WHERE (LOWER(email) = ? OR LOWER(email) = ?) AND role = 'admin' LIMIT 1",
+          [cleanEmail, devAdminEmail.toLowerCase()],
+        );
+      } else if (role == 'athlete') {
+        rows = await database.rawQuery(
+          "SELECT * FROM users WHERE (LOWER(email) = ? OR LOWER(email) = ?) AND role = 'athlete' LIMIT 1",
+          [cleanEmail, devAthleteEmail.toLowerCase()],
+        );
+      } else {
+        // افتراضياً دور المدرب
+        rows = await database.rawQuery(
+          "SELECT * FROM users WHERE (LOWER(email) = ? OR LOWER(email) = ?) AND role = 'coach' LIMIT 1",
+          [cleanEmail, devCoachEmail.toLowerCase()],
+        );
+        if (rows.isEmpty) {
+          rows = await database.rawQuery(
+            'SELECT * FROM users WHERE LOWER(email) = ? LIMIT 1',
+            [cleanEmail],
+          );
+        }
+      }
+    } else {
+      rows = await database.rawQuery(
+        'SELECT * FROM users WHERE LOWER(email) = ?',
+        [cleanEmail],
+      );
+    }
 
     if (rows.isEmpty) {
       return const LoginResult.failure(LoginError.invalidCredentials);
