@@ -103,7 +103,8 @@ class _ProgramTabState extends State<ProgramTab> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(s.delete),
           ),
@@ -118,9 +119,11 @@ class _ProgramTabState extends State<ProgramTab> {
   }
 
   Future<void> _pickCycleDates(ProgramCycle cycle) async {
-    DateTime selectedStart = DateTime.tryParse(cycle.startDate) ?? DateTime.now();
-    DateTime selectedEnd =
-        DateTime.tryParse(cycle.endDate) ?? selectedStart.add(const Duration(days: 27));
+    final s = AppStrings.of(context);
+    DateTime selectedStart =
+        DateTime.tryParse(cycle.startDate) ?? DateTime.now();
+    DateTime selectedEnd = DateTime.tryParse(cycle.endDate) ??
+        selectedStart.add(const Duration(days: 27));
 
     final picked = await showDateRangePicker(
       context: context,
@@ -198,7 +201,8 @@ class _ProgramTabState extends State<ProgramTab> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(s.cancel, style: const TextStyle(color: EngineRowingUI.labelSlate)),
+            child: Text(s.cancel,
+                style: const TextStyle(color: EngineRowingUI.labelSlate)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -227,7 +231,10 @@ class _ProgramTabState extends State<ProgramTab> {
         backgroundColor: _cardFill,
         title: Row(
           children: [
-            Icon(isPhysio ? Icons.health_and_safety_outlined : Icons.engineering_outlined,
+            Icon(
+                isPhysio
+                    ? Icons.health_and_safety_outlined
+                    : Icons.engineering_outlined,
                 color: _gold),
             const SizedBox(width: 8),
             Text(
@@ -249,7 +256,8 @@ class _ProgramTabState extends State<ProgramTab> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(s.cancel, style: const TextStyle(color: EngineRowingUI.labelSlate)),
+            child: Text(s.cancel,
+                style: const TextStyle(color: EngineRowingUI.labelSlate)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -301,7 +309,8 @@ class _ProgramTabState extends State<ProgramTab> {
             constraints: const BoxConstraints(maxWidth: 850),
             child: PinchZoomArea(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 children: [
                   // ── شريط رأس تاب Program مع زرار (+) لإضافة دورة مرحلية جديدة ──
                   _buildHeaderBar(s),
@@ -398,7 +407,8 @@ class _ProgramTabState extends State<ProgramTab> {
                   s.isArabic
                       ? 'تخطيط الدورات المرحلية والأسبوعية وحسابات الزونات الستة والتستات'
                       : 'Phase Cycle Planning & Zone Loads',
-                  style: const TextStyle(fontSize: 12.5, color: EngineRowingUI.labelSlate),
+                  style: const TextStyle(
+                      fontSize: 12.5, color: EngineRowingUI.labelSlate),
                 ),
               ],
             ),
@@ -417,7 +427,8 @@ class _ProgramTabState extends State<ProgramTab> {
             icon: const Icon(Icons.add_circle, color: _navy, size: 20),
             label: Text(
               s.addCycle,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+              style:
+                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
             ),
             onPressed: _addNewCycle,
           ),
@@ -426,10 +437,10 @@ class _ProgramTabState extends State<ProgramTab> {
     );
   }
 
-  /// كارت لوحة السيكل المجسمة بعرض الشاشة بكامل مواصفات الوصف
+  /// كارت لوحة الدورة المرحلية المجسمة بعرض الشاشة
   Widget _buildCyclePanel(AppStrings s, ProgramCycle cycle) {
-    final zoneTotals = _cycleZoneTotals[cycle.id] ??
-        {for (var z in kProgramZones) z: 0};
+    final zoneTotals =
+        _cycleZoneTotals[cycle.id] ?? {for (var z in kProgramZones) z: 0};
 
     final createdDateStr = cycle.createdAt.length >= 10
         ? cycle.createdAt.substring(0, 10)
@@ -465,7 +476,9 @@ class _ProgramTabState extends State<ProgramTab> {
                   child: Text(
                     '${cycle.id}',
                     style: const TextStyle(
-                        color: _navy, fontWeight: FontWeight.bold, fontSize: 15),
+                        color: _navy,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -488,7 +501,9 @@ class _ProgramTabState extends State<ProgramTab> {
                     cycle.comment.isNotEmpty
                         ? Icons.comment_rounded
                         : Icons.mode_comment_outlined,
-                    color: cycle.comment.isNotEmpty ? _gold : EngineRowingUI.labelSlate,
+                    color: cycle.comment.isNotEmpty
+                        ? _gold
+                        : EngineRowingUI.labelSlate,
                     size: 22,
                   ),
                   onPressed: () => _showCommentDialog(cycle),
@@ -542,7 +557,9 @@ class _ProgramTabState extends State<ProgramTab> {
                                 style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 12.5,
-                                    fontFeatures: [FontFeature.tabularFigures()],
+                                    fontFeatures: [
+                                      FontFeature.tabularFigures()
+                                    ],
                                     color: EngineRowingUI.textWhite),
                               ),
                             ),
@@ -652,6 +669,7 @@ class _ProgramTabState extends State<ProgramTab> {
 
                 // ── 2. أربع خانات التستات الأربعة (500m, 750m, 1500m, 3000m) مع Checkbox ──
                 // ── 2. أربع خانات التستات الأربعة (500m, 750m, 1500m, 3000m) مع Checkbox موزعة بكامل العرض ──
+                // ── 2. أربع خانات التستات الأربعة (500m, 750m, 1500m, 3000m) مع Checkbox موزعة بكامل العرض ──
                 Text(
                   s.testDatesTitle,
                   style: const TextStyle(
@@ -660,25 +678,12 @@ class _ProgramTabState extends State<ProgramTab> {
                       color: _gold),
                 ),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 8,
-                  children: kProgramTestTypes.map((testType) {
-                    final testItem = cycle.tests.firstWhere(
-                      (t) => t.testType == testType,
-                      orElse: () => ProgramCycleTest(
-                        cycleId: cycle.id,
-                        testType: testType,
-                        testDate: cycle.endDate,
-                        targetValue: '',
-                        isCompleted: false,
-                      ),
-                    );
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final maxW = constraints.maxWidth;
                     final cols = maxW < 360 ? 1 : (maxW < 680 ? 2 : 4);
                     final itemWidth = (maxW - ((cols - 1) * 10.0)) / cols;
+
                     return Wrap(
                       spacing: 10,
                       runSpacing: 8,
@@ -694,38 +699,6 @@ class _ProgramTabState extends State<ProgramTab> {
                           ),
                         );
 
-                    return Container(
-                      width: 175,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: EngineRowingUI.equationCardFill,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: testItem.isCompleted
-                              ? _gold
-                              : _gridLine,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: Checkbox(
-                                  value: testItem.isCompleted,
-                                  activeColor: _gold,
-                                  checkColor: _navy,
-                                  side: const BorderSide(color: EngineRowingUI.labelSlate),
-                                  onChanged: (val) {
-                                    setState(() {
-                                      testItem.isCompleted = val ?? false;
-                                    });
-                                    ProgramService.updateProgramCycle(cycle);
-                                  },
                         return SizedBox(
                           width: itemWidth,
                           child: Container(
@@ -735,9 +708,7 @@ class _ProgramTabState extends State<ProgramTab> {
                               color: EngineRowingUI.equationCardFill,
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: testItem.isCompleted
-                                    ? _gold
-                                    : _gridLine,
+                                color: testItem.isCompleted ? _gold : _gridLine,
                               ),
                             ),
                             child: Column(
@@ -752,12 +723,14 @@ class _ProgramTabState extends State<ProgramTab> {
                                         value: testItem.isCompleted,
                                         activeColor: _gold,
                                         checkColor: _navy,
-                                        side: const BorderSide(color: EngineRowingUI.labelSlate),
+                                        side: const BorderSide(
+                                            color: EngineRowingUI.labelSlate),
                                         onChanged: (val) {
                                           setState(() {
                                             testItem.isCompleted = val ?? false;
                                           });
-                                          ProgramService.updateProgramCycle(cycle);
+                                          ProgramService.updateProgramCycle(
+                                              cycle);
                                         },
                                       ),
                                     ),
@@ -779,46 +752,40 @@ class _ProgramTabState extends State<ProgramTab> {
                                     ),
                                   ],
                                 ),
-                              ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Directionality(
                                 const SizedBox(height: 4),
                                 // إدخال قيمة التست المستهدفة
                                 Directionality(
                                   textDirection: TextDirection.ltr,
-                                  child: Text(
-                                    testType,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 11.5,
-                                      color: testItem.isCompleted
-                                          ? _gold
-                                          : EngineRowingUI.textWhite,
                                   child: TextFormField(
                                     initialValue: testItem.targetValue,
                                     textAlign: TextAlign.left,
                                     inputFormatters: [
-                                      RowingNumberFormatter.englishDigitsInputFormatter,
+                                      RowingNumberFormatter
+                                          .englishDigitsInputFormatter,
                                     ],
                                     style: const TextStyle(
                                       fontSize: 11,
                                       color: EngineRowingUI.textWhite,
-                                      fontFeatures: [FontFeature.tabularFigures()],
+                                      fontFeatures: [
+                                        FontFeature.tabularFigures()
+                                      ],
                                     ),
                                     decoration: const InputDecoration(
                                       hintText: 'Target split or W...',
                                       hintStyle: TextStyle(
-                                          fontSize: 10,
-                                          color: EngineRowingUI.captionGrey),
+                                        fontSize: 10,
+                                        color: EngineRowingUI.captionGrey,
+                                      ),
                                       isDense: true,
                                       contentPadding: EdgeInsets.symmetric(
                                           horizontal: 6, vertical: 4),
                                       border: OutlineInputBorder(
-                                        borderSide: BorderSide(color: _gridLine),
+                                        borderSide:
+                                            BorderSide(color: _gridLine),
                                       ),
                                       enabledBorder: OutlineInputBorder(
-                                        borderSide: BorderSide(color: _gridLine),
+                                        borderSide:
+                                            BorderSide(color: _gridLine),
                                       ),
                                       focusedBorder: OutlineInputBorder(
                                         borderSide: BorderSide(color: _gold),
@@ -826,63 +793,23 @@ class _ProgramTabState extends State<ProgramTab> {
                                     ),
                                     onChanged: (val) {
                                       testItem.targetValue =
-                                          RowingNumberFormatter.toEnglishDigits(val.trim());
+                                          RowingNumberFormatter.toEnglishDigits(
+                                              val.trim());
                                       ProgramService.updateProgramCycle(cycle);
                                     },
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          // إدخال قيمة التست المستهدفة
-                          Directionality(
-                            textDirection: TextDirection.ltr,
-                            child: TextFormField(
-                              initialValue: testItem.targetValue,
-                              textAlign: TextAlign.left,
-                              inputFormatters: [
-                                RowingNumberFormatter.englishDigitsInputFormatter,
                               ],
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: EngineRowingUI.textWhite,
-                                fontFeatures: [FontFeature.tabularFigures()],
-                              ),
-                              decoration: const InputDecoration(
-                                hintText: 'Target split or W...',
-                                hintStyle: TextStyle(
-                                    fontSize: 10,
-                                    color: EngineRowingUI.captionGrey),
-                                isDense: true,
-                                contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 4),
-                                border: OutlineInputBorder(
-                                  borderSide: BorderSide(color: _gridLine),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: _gridLine),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: _gold),
-                                ),
-                              ),
-                              onChanged: (val) {
-                                testItem.targetValue =
-                                    RowingNumberFormatter.toEnglishDigits(val.trim());
-                                ProgramService.updateProgramCycle(cycle);
-                              },
                             ),
                           ),
-                        ],
-                      ),
                         );
                       }).toList(),
                     );
-                  }).toList(),
                   },
                 ),
                 const SizedBox(height: 18),
+
+                // ── 3. خانات الزونات المتجاوبة والمنحنى بالخلفية البيضاء (RowingAdaptiveZoneBoxes) ──
 
                 // ── 3. خانات الزونات المتجاوبة والمنحنى بالخلفية البيضاء (RowingAdaptiveZoneBoxes) ──
                 RowingAdaptiveZoneBoxes(

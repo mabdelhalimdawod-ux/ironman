@@ -52,6 +52,12 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
       final prevItems =
           _session.workouts.where((w) => w.section == section).toList();
       final last = template ?? (prevItems.isNotEmpty ? prevItems.last : null);
+      final defaultPrefix = section == 'warmup'
+          ? 'إحماء'
+          : (section == 'main' ? 'تمرين' : 'تهدئة');
+      final nextIdx = prevItems.length + 1;
+      final newName = ProgramService.incrementBoardTitle(
+          last?.details, defaultPrefix, nextIdx);
 
       String nextTitle;
       if (last != null && last.details.trim().isNotEmpty) {
@@ -85,7 +91,11 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
             (section == 'main'
                 ? 'zone3 = 75%:85%'
                 : 'zone1 = 55%:65%'),
+<<<<<<< HEAD
         details: nextTitle,
+=======
+        details: newName,
+>>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
       ));
     });
   }
@@ -298,12 +308,19 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
             ),
           ),
 
-          // قائمة الصفوف الثلاثة: 1. الإحماء 2. الرئيسي 3. التهدئة
+          // قائمة الصفوف الثلاثة: 1. الإحماء 2. الرئيسي 3. التهدئة مع التكبير بالأصابع
           Expanded(
+<<<<<<< HEAD
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 850),
                 child: PinchZoomArea(
+=======
+            child: PinchZoomArea(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 850),
+>>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
                   child: ListView(
                     padding: const EdgeInsets.all(16),
                     children: [
@@ -479,9 +496,9 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
                         borderRadius: BorderRadius.circular(8)),
                   ),
                   icon: const Icon(Icons.add_rounded, size: 18),
-                  label: const Text('إضافة تمرين',
+                  label: Text('إضافة ${section == 'warmup' ? 'إحماء' : (section == 'main' ? 'تمرين' : 'تهدئة')} (+)',
                       style:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                   onPressed: onAdd,
                 ),
               ],
@@ -592,20 +609,34 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
     final currentDetailedZone = formatZoneToDetailed(widget.item.zone);
     final normZone = normalizeZoneKey(currentDetailedZone);
     final zoneColor = kZoneColors[normZone] ?? _gold;
+    final defaultPrefix = widget.item.section == 'warmup'
+        ? 'إحماء'
+        : (widget.item.section == 'main' ? 'تمرين' : 'تهدئة');
+    final boardTitle = widget.item.details.isNotEmpty
+        ? widget.item.details
+        : '$defaultPrefix ${widget.index + 1}';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
+<<<<<<< HEAD
       decoration: neonGlowBoxDecoration(
         fillColor: EngineRowingUI.equationCardFill,
         borderColor: zoneColor.withValues(alpha: 0.6),
         borderWidth: 1.2,
         borderRadius: 12,
         intensity: intensityNotifier.value,
+=======
+      decoration: EngineRowingUI.neonGlowBoxDecoration(
+        backgroundColor: EngineRowingUI.equationCardFill,
+        borderColor: zoneColor,
+        borderRadius: 12,
+>>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+<<<<<<< HEAD
           // ── الشريط العلوي للخانة: رقم التمرين + اسم اللوحة + وقت التمرين + زر (+) بجوار الخانات + زر الحذف (متجاوب تماماً) ──
           Wrap(
             alignment: WrapAlignment.spaceBetween,
@@ -656,6 +687,26 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                     ),
                   ),
                 ],
+=======
+          // ── الشريط العلوي للخانة: اسم اللوحة المتكرر + رقم التمرين + وقت التمرين + زر (+) + زر الحذف ──
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _gold.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: _gold, width: 1.2),
+                ),
+                child: Text(
+                  boardTitle,
+                  style: const TextStyle(
+                    color: _gold,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+>>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
               ),
 
               // 1. خانة وقت التمرين السريع
@@ -693,7 +744,7 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                 ),
               ),
 
-              // زر (+) بجوار الخانات لإضافة تمرين جديد بنفس المواصفات
+              // زر (+) بجوار الخانات لإضافة تمرين جديد بنفس المواصفات مع زيادة الرقم
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _gold,
@@ -705,9 +756,9 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                 ),
                 icon: const Icon(Icons.add_circle_outline_rounded,
                     size: 16, color: _gold),
-                label: const Text(
-                  'إضافة تمرين (+)',
-                  style: TextStyle(
+                label: Text(
+                  'إضافة $defaultPrefix (+)',
+                  style: const TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.bold,
                       color: _gold),

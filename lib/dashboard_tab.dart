@@ -126,20 +126,21 @@ class _DashboardTabState extends State<DashboardTab> {
             onRefresh: _loadHomeData,
             color: EngineRowingUI.neonLime,
             backgroundColor: EngineRowingUI.cardFill,
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              children: [
-                // ── ترويسة الترحيب ──
-                _buildGreetingHeader(s, user),
-                const SizedBox(height: 16),
-
-                // ── رسالة المدرب إن وجدت (فقط للاعبين) ──
-                if (_unreadMessage != null) ...[
-                  _buildCoachMessageCard(s, _unreadMessage!),
+            child: PinchZoomArea(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                children: [
+                  // ── ترويسة الترحيب ──
+                  _buildGreetingHeader(s, user),
                   const SizedBox(height: 16),
-                ],
 
-                // ── كارت الحصة التدريبية القادمة ──
+                  // ── رسالة المدرب إن وجدت (فقط للاعبين) ──
+                  if (_unreadMessage != null) ...[
+                    _buildCoachMessageCard(s, _unreadMessage!),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // ── كارت الحصة التدريبية القادمة ──
                 _buildNextSessionCard(s),
                 const SizedBox(height: 16),
 
@@ -157,6 +158,7 @@ class _DashboardTabState extends State<DashboardTab> {
                 _buildTestingDatesCard(s, user),
                 const SizedBox(height: 24),
               ],
+            ),
             ),
           ),
         ),

@@ -470,43 +470,45 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                       // رأس تعريفي باللاعب ونبض الراحة المعتمد بمعادلة كارفونين
                       _buildAthleteHeaderCard(s),
 
-                      // المحتوى القابل للتمرير
+                      // المحتوى القابل للتمرير مع دعم التكبير بالأصابع
                       Expanded(
-                        child: ListView(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          children: [
-                            // قسم المؤشرات اليومية المشتركة (HRV، النوم، الوزن، الإرهاق)
-                            _buildCommonMetricsCard(s),
-                            const SizedBox(height: 16),
+                        child: PinchZoomArea(
+                          child: ListView(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            children: [
+                              // قسم المؤشرات اليومية المشتركة (HRV، النوم، الوزن، الإرهاق)
+                              _buildCommonMetricsCard(s),
+                              const SizedBox(height: 16),
 
-                            // هيدر تمارين اليوم
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.fitness_center,
-                                  color: EngineRowingUI.neonLime,
-                                  size: 22,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'فورمات تمارين اليوم (${_workoutForms.length} تمارين)',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: EngineRowingUI.textWhite,
+                              // هيدر تمارين اليوم
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.fitness_center,
+                                    color: EngineRowingUI.neonLime,
+                                    size: 22,
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'فورمات تمارين اليوم (${_workoutForms.length} تمارين)',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: EngineRowingUI.textWhite,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
 
-                            // عدد من الفورمات بعدد تمارين اليوم، كل فورم مخصص لتمرين ومكتوب عليه ميعاده ونوعه
-                            ...List.generate(_workoutForms.length, (idx) {
-                              return _buildWorkoutSessionForm(s, idx, _workoutForms[idx]);
-                            }),
+                              // عدد من الفورمات بعدد تمارين اليوم، كل فورم مخصص لتمرين ومكتوب عليه ميعاده ونوعه
+                              ...List.generate(_workoutForms.length, (idx) {
+                                return _buildWorkoutSessionForm(s, idx, _workoutForms[idx]);
+                              }),
 
-                            const SizedBox(height: 24),
-                          ],
+                              const SizedBox(height: 24),
+                            ],
+                          ),
                         ),
                       ),
 

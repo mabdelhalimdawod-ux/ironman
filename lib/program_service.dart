@@ -1114,7 +1114,23 @@ class ProgramService {
     return sessions;
   }
 
-  /// إضافة حصة تدريبية جديدة لليوم
+  /// تكرار اسم اللوحة السابقة مع زيادة رقمها التسلسلي (مثال: إحماء 1 -> إحماء 2 أو الحصة 1 -> الحصة 2)
+  static String incrementBoardTitle(String? prevTitle, String defaultPrefix, int targetIndex) {
+    if (prevTitle == null || prevTitle.trim().isEmpty) {
+      return '$defaultPrefix $targetIndex';
+    }
+    final trimmed = prevTitle.trim();
+    final regex = RegExp(r'^(.*?)\s*(\d+)$');
+    final match = regex.firstMatch(trimmed);
+    if (match != null) {
+      final prefix = match.group(1)!.trim();
+      final number = int.tryParse(match.group(2)!) ?? (targetIndex - 1);
+      return '$prefix ${number + 1}';
+    }
+    return '$trimmed $targetIndex';
+  }
+
+  /// إضافة حصة تدريبية جديدة لليوم مع تكرار اسم الحصة السابقة وزيادة رقمها
   static Future<ProgramDaySession> addDaySessionDetailed(
       int cycleId, String cycleType, int dayOfWeek) async {
     await ensureTables();
@@ -1124,9 +1140,14 @@ class ProgramService {
     final newIdx = current.length;
     final defaultTimes = ['07:00', '16:30', '11:00', '19:00'];
     final time = defaultTimes[newIdx.clamp(0, defaultTimes.length - 1)];
-    final name = newIdx == 0
-        ? 'الحصة الصباحية'
-        : (newIdx == 1 ? 'الحصة المسائية' : 'الحصة ${newIdx + 1}');
+    final String name;
+    if (current.isNotEmpty) {
+      name = incrementBoardTitle(current.last.name, 'الحصة', newIdx + 1);
+    } else {
+      name = newIdx == 0
+          ? 'الحصة الصباحية'
+          : (newIdx == 1 ? 'الحصة المسائية' : 'الحصة ${newIdx + 1}');
+    }
 
     final sId = await database.insert('program_sessions', {
       'cycle_id': cycleId,

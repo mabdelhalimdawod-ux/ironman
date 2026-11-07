@@ -96,8 +96,13 @@ class AppStrings {
   String get cycleProgress => isArabic ? 'تقدم الدورة المرحلية' : 'Phase Cycle Progress';
 
   // ==================== Program & Cycles Strings (المرحلة الثانية) ====================
+<<<<<<< HEAD
   String get trainingCycles => isArabic ? 'الدورات المرحلية للتدريب' : 'Training Phase Cycles';
   String get cyclesSubtitle => isArabic ? 'نظام الدورات المرحلية والدورات الأسبوعية' : 'Training Phase Cycles & Weekly Microcycles';
+=======
+  String get trainingCycles => isArabic ? 'الدورات المرحلية التدريبية' : 'Training Phase Cycles';
+  String get cyclesSubtitle => isArabic ? 'نظام الدورات المرحلية التدريبية والدورات الأسبوعية' : 'Training Phase Cycles & Weekly Microcycles';
+>>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
   String get cycleNumber => isArabic ? 'الدورة المرحلية' : 'Phase Cycle';
   String cycleTitle(int num) => isArabic ? 'الدورة المرحلية $num' : 'Phase Cycle $num';
   String get addCycle => isArabic ? 'إضافة دورة مرحلية جديدة' : 'Add New Phase Cycle';
@@ -124,7 +129,11 @@ class AppStrings {
   String get technicalNote => isArabic ? 'ملاحظة فنية' : 'Technical Note';
   String get addNote => isArabic ? 'إضافة ملاحظة' : 'Add Note';
   String get testDatesTitle => isArabic ? 'تواريخ التستات المقررة للدورة المرحلية' : 'Scheduled Phase Cycle Tests';
+<<<<<<< HEAD
   String get zoneParticipationTitle => isArabic ? 'نسب مشاركة الزونات بالدورة المرحلية' : 'Zone Distribution';
+=======
+  String get zoneParticipationTitle => isArabic ? 'نسب مشاركة الزونات بالدورة المرحلية' : 'Phase Cycle Zone Distribution';
+>>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
 
   // المستوى 2: الدورات الأسبوعية الأساسية والفرعية
   String get basicWeeklyCycleTitle => isArabic ? 'الدورة التدريبية الأسبوعية الأساسية' : 'Basic Weekly Training Cycle';
@@ -471,6 +480,7 @@ class AppStrings {
   String get exportToPdf => isArabic ? 'تحويل البيانات إلى تقرير PDF' : 'Export Report to PDF';
   String get shareReportAction => isArabic ? 'مشاركة التقرير عبر البريد أو الفريق' : 'Share Report via Email / Chat';
 
+<<<<<<< HEAD
   // ==================== Display Settings, Zoom & Intensity ====================
   String get displayScaleTitle => isArabic ? 'مقياس الرؤية والتكبير' : 'Display Scale & Zoom';
   String get displayScaleDesc => isArabic ? 'تكبير أو تصغير عناصر الواجهة للموبايل' : 'Scale UI elements for mobile';
@@ -481,4 +491,17 @@ class AppStrings {
   String get intensityUltra => isArabic ? 'فائق الإضاءة (نيون)' : 'Ultra Neon';
   String get pinchZoomHint => isArabic ? 'يمكنك التكبير والتصغير بأصابعك على الشاشة' : 'Pinch with two fingers to zoom anywhere';
   String get defaultBoardName => isArabic ? 'إحماء' : 'Warm-up';
+=======
+  // ==================== Display Scaling & Intensity Control ====================
+  String get displayControlTitle => isArabic ? 'التحكم في مقاسات الرؤية والسطوع' : 'Display Scale & Brightness Control';
+  String get viewScale => isArabic ? 'مقاس الرؤية والتكبير' : 'Display Scale';
+  String get colorIntensity => isArabic ? 'حدة الألوان وإضاءة الحروف والحدود' : 'Color Intensity & Neon Glow';
+  String get intensityNormal => isArabic ? 'عادي (متوازن)' : 'Normal (Balanced)';
+  String get intensityHigh => isArabic ? 'عالي (تباين واضح)' : 'High Contrast';
+  String get intensityUltra => isArabic ? 'فسفوري فائق (إضاءة نيون قوية)' : 'Ultra Vivid Neon';
+  String get boardWarmupPrefix => isArabic ? 'إحماء' : 'Warmup';
+  String get boardMainPrefix => isArabic ? 'تمرين' : 'Workout';
+  String get boardCooldownPrefix => isArabic ? 'تهدئة' : 'Cooldown';
+  String boardItemTitle(String prefix, int num) => '$prefix $num';
+>>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
 }

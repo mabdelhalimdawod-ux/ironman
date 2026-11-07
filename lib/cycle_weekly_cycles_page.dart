@@ -155,6 +155,7 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
                 constraints: const BoxConstraints(maxWidth: 850),
                 child: PinchZoomArea(
                   child: ListView(
+<<<<<<< HEAD
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 14),
                     children: [
@@ -183,6 +184,33 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
                                     fontWeight: FontWeight.bold,
                                     height: 1.3,
                                   ),
+=======
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    children: [
+                    // ── شريط التنبيه والتحقق من مجموع تكرارات الدورتين ──
+                    if (!isRepsValid)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF280B14),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFF5252), width: 1.2),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.warning_amber_rounded,
+                                color: Color(0xFFFF5252), size: 24),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                '${s.repsMismatchWarning}\n(${s.isArabic ? "مجموع التكرارات الحالي:" : "Current configured reps:"} ${_cycle.sumConfiguredReps} • ${s.isArabic ? "المطلوب:" : "Required:"} $totalWeeks ${s.isArabic ? "أسابيع بناءً على تواريخ الدورة المرحلية" : "weeks based on phase cycle dates"})',
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  color: EngineRowingUI.textWhite,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1.3,
+>>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
                                 ),
                               ),
                             ],
@@ -244,6 +272,7 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
                 ),
               ),
             ),
+          ),
     );
   }
 
@@ -447,17 +476,10 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: _cardFill,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _gridLine, width: 1.2),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 14,
-            offset: Offset(0, 5),
-          ),
-        ],
+      decoration: EngineRowingUI.neonGlowBoxDecoration(
+        backgroundColor: _cardFill,
+        borderColor: _gridLine,
+        borderRadius: 14,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -645,6 +667,7 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
                 ),
                 const SizedBox(height: 14),
 
+<<<<<<< HEAD
                 // ── الخانات المتجاوبة لتوزيع أحمال الزونات والمنحنى بالخلفية البيضاء (RowingAdaptiveZoneBoxes) ──
                 RowingAdaptiveZoneBoxes(
                   zoneSeconds: dayZoneSeconds,
@@ -652,6 +675,23 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
                       ? 'أحمال الأسبوع الواحد (ثواني، دقائق، ساعات):'
                       : 'Weekly Loads:',
                   showCurveChart: true,
+=======
+                // ── الخانات الـ 6 المتجاورة لتوزيع الأحمال في الأسبوع الواحد ──
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    // ── لوحة الزونات والكيرف المتجاوبة بالكامل لجميع الشاشات والموبايل مع الخلفية البيضاء للكيرف ──
+                    RowingAdaptiveZoneBoxes(
+                      zoneTotals: dayZoneSeconds,
+                      title: s.isArabic
+                          ? 'أحمال الأسبوع الواحد (ثواني، دقائق، ساعات):'
+                          : 'Weekly Microcycle Zone Loads:',
+                      curveTitle: s.zoneParticipationTitle,
+                      formatDuration: (secs) =>
+                          ProgramService.formatDurationDetailed(secs),
+                    ),
+                  ],
+>>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
                 ),
               ],
             ),

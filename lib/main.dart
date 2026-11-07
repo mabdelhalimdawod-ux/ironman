@@ -77,7 +77,11 @@ class _IronmanAppState extends State<IronmanApp> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: AppLanguage.instance,
+      listenable: Listenable.merge([
+        AppLanguage.instance,
+        RowingResponsive.userScaleNotifier,
+        RowingResponsive.intensityNotifier,
+      ]),
       builder: (context, _) {
         final isArabic = AppLanguage.instance.isArabic;
 
@@ -130,8 +134,25 @@ class MainNavigationScaffold extends StatefulWidget {
 
 class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
   int _currentIndex = 0;
+<<<<<<< HEAD
   double _navWidth = 0.0;
+=======
+  double _navWidth = 0.0; // يبدأ مختفياً تماماً لإتاحة كامل الشاشة للمدخلات والمخرجات على الموبايل
+>>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
   bool _isResizing = false;
+
+  static const double _expandedWidth = 240.0;
+
+  /// إظهار الشريط الجانبي بالكامل أو إخفاؤه تماماً بضغطة زر الهمبورجر
+  void _toggleSidebar() {
+    setState(() {
+      if (_navWidth > 0) {
+        _navWidth = 0.0;
+      } else {
+        _navWidth = _expandedWidth;
+      }
+    });
+  }
 
   // ── أحجام الشريط الجانبي ──
   static const double _minWidth = 0.0;    // مخفي تماماً
@@ -264,8 +285,10 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
             padding: const EdgeInsets.symmetric(horizontal: 14),
             child: Row(
               children: [
+                // زر الهمبورجر: يظهر الشريط الجانبي بالكامل أو يخفيه تماماً بضغطة واحدة
                 IconButton(
                   icon: const Icon(Icons.menu_rounded, color: yellow, size: 28),
+<<<<<<< HEAD
                   tooltip: s.hamburgerTitle,
                   onPressed: _toggleSideNav,
                 ),
@@ -273,13 +296,23 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
                   icon: const Icon(Icons.tune_rounded, color: yellow, size: 22),
                   tooltip: s.hamburgerTitle,
                   onPressed: () => _openHamburgerHub(context, s),
+=======
+                  tooltip: _navWidth > 0
+                      ? (s.isArabic ? 'إخفاء لوحة التابات' : 'Hide Sidebar')
+                      : (s.isArabic ? 'إظهار لوحة التابات كاملة' : 'Show Full Sidebar'),
+                  onPressed: _toggleSidebar,
+>>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     [s.tabHome, s.tabProgram, s.tabWorkouts][_currentIndex],
                     style: const TextStyle(
+<<<<<<< HEAD
                       fontSize: 18,
+=======
+                      fontSize: 19,
+>>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
                       fontWeight: FontWeight.bold,
                       color: EngineRowingUI.textWhite,
                       letterSpacing: 0.5,
@@ -287,11 +320,18 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
                     textAlign: isArabic ? TextAlign.right : TextAlign.left,
                   ),
                 ),
+                // زرار داخل AppBar للتحكم في مقاسات الرؤية والسطوع والإضاءة
+                IconButton(
+                  icon: const Icon(Icons.tune_rounded, color: yellow, size: 24),
+                  tooltip: s.displayControlTitle,
+                  onPressed: () => _openHamburgerHub(context, s),
+                ),
               ],
             ),
           ),
-          // ── Body ──
+          // ── Body مع دعم التكبير والتصغير التفاعلي بالأصابع ──
           Expanded(
+<<<<<<< HEAD
             child: ValueListenableBuilder<double>(
               valueListenable: userScaleNotifier,
               builder: (context, scale, child) {
@@ -306,6 +346,13 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
                   ),
                 );
               },
+=======
+            child: PinchZoomArea(
+              child: IndexedStack(
+                index: _currentIndex,
+                children: _tabs,
+              ),
+>>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
             ),
           ),
         ],
@@ -314,6 +361,7 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
     // ════════════════════════════════════════
     // ██  مقبض السحب (Drag Handle)
     // ════════════════════════════════════════
+<<<<<<< HEAD
     final dragHandle = _navWidth <= 0
         ? const SizedBox.shrink()
         : GestureDetector(
@@ -339,6 +387,200 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
                       color: EngineRowingUI.bgGridLine,
                       borderRadius: BorderRadius.circular(4),
                     ),
+=======
+    final dragHandle = GestureDetector(
+      onHorizontalDragStart: (_) => setState(() => _isResizing = true),
+      onHorizontalDragUpdate: (details) {
+        setState(() {
+          final delta = isArabic ? -details.delta.dx : details.delta.dx;
+          _navWidth = (_navWidth + delta).clamp(_minWidth, _maxWidth);
+        });
+      },
+      onHorizontalDragEnd: (_) => _snapToNearest(),
+      onDoubleTap: _cycleSize,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.resizeColumn,
+        child: Container(
+          width: 8,
+          color: Colors.transparent,
+          child: Center(
+            child: Container(
+              width: 3,
+              height: 48,
+              decoration: BoxDecoration(
+                color: EngineRowingUI.bgGridLine,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // ════════════════════════════════════════
+    // ██  الشريط الجانبي (Side Navigation)
+    // ════════════════════════════════════════
+    final sideNav = AnimatedContainer(
+      duration: _isResizing ? Duration.zero : const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+      width: _navWidth,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: const Color(0xFF071126),
+        border: Border(
+          right: isArabic
+              ? BorderSide.none
+              : const BorderSide(color: EngineRowingUI.bgGridLine, width: 1),
+          left: isArabic
+              ? const BorderSide(color: EngineRowingUI.bgGridLine, width: 1)
+              : BorderSide.none,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(80),
+            blurRadius: 24,
+            offset: Offset(isArabic ? -4 : 4, 0),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // ── منطقة الشعار وزر الإغلاق للهمبرجر ──
+          Container(
+            height: 60,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            alignment: Alignment.center,
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, color: yellow, size: 24),
+                  tooltip: s.cancel,
+                  onPressed: _toggleSidebar,
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.rowing_rounded, color: yellow, size: 22),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          'ENGINE ROWING',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: yellow,
+                            fontSize: _navWidth > 240 ? 15 : 13,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // ── فاصل ──
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: isCollapsed ? 14 : 20),
+            child: Divider(
+              color: Colors.white.withAlpha(30),
+              height: 1,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // ── عناصر التنقل ──
+          ...List.generate(navItems.length, (i) {
+            final item = navItems[i];
+            final isActive = _currentIndex == i;
+            return _SideNavItem(
+              icon: isActive ? item.activeIcon : item.icon,
+              label: item.label,
+              imageAsset: item.imageAsset,
+              isActive: isActive,
+              isCollapsed: isCollapsed,
+              navWidth: _navWidth,
+              onTap: () {
+                setState(() {
+                  _currentIndex = i;
+                  if (MediaQuery.sizeOf(context).width < 700) {
+                    _navWidth = 0.0;
+                  }
+                });
+              },
+            );
+          }),
+
+          const Spacer(),
+
+          // ── فاصل سفلي ──
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: isCollapsed ? 14 : 20),
+            child: Divider(
+              color: Colors.white.withAlpha(30),
+              height: 1,
+            ),
+          ),
+          const SizedBox(height: 6),
+
+          // ── زرار تسجيل الخروج ──
+          _SideNavItem(
+            icon: Icons.logout_rounded,
+            label: s.logout,
+            isActive: false,
+            isCollapsed: isCollapsed,
+            navWidth: _navWidth,
+            onTap: () => _confirmLogout(context, s),
+          ),
+
+          const SizedBox(height: 4),
+
+          // ── زر تغيير الحجم ──
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: _cycleSize,
+                hoverColor: Colors.white.withAlpha(20),
+                splashColor: yellow.withAlpha(40),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isCollapsed ? 0 : 14,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: isCollapsed
+                        ? MainAxisAlignment.center
+                        : MainAxisAlignment.start,
+                    children: [
+                      Icon(
+                        _cycleIcon(),
+                        color: Colors.white54,
+                        size: 22,
+                      ),
+                      if (!isCollapsed) ...[
+                        const SizedBox(width: 12),
+                        Flexible(
+                          child: Text(
+                            _sizeLabel(s),
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white54,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+>>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
                   ),
                 ),
               ),
@@ -532,13 +774,17 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
             ),
     );
 
+<<<<<<< HEAD
+=======
+    // الشريط الجانبي على اليمين في العربية، وعلى اليسار في الإنجليزية (يختفي تماماً إذا كان عرضه 0)
+>>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
     return Scaffold(
       backgroundColor: EngineRowingUI.bgNavy,
       body: Row(
         textDirection: TextDirection.ltr,
         children: isArabic
-            ? [mainContent, dragHandle, sideNav]
-            : [sideNav, dragHandle, mainContent],
+            ? [mainContent, if (_navWidth > 0) dragHandle, sideNav]
+            : [sideNav, if (_navWidth > 0) dragHandle, mainContent],
       ),
     );
   }
@@ -817,14 +1063,149 @@ class _HamburgerHubSheet extends StatelessWidget {
                 ),
               ),
 
-              // ── محتوى المحاور الخمسة ──
+              // ── محتوى لوحة العمليات والتحكم ──
               Expanded(
                 child: ListView(
                   controller: scrollController,
                   padding: const EdgeInsets.all(18),
                   children: [
+<<<<<<< HEAD
                     // 0. مقياس الرؤية والتكبير وحدّة الإضاءة (Visual Scale & Intensity Controls)
                     _buildVisualControlsCard(context, s),
+=======
+                    // 0. التحكم في مقاسات الرؤية والسطوع والإضاءة الفسفورية للحروف والأرقام
+                    _buildHubCard(
+                      context: context,
+                      title: s.displayControlTitle,
+                      icon: Icons.tune_rounded,
+                      iconColor: EngineRowingUI.neonLime,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // 1. القائمة المنسدلة لنسب تكبير وتصغير مقاسات الرؤية
+                              Row(
+                                children: [
+                                  const Icon(Icons.aspect_ratio_rounded,
+                                      size: 20, color: EngineRowingUI.neonLime),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    s.viewScale,
+                                    style: const TextStyle(
+                                      color: EngineRowingUI.textWhite,
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  ValueListenableBuilder<double>(
+                                    valueListenable: RowingResponsive.userScaleNotifier,
+                                    builder: (context, scaleVal, _) {
+                                      return Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                                        decoration: BoxDecoration(
+                                          color: EngineRowingUI.equationCardFill,
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: EngineRowingUI.neonLime),
+                                        ),
+                                        child: DropdownButtonHideUnderline(
+                                          child: DropdownButton<double>(
+                                            value: scaleVal,
+                                            dropdownColor: EngineRowingUI.bgNavy,
+                                            icon: const Icon(Icons.arrow_drop_down,
+                                                color: EngineRowingUI.neonLime),
+                                            style: const TextStyle(
+                                              color: EngineRowingUI.neonLime,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12.5,
+                                            ),
+                                            items: const [
+                                              DropdownMenuItem(value: 0.80, child: Text('80% (تصغير)')),
+                                              DropdownMenuItem(value: 0.90, child: Text('90%')),
+                                              DropdownMenuItem(value: 1.00, child: Text('100% (قياسي)')),
+                                              DropdownMenuItem(value: 1.10, child: Text('110%')),
+                                              DropdownMenuItem(value: 1.25, child: Text('125% (تكبير)')),
+                                              DropdownMenuItem(value: 1.50, child: Text('150% (كبير جداً)')),
+                                            ],
+                                            onChanged: (newVal) {
+                                              if (newVal != null) {
+                                                RowingResponsive.userScaleNotifier.value = newVal;
+                                              }
+                                            },
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              const Divider(height: 1, color: EngineRowingUI.bgGridLine),
+                              const SizedBox(height: 14),
+
+                              // 2. التحكم في حدة الألوان والسطوع والإضاءة الفسفورية
+                              Text(
+                                s.colorIntensity,
+                                style: const TextStyle(
+                                  color: EngineRowingUI.textWhite,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              ValueListenableBuilder<DisplayIntensity>(
+                                valueListenable: RowingResponsive.intensityNotifier,
+                                builder: (context, curIntensity, _) {
+                                  return Row(
+                                    children: [
+                                      Expanded(
+                                        child: _buildIntensityChip(
+                                          title: s.intensityNormal,
+                                          isSelected: curIntensity == DisplayIntensity.normal,
+                                          onTap: () => RowingResponsive.intensityNotifier.value =
+                                              DisplayIntensity.normal,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: _buildIntensityChip(
+                                          title: s.intensityHigh,
+                                          isSelected: curIntensity == DisplayIntensity.high,
+                                          onTap: () => RowingResponsive.intensityNotifier.value =
+                                              DisplayIntensity.high,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: _buildIntensityChip(
+                                          title: s.intensityUltra,
+                                          isSelected: curIntensity == DisplayIntensity.ultra,
+                                          onTap: () => RowingResponsive.intensityNotifier.value =
+                                              DisplayIntensity.ultra,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                s.isArabic
+                                    ? '• يمكنك التكبير والتصغير التفاعلي بأصابعك (Pinch-to-zoom) على شاشة الموبايل في أي وقت.'
+                                    : '• You can also pinch-to-zoom interactively with your fingers on mobile anytime.',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: EngineRowingUI.labelSlate,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+>>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
                     const SizedBox(height: 16),
 
                     // 1. الانتقال بين شاشات التحليل المعقدة (Multi-Dashboard Navigation)
@@ -1002,8 +1383,9 @@ class _HamburgerHubSheet extends StatelessWidget {
                         _buildActionTile(
                           icon: Icons.table_chart_rounded,
                           title: s.exportToExcel,
-                          subtitle:
-                              'تحويل جميع بيانات السيكل والورك أوت إلى ملف Excel',
+                          subtitle: s.isArabic
+                              ? 'تحويل جميع بيانات الدورة المرحلية والورك أوت إلى ملف Excel'
+                              : 'Export all phase cycle and workout data to Excel',
                           trailingText: 'تصدير',
                           onTap: () {
                             _showSimpleNotice(context, s.exportToExcel,
@@ -1097,6 +1479,41 @@ class _HamburgerHubSheet extends StatelessWidget {
           ),
           ...children,
         ],
+      ),
+    );
+  }
+
+  Widget _buildIntensityChip({
+    required String title,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? EngineRowingUI.neonLime.withValues(alpha: 0.25)
+              : EngineRowingUI.equationCardFill,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? EngineRowingUI.neonLime : EngineRowingUI.bgGridLine,
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Text(
+          title,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            color: isSelected ? EngineRowingUI.neonLime : EngineRowingUI.textWhite,
+          ),
+        ),
       ),
     );
   }
