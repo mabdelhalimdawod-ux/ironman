@@ -226,9 +226,9 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
           // شريط معلومات الحصة التدريبية العلوي
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: _cardFill,
-              border: Border(bottom: BorderSide(color: _gridLine)),
+              border: Border(bottom: BorderSide(color: _gold.withAlpha(120), width: 1.2)),
             ),
             child: Row(
               children: [
@@ -415,17 +415,10 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
     required VoidCallback onAdd,
   }) {
     return Container(
-      decoration: BoxDecoration(
-        color: _cardFill,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _gridLine, width: 1.2),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
+      decoration: EngineRowingUI.neonGlowBoxDecoration(
+        backgroundColor: _cardFill,
+        borderColor: _gold,
+        borderRadius: 14,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

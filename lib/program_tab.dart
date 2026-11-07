@@ -321,108 +321,202 @@ class _ProgramTabState extends State<ProgramTab> {
 
   /// رأس الصفحة التعريفي لتاب Program مع الصورة والزرار (+)
   Widget _buildHeaderBar(AppStrings s) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _cardFill,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _gridLine, width: 1.2),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black38,
-            blurRadius: 14,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // أيقونة / صورة تاب Program
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: EngineRowingUI.equationCardFill,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _gridLine),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.asset(
-                'assets/images/program_tab_icon.png',
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const Icon(
-                  Icons.event_repeat_rounded,
-                  color: _gold,
-                  size: 28,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 14),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 620;
 
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: EngineRowingUI.neonGlowBoxDecoration(
+            backgroundColor: _cardFill,
+            borderColor: _gold,
+            borderRadius: 14,
+          ),
+          child: isMobile
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: EngineRowingUI.equationCardFill,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: _gold.withAlpha(120)),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.asset(
+                              'assets/images/program_tab_icon.png',
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.event_repeat_rounded,
+                                color: _gold,
+                                size: 26,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: [
+                              Text(
+                                s.trainingCycles,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: EngineRowingUI.textWhite,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: _gold.withAlpha(30),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: _gold.withAlpha(90)),
+                                ),
+                                child: const Text(
+                                  'لوحة المدربين',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: _gold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
                     Text(
-                      s.trainingCycles,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: EngineRowingUI.textWhite,
+                      s.isArabic
+                          ? 'تخطيط الدورات المرحلية والدورات التدريبية وحسابات الزونات الستة والتستات'
+                          : 'Planning phase cycles, microcycles, 6 zones & testing dates',
+                      style: const TextStyle(fontSize: 12, color: EngineRowingUI.labelSlate),
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _gold,
+                        foregroundColor: _navy,
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        elevation: 2,
+                      ),
+                      icon: const Icon(Icons.add_circle, color: _navy, size: 20),
+                      label: Text(
+                        s.addCycle,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 13.5),
+                      ),
+                      onPressed: _addNewCycle,
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: EngineRowingUI.equationCardFill,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _gold.withAlpha(120)),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.asset(
+                          'assets/images/program_tab_icon.png',
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            Icons.event_repeat_rounded,
+                            color: _gold,
+                            size: 28,
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: _gold.withAlpha(30),
-                        borderRadius: BorderRadius.circular(8),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: [
+                              Text(
+                                s.trainingCycles,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: EngineRowingUI.textWhite,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: _gold.withAlpha(30),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: _gold.withAlpha(90)),
+                                ),
+                                child: const Text(
+                                  'لوحة المدربين',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: _gold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            s.isArabic
+                                ? 'تخطيط الدورات المرحلية والدورات التدريبية وحسابات الزونات الستة والتستات'
+                                : 'Planning phase cycles, microcycles, 6 zones & testing dates',
+                            style: const TextStyle(
+                                fontSize: 12.5, color: EngineRowingUI.labelSlate),
+                          ),
+                        ],
                       ),
-                      child: const Text(
-                        'لوحة المدربين',
-                        style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: _gold),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _gold,
+                        foregroundColor: _navy,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        elevation: 2,
                       ),
+                      icon: const Icon(Icons.add_circle, color: _navy, size: 20),
+                      label: Text(
+                        s.addCycle,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 13.5),
+                      ),
+                      onPressed: _addNewCycle,
                     ),
                   ],
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  s.isArabic
-                      ? 'تخطيط الدورات المرحلية والدورات التدريبية وحسابات الزونات الستة والتستات'
-                      : 'Planning phase cycles, microcycles, 6 zones & testing dates',
-                  style: const TextStyle(fontSize: 12.5, color: EngineRowingUI.labelSlate),
-                ),
-              ],
-            ),
-          ),
-
-          // ── زرار علامة (+) لإضافة تاب سيكل كامل جديد ──
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _gold,
-              foregroundColor: _navy,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-              elevation: 2,
-            ),
-            icon: const Icon(Icons.add_circle, color: _navy, size: 20),
-            label: Text(
-              s.addCycle,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
-            ),
-            onPressed: _addNewCycle,
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -448,61 +542,85 @@ class _ProgramTabState extends State<ProgramTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── رأس لوحة السيكل (العنوان + زر الحذف + أيقونة الكومنت) ──
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-            decoration: const BoxDecoration(
-              color: EngineRowingUI.equationCardFill,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
-              border: Border(bottom: BorderSide(color: _gridLine, width: 1.0)),
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 16,
-                  backgroundColor: _gold,
-                  child: Text(
-                    '${cycle.id}',
-                    style: const TextStyle(
-                        color: _navy, fontWeight: FontWeight.bold, fontSize: 15),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    cycle.name,
-                    style: const TextStyle(
-                      color: EngineRowingUI.textWhite,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
+          // ── رأس لوحة السيكل (العنوان + زر الدخول + زر الحذف + أيقونة الكومنت) ──
+          InkWell(
+            onTap: () => _openCycleWeeklyCycles(cycle),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(13)),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+              decoration: const BoxDecoration(
+                color: EngineRowingUI.equationCardFill,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
+                border: Border(bottom: BorderSide(color: _gridLine, width: 1.0)),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: _gold,
+                    child: Text(
+                      '${cycle.id}',
+                      style: const TextStyle(
+                          color: _navy, fontWeight: FontWeight.bold, fontSize: 15),
                     ),
                   ),
-                ),
-
-                // زر الكومنت
-                IconButton(
-                  tooltip: s.comment,
-                  icon: Icon(
-                    cycle.comment.isNotEmpty
-                        ? Icons.comment_rounded
-                        : Icons.mode_comment_outlined,
-                    color: cycle.comment.isNotEmpty ? _gold : EngineRowingUI.labelSlate,
-                    size: 22,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      cycle.name,
+                      style: const TextStyle(
+                        color: EngineRowingUI.textWhite,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                   ),
-                  onPressed: () => _showCommentDialog(cycle),
-                ),
-                const SizedBox(width: 6),
 
-                // زر حذف السيكل
-                if (_cycles.length > 1)
+                  // زر دخول الدورة المرحلية مباشرة من الرأس
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _gold,
+                      foregroundColor: _navy,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 1,
+                    ),
+                    icon: const Icon(Icons.login_rounded, size: 16, color: _navy),
+                    label: Text(
+                      s.enterCycle,
+                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: () => _openCycleWeeklyCycles(cycle),
+                  ),
+                  const SizedBox(width: 6),
+
+                  // زر الكومنت
                   IconButton(
-                    tooltip: s.deleteCycle,
-                    icon: const Icon(Icons.delete_outline_rounded,
-                        color: Colors.redAccent, size: 22),
-                    onPressed: () => _deleteCycle(cycle),
+                    tooltip: s.comment,
+                    icon: Icon(
+                      cycle.comment.isNotEmpty
+                          ? Icons.comment_rounded
+                          : Icons.mode_comment_outlined,
+                      color: cycle.comment.isNotEmpty ? _gold : EngineRowingUI.labelSlate,
+                      size: 22,
+                    ),
+                    onPressed: () => _showCommentDialog(cycle),
                   ),
-              ],
+                  const SizedBox(width: 4),
+
+                  // زر حذف السيكل
+                  if (_cycles.length > 1)
+                    IconButton(
+                      tooltip: s.deleteCycle,
+                      icon: const Icon(Icons.delete_outline_rounded,
+                          color: Colors.redAccent, size: 22),
+                      onPressed: () => _deleteCycle(cycle),
+                    ),
+                ],
+              ),
             ),
           ),
 

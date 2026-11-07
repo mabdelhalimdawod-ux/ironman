@@ -1048,12 +1048,14 @@ class PinchZoomArea extends StatelessWidget {
   final Widget child;
   final double minScale;
   final double maxScale;
+  final bool panEnabled;
 
   const PinchZoomArea({
     super.key,
     required this.child,
     this.minScale = 0.8,
     this.maxScale = 2.5,
+    this.panEnabled = false,
   });
 
   @override
@@ -1061,7 +1063,7 @@ class PinchZoomArea extends StatelessWidget {
     return InteractiveViewer(
       minScale: minScale,
       maxScale: maxScale,
-      panEnabled: true,
+      panEnabled: panEnabled,
       scaleEnabled: true,
       child: child,
     );

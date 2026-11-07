@@ -250,10 +250,10 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
                     // هيدر توضيحي
                     Container(
                       padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: _cardFill,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _gridLine),
+                      decoration: EngineRowingUI.neonGlowBoxDecoration(
+                        backgroundColor: _cardFill,
+                        borderColor: _gold,
+                        borderRadius: 12,
                       ),
                       child: Row(
                         children: [
@@ -317,7 +317,7 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
       margin: const EdgeInsets.only(bottom: 18),
       decoration: EngineRowingUI.neonGlowBoxDecoration(
         backgroundColor: _cardFill,
-        borderColor: _gridLine,
+        borderColor: _gold.withAlpha(160),
         borderRadius: 14,
       ),
       child: Column(

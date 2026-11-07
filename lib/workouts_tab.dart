@@ -163,17 +163,10 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
   /// الهيدر العلوي لحصص اليوم بمواعيدها
   Widget _buildTodayWorkoutsHeader(AppStrings s, String dateStr) {
     return Container(
-      decoration: BoxDecoration(
-        color: _cardFill,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _gridLine, width: 1.2),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
+      decoration: EngineRowingUI.neonGlowBoxDecoration(
+        backgroundColor: _cardFill,
+        borderColor: _gold,
+        borderRadius: 14,
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -445,7 +438,7 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
         ? _gold
         : isPartiallyCompleted
             ? const Color(0xFFFF9100)
-            : _gridLine;
+            : _gold.withAlpha(140);
 
     final Color nameColor = isFullyCompleted
         ? _gold // يتغير لون اسم اللاعب للفسفوري عند إكمال كل تمارين يومه!

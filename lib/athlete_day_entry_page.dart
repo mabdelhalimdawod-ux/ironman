@@ -131,6 +131,32 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
     });
   }
 
+  void _addNewWorkoutForm() {
+    setState(() {
+      final nextIdx = _workoutForms.length;
+      final formState = _SingleWorkoutFormState(
+        sessionIdx: nextIdx,
+        kind: 'Erg',
+        time: nextIdx == 0 ? '07:00' : (nextIdx == 1 ? '16:30' : '19:00'),
+        initialZone: 'Z2',
+      );
+      formState.targetRange = HeartRateZones.calculate(
+        mhr: _currentMHR,
+        rhr: _currentRHR,
+        zone: 'Z2',
+      );
+      _workoutForms.add(formState);
+    });
+  }
+
+  void _removeWorkoutForm(int index) {
+    if (_workoutForms.length <= 1) return;
+    setState(() {
+      final form = _workoutForms.removeAt(index);
+      form.dispose();
+    });
+  }
+
   Future<void> _initFormsAndLoadExistingData() async {
     setState(() => _loading = true);
 
@@ -170,6 +196,21 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
         zone: zone,
       );
 
+      _workoutForms.add(formState);
+    }
+
+    if (_workoutForms.isEmpty) {
+      final formState = _SingleWorkoutFormState(
+        sessionIdx: 0,
+        kind: 'Erg',
+        time: '07:00',
+        initialZone: 'Z2',
+      );
+      formState.targetRange = HeartRateZones.calculate(
+        mhr: initialMHR,
+        rhr: initialRHR,
+        zone: 'Z2',
+      );
       _workoutForms.add(formState);
     }
 
@@ -489,13 +530,33 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                                     size: 22,
                                   ),
                                   const SizedBox(width: 8),
-                                  Text(
-                                    'فورمات تمارين اليوم (${_workoutForms.length} تمارين)',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: EngineRowingUI.textWhite,
+                                  Expanded(
+                                    child: Text(
+                                      'فورمات تمارين اليوم (${_workoutForms.length})',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: EngineRowingUI.textWhite,
+                                      ),
                                     ),
+                                  ),
+                                  ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: EngineRowingUI.neonLime,
+                                      foregroundColor: EngineRowingUI.bgNavy,
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 6),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    icon: const Icon(Icons.add, size: 16),
+                                    label: const Text(
+                                      'إضافة تمرين',
+                                      style: TextStyle(
+                                          fontSize: 12, fontWeight: FontWeight.bold),
+                                    ),
+                                    onPressed: _addNewWorkoutForm,
                                   ),
                                 ],
                               ),
@@ -526,9 +587,9 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: EngineRowingUI.cardFill,
-        border: Border(bottom: BorderSide(color: EngineRowingUI.bgGridLine)),
+        border: Border(bottom: BorderSide(color: EngineRowingUI.neonLime.withAlpha(140), width: 1.2)),
       ),
       child: Row(
         children: [
@@ -609,7 +670,7 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
       color: EngineRowingUI.cardFill,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: EngineRowingUI.bgGridLine),
+        side: BorderSide(color: EngineRowingUI.neonLime.withAlpha(160), width: 1.2),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -784,7 +845,7 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
       color: EngineRowingUI.cardFill,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: EngineRowingUI.bgGridLine, width: 1.2),
+        side: BorderSide(color: EngineRowingUI.neonLime.withAlpha(160), width: 1.2),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -869,6 +930,14 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                       );
                     },
                   ),
+                if (_workoutForms.length > 1) ...[
+                  const SizedBox(width: 6),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                    tooltip: 'حذف هذا التمرين',
+                    onPressed: () => _removeWorkoutForm(formIdx),
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 12),

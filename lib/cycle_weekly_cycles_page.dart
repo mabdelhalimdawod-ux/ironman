@@ -253,17 +253,10 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _cardFill,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _gridLine, width: 1.2),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
+      decoration: EngineRowingUI.neonGlowBoxDecoration(
+        backgroundColor: _cardFill,
+        borderColor: _gold,
+        borderRadius: 14,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -424,7 +417,7 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
       margin: const EdgeInsets.only(bottom: 16),
       decoration: EngineRowingUI.neonGlowBoxDecoration(
         backgroundColor: _cardFill,
-        borderColor: _gridLine,
+        borderColor: _gold.withAlpha(160),
         borderRadius: 14,
       ),
       child: Column(
