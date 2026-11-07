@@ -1050,34 +1050,31 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                 tooltip: 'إضافة تمرين بنفس المواصفات',
                 onPressed: widget.onAddNext,
               ),
-
-              // 9. ملاحظات أو تفاصيل إضافية
-              SizedBox(
-                width: 140,
-                child: TextFormField(
-                  controller: _detailsCtrl,
-                  style: const TextStyle(fontSize: 12, color: EngineRowingUI.textWhite),
-                  decoration: InputDecoration(
-                    labelText: s.workoutDetails,
-                    labelStyle: const TextStyle(fontSize: 11, color: EngineRowingUI.labelSlate),
-                    hintText: 'ملاحظة...',
-                    hintStyle: const TextStyle(fontSize: 10, color: EngineRowingUI.captionGrey),
-                    filled: true,
-                    fillColor: _cardFill,
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                    border: const OutlineInputBorder(borderSide: BorderSide(color: _gridLine)),
-                    enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: _gridLine)),
-                    focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: _gold)),
-                    isDense: true,
-                  ),
-                  onChanged: (val) {
-                    widget.item.details = val;
-                    widget.onDataChanged();
-                  },
-                ),
-              ),
             ],
+          ),
+          const SizedBox(height: 10),
+
+          // 9. ملاحظات أو تفاصيل إضافية (تمتد بكامل العرض لاستغلال المساحة المتاحة دون هدر)
+          TextFormField(
+            controller: _detailsCtrl,
+            style: const TextStyle(fontSize: 12.5, color: EngineRowingUI.textWhite),
+            decoration: InputDecoration(
+              labelText: s.workoutDetails,
+              labelStyle: const TextStyle(fontSize: 11, color: EngineRowingUI.labelSlate),
+              hintText: 'ملاحظة أو تفاصيل التمرين...',
+              hintStyle: const TextStyle(fontSize: 10.5, color: EngineRowingUI.captionGrey),
+              filled: true,
+              fillColor: _cardFill,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              border: const OutlineInputBorder(borderSide: BorderSide(color: _gridLine)),
+              enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: _gridLine)),
+              focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: _gold)),
+              isDense: true,
+            ),
+            onChanged: (val) {
+              widget.item.details = val;
+              widget.onDataChanged();
+            },
           ),
         ],
       ),

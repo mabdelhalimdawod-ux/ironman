@@ -651,6 +651,7 @@ class _ProgramTabState extends State<ProgramTab> {
                 const SizedBox(height: 14),
 
                 // ── 2. أربع خانات التستات الأربعة (500m, 750m, 1500m, 3000m) مع Checkbox ──
+                // ── 2. أربع خانات التستات الأربعة (500m, 750m, 1500m, 3000m) مع Checkbox موزعة بكامل العرض ──
                 Text(
                   s.testDatesTitle,
                   style: const TextStyle(
@@ -673,6 +674,25 @@ class _ProgramTabState extends State<ProgramTab> {
                         isCompleted: false,
                       ),
                     );
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final maxW = constraints.maxWidth;
+                    final cols = maxW < 360 ? 1 : (maxW < 680 ? 2 : 4);
+                    final itemWidth = (maxW - ((cols - 1) * 10.0)) / cols;
+                    return Wrap(
+                      spacing: 10,
+                      runSpacing: 8,
+                      children: kProgramTestTypes.map((testType) {
+                        final testItem = cycle.tests.firstWhere(
+                          (t) => t.testType == testType,
+                          orElse: () => ProgramCycleTest(
+                            cycleId: cycle.id,
+                            testType: testType,
+                            testDate: cycle.endDate,
+                            targetValue: '',
+                            isCompleted: false,
+                          ),
+                        );
 
                     return Container(
                       width: 175,
@@ -706,11 +726,66 @@ class _ProgramTabState extends State<ProgramTab> {
                                     });
                                     ProgramService.updateProgramCycle(cycle);
                                   },
+                        return SizedBox(
+                          width: itemWidth,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: EngineRowingUI.equationCardFill,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: testItem.isCompleted
+                                    ? _gold
+                                    : _gridLine,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: Checkbox(
+                                        value: testItem.isCompleted,
+                                        activeColor: _gold,
+                                        checkColor: _navy,
+                                        side: const BorderSide(color: EngineRowingUI.labelSlate),
+                                        onChanged: (val) {
+                                          setState(() {
+                                            testItem.isCompleted = val ?? false;
+                                          });
+                                          ProgramService.updateProgramCycle(cycle);
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Directionality(
+                                        textDirection: TextDirection.ltr,
+                                        child: Text(
+                                          testType,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 11.5,
+                                            color: testItem.isCompleted
+                                                ? _gold
+                                                : EngineRowingUI.textWhite,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Directionality(
+                                const SizedBox(height: 4),
+                                // إدخال قيمة التست المستهدفة
+                                Directionality(
                                   textDirection: TextDirection.ltr,
                                   child: Text(
                                     testType,
@@ -720,7 +795,40 @@ class _ProgramTabState extends State<ProgramTab> {
                                       color: testItem.isCompleted
                                           ? _gold
                                           : EngineRowingUI.textWhite,
+                                  child: TextFormField(
+                                    initialValue: testItem.targetValue,
+                                    textAlign: TextAlign.left,
+                                    inputFormatters: [
+                                      RowingNumberFormatter.englishDigitsInputFormatter,
+                                    ],
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: EngineRowingUI.textWhite,
+                                      fontFeatures: [FontFeature.tabularFigures()],
                                     ),
+                                    decoration: const InputDecoration(
+                                      hintText: 'Target split or W...',
+                                      hintStyle: TextStyle(
+                                          fontSize: 10,
+                                          color: EngineRowingUI.captionGrey),
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 4),
+                                      border: OutlineInputBorder(
+                                        borderSide: BorderSide(color: _gridLine),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderSide: BorderSide(color: _gridLine),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: BorderSide(color: _gold),
+                                      ),
+                                    ),
+                                    onChanged: (val) {
+                                      testItem.targetValue =
+                                          RowingNumberFormatter.toEnglishDigits(val.trim());
+                                      ProgramService.updateProgramCycle(cycle);
+                                    },
                                   ),
                                 ),
                               ),
@@ -768,8 +876,11 @@ class _ProgramTabState extends State<ProgramTab> {
                           ),
                         ],
                       ),
+                        );
+                      }).toList(),
                     );
                   }).toList(),
+                  },
                 ),
                 const SizedBox(height: 18),
 
