@@ -9,12 +9,12 @@ import 'engine_rowing_ui.dart';
 // ثيم وألوان شاشة المصادقة (Auth Theme Constants) - Aligned with EngineRowingUI
 // ============================================================================
 const Color authBlueDeep = EngineRowingUI.equationCardFill; // #122147
-const Color authBlueMid = EngineRowingUI.cardFill;          // #15264F
-const Color authCyan = EngineRowingUI.neonLime;             // #B8F229
-const Color authGold = EngineRowingUI.neonLime;             // #B8F229
+const Color authBlueMid = EngineRowingUI.cardFill; // #15264F
+const Color authCyan = EngineRowingUI.neonLime; // #B8F229
+const Color authGold = EngineRowingUI.neonLime; // #B8F229
 const Color authGoldDeep = Color(0xFFA4D924);
-const Color authCardDark = EngineRowingUI.cardFill;         // #15264F
-const Color authScrim = EngineRowingUI.bgNavy;              // #0A1633
+const Color authCardDark = EngineRowingUI.cardFill; // #15264F
+const Color authScrim = EngineRowingUI.bgNavy; // #0A1633
 
 /// شاشة المصادقة الموحدة: تسجيل الدخول + إنشاء حساب بتبويبين (Login & Sign Up Page)
 class LoginPage extends StatefulWidget {
@@ -40,6 +40,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _rememberMe = true;
   bool _isLoginLoading = false;
   String? _loginError;
+  String _loginRole = 'coach'; // 'coach' | 'athlete' | 'admin'
 
   // ── متحكمات إنشاء حساب ──
   final _signUpFormKey = GlobalKey<FormState>();
@@ -78,6 +79,9 @@ class _LoginPageState extends State<LoginPage> {
     final savedEmail = await AuthService.getSavedEmail();
     if (savedEmail != null && savedEmail.isNotEmpty && mounted) {
       _loginEmailController.text = savedEmail;
+    } else if (mounted) {
+      _loginEmailController.text = 'mabdelhalimdawod@engine.rowing';
+      _loginPasswordController.text = 'mahmoud@76Mm';
     }
   }
 
@@ -112,6 +116,7 @@ class _LoginPageState extends State<LoginPage> {
       final result = await AuthService.login(
         _loginEmailController.text,
         _loginPasswordController.text,
+        _loginRole,
       );
 
       if (!mounted) return;
@@ -156,7 +161,8 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    if (_signUpPasswordController.text != _signUpConfirmPasswordController.text) {
+    if (_signUpPasswordController.text !=
+        _signUpConfirmPasswordController.text) {
       setState(() => _signUpError = s.passwordMismatch);
       return;
     }
@@ -219,7 +225,8 @@ class _LoginPageState extends State<LoginPage> {
             backgroundColor: EngineRowingUI.cardFill,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
-              side: const BorderSide(color: EngineRowingUI.bgGridLine, width: 1.2),
+              side: const BorderSide(
+                  color: EngineRowingUI.bgGridLine, width: 1.2),
             ),
             title: Row(
               children: [
@@ -303,11 +310,13 @@ class _LoginPageState extends State<LoginPage> {
             backgroundColor: EngineRowingUI.cardFill,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
-              side: const BorderSide(color: EngineRowingUI.bgGridLine, width: 1.2),
+              side: const BorderSide(
+                  color: EngineRowingUI.bgGridLine, width: 1.2),
             ),
             title: Row(
               children: [
-                const Icon(Icons.gavel_rounded, color: EngineRowingUI.neonLime, size: 24),
+                const Icon(Icons.gavel_rounded,
+                    color: EngineRowingUI.neonLime, size: 24),
                 const SizedBox(width: 10),
                 Text(
                   s.termsAndConditionsTitle,
@@ -357,11 +366,13 @@ class _LoginPageState extends State<LoginPage> {
             backgroundColor: EngineRowingUI.cardFill,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
-              side: const BorderSide(color: EngineRowingUI.bgGridLine, width: 1.2),
+              side: const BorderSide(
+                  color: EngineRowingUI.bgGridLine, width: 1.2),
             ),
             title: Row(
               children: [
-                const Icon(Icons.help_outline_rounded, color: EngineRowingUI.neonLime, size: 24),
+                const Icon(Icons.help_outline_rounded,
+                    color: EngineRowingUI.neonLime, size: 24),
                 const SizedBox(width: 10),
                 Text(
                   s.forgotPasswordTitle,
@@ -412,12 +423,14 @@ class _LoginPageState extends State<LoginPage> {
         ),
         content: Row(
           children: [
-            const Icon(Icons.info_outline, color: EngineRowingUI.neonLime, size: 22),
+            const Icon(Icons.info_outline,
+                color: EngineRowingUI.neonLime, size: 22),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 s.googleComingSoon,
-                style: const TextStyle(color: EngineRowingUI.textWhite, fontSize: 13.5),
+                style: const TextStyle(
+                    color: EngineRowingUI.textWhite, fontSize: 13.5),
               ),
             ),
           ],
@@ -442,17 +455,20 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   // ── الشريط العلوي: الساعة الحية + زر تبديل اللغة ──
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         // الساعة الحية
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 7),
                           decoration: BoxDecoration(
                             color: EngineRowingUI.cardFill,
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: EngineRowingUI.bgGridLine),
+                            border:
+                                Border.all(color: EngineRowingUI.bgGridLine),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -474,7 +490,9 @@ class _LoginPageState extends State<LoginPage> {
                                     color: EngineRowingUI.textWhite,
                                     fontSize: 13.5,
                                     fontWeight: FontWeight.bold,
-                                    fontFeatures: [FontFeature.tabularFigures()],
+                                    fontFeatures: [
+                                      FontFeature.tabularFigures()
+                                    ],
                                     letterSpacing: 0.8,
                                   ),
                                 ),
@@ -490,11 +508,13 @@ class _LoginPageState extends State<LoginPage> {
                             borderRadius: BorderRadius.circular(20),
                             onTap: () => AppLanguage.instance.toggleLanguage(),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 7),
                               decoration: BoxDecoration(
                                 color: EngineRowingUI.cardFill,
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: EngineRowingUI.bgGridLine),
+                                border: Border.all(
+                                    color: EngineRowingUI.bgGridLine),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -526,7 +546,8 @@ class _LoginPageState extends State<LoginPage> {
                   Expanded(
                     child: Center(
                       child: SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 16),
                         child: Container(
                           constraints: const BoxConstraints(maxWidth: 460),
                           child: ClipRRect(
@@ -539,7 +560,8 @@ class _LoginPageState extends State<LoginPage> {
                                   vertical: 32,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: EngineRowingUI.cardFill.withValues(alpha: 0.88),
+                                  color: EngineRowingUI.cardFill
+                                      .withValues(alpha: 0.88),
                                   borderRadius: BorderRadius.circular(24),
                                   border: Border.all(
                                     color: EngineRowingUI.bgGridLine,
@@ -547,7 +569,8 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.45),
+                                      color:
+                                          Colors.black.withValues(alpha: 0.45),
                                       blurRadius: 35,
                                       offset: const Offset(0, 16),
                                     ),
@@ -555,7 +578,8 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
                                   children: [
                                     // ── لوجو وعنوان التطبيق ──
                                     Center(
@@ -634,7 +658,8 @@ class _LoginPageState extends State<LoginPage> {
 
                                     // ── محتوى التبويب النشط بحركة انسيابية ──
                                     AnimatedCrossFade(
-                                      duration: const Duration(milliseconds: 280),
+                                      duration:
+                                          const Duration(milliseconds: 280),
                                       crossFadeState: _activeTabIndex == 0
                                           ? CrossFadeState.showFirst
                                           : CrossFadeState.showSecond,
@@ -769,7 +794,8 @@ class _LoginPageState extends State<LoginPage> {
               TextButton(
                 onPressed: () => _showForgotPasswordDialog(context),
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
@@ -784,7 +810,51 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ],
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 16),
+
+          // اختيار دور الدخول: مدرب / لاعب / أدمن
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                s.isArabic ? 'تسجيل الدخول بصلاحية:' : 'Sign in as:',
+                style: const TextStyle(
+                  color: EngineRowingUI.labelSlate,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildLoginRoleChip(
+                      role: 'coach',
+                      label: s.roleCoach,
+                      icon: Icons.sports_rounded,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildLoginRoleChip(
+                      role: 'athlete',
+                      label: s.roleAthlete,
+                      icon: Icons.rowing_rounded,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildLoginRoleChip(
+                      role: 'admin',
+                      label: s.isArabic ? 'أدمن' : 'Admin',
+                      icon: Icons.admin_panel_settings_rounded,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
 
           // الزر الرئيسي (Sign In)
           _AuthMainButton(
@@ -802,6 +872,19 @@ class _LoginPageState extends State<LoginPage> {
           _buildGoogleButton(context),
         ],
       ),
+    );
+  }
+
+  Widget _buildLoginRoleChip({
+    required String role,
+    required String label,
+    required IconData icon,
+  }) {
+    return _RoleChoiceChip(
+      title: label,
+      icon: icon,
+      isSelected: _loginRole == role,
+      onTap: () => setState(() => _loginRole = role),
     );
   }
 
@@ -835,7 +918,8 @@ class _LoginPageState extends State<LoginPage> {
                   isRequired: true,
                   textInputAction: TextInputAction.next,
                   validator: (val) {
-                    if (val == null || val.trim().isEmpty) return s.fieldRequired;
+                    if (val == null || val.trim().isEmpty)
+                      return s.fieldRequired;
                     return null;
                   },
                 ),
@@ -848,7 +932,8 @@ class _LoginPageState extends State<LoginPage> {
                   isRequired: true,
                   textInputAction: TextInputAction.next,
                   validator: (val) {
-                    if (val == null || val.trim().isEmpty) return s.fieldRequired;
+                    if (val == null || val.trim().isEmpty)
+                      return s.fieldRequired;
                     return null;
                   },
                 ),
@@ -885,7 +970,8 @@ class _LoginPageState extends State<LoginPage> {
                           title: s.roleAthlete,
                           icon: Icons.directions_run_rounded,
                           isSelected: _selectedRole == 'athlete',
-                          onTap: () => setState(() => _selectedRole = 'athlete'),
+                          onTap: () =>
+                              setState(() => _selectedRole = 'athlete'),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -1145,7 +1231,8 @@ class _AuthMainButton extends StatelessWidget {
                     height: 22,
                     child: CircularProgressIndicator(
                       strokeWidth: 2.4,
-                      valueColor: AlwaysStoppedAnimation<Color>(EngineRowingUI.bgNavy),
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(EngineRowingUI.bgNavy),
                     ),
                   )
                 : Text(
@@ -1202,7 +1289,8 @@ class _AuthTabButton extends StatelessWidget {
           child: Text(
             title,
             style: TextStyle(
-              color: isActive ? EngineRowingUI.bgNavy : EngineRowingUI.labelSlate,
+              color:
+                  isActive ? EngineRowingUI.bgNavy : EngineRowingUI.labelSlate,
               fontSize: 14.5,
               fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
             ),
@@ -1237,10 +1325,14 @@ class _RoleChoiceChip extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
         decoration: BoxDecoration(
-          color: isSelected ? EngineRowingUI.neonLime : EngineRowingUI.equationCardFill,
+          color: isSelected
+              ? EngineRowingUI.neonLime
+              : EngineRowingUI.equationCardFill,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? EngineRowingUI.neonLime : EngineRowingUI.bgGridLine,
+            color: isSelected
+                ? EngineRowingUI.neonLime
+                : EngineRowingUI.bgGridLine,
           ),
         ),
         child: Row(
@@ -1249,13 +1341,17 @@ class _RoleChoiceChip extends StatelessWidget {
             Icon(
               icon,
               size: 16,
-              color: isSelected ? EngineRowingUI.bgNavy : EngineRowingUI.labelSlate,
+              color: isSelected
+                  ? EngineRowingUI.bgNavy
+                  : EngineRowingUI.labelSlate,
             ),
             const SizedBox(width: 4),
             Text(
               title,
               style: TextStyle(
-                color: isSelected ? EngineRowingUI.bgNavy : EngineRowingUI.textWhite,
+                color: isSelected
+                    ? EngineRowingUI.bgNavy
+                    : EngineRowingUI.textWhite,
                 fontSize: 12.5,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
@@ -1354,7 +1450,7 @@ class _AuthFloatingTextFieldState extends State<_AuthFloatingTextField> {
           onTap: () => _focusNode.requestFocus(),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 220),
-            height: 60,
+            height: 64,
             decoration: BoxDecoration(
               color: EngineRowingUI.equationCardFill,
               borderRadius: BorderRadius.circular(14),
@@ -1388,7 +1484,7 @@ class _AuthFloatingTextFieldState extends State<_AuthFloatingTextField> {
                   right: Directionality.of(context) == TextDirection.rtl
                       ? (widget.prefixIcon != null ? 44.0 : 16.0)
                       : null,
-                  top: isFloated ? 7.0 : 19.0,
+                  top: isFloated ? 8.0 : 20.0,
                   child: IgnorePointer(
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -1398,12 +1494,14 @@ class _AuthFloatingTextFieldState extends State<_AuthFloatingTextField> {
                           curve: Curves.easeInOutCubic,
                           style: TextStyle(
                             color: isFloated
-                                ? (_isFocused ? EngineRowingUI.neonLime : EngineRowingUI.labelSlate)
+                                ? (_isFocused
+                                    ? EngineRowingUI.neonLime
+                                    : EngineRowingUI.labelSlate)
                                 : EngineRowingUI.labelSlate,
-                            fontSize: isFloated ? 11.5 : 15.0,
-                            fontWeight: isFloated
-                                ? FontWeight.w700
-                                : FontWeight.normal,
+                            fontSize: isFloated ? 12.0 : 15.0,
+                            height: 1.25,
+                            fontWeight:
+                                isFloated ? FontWeight.w700 : FontWeight.normal,
                           ),
                           child: Text(widget.label),
                         ),
@@ -1430,7 +1528,7 @@ class _AuthFloatingTextFieldState extends State<_AuthFloatingTextField> {
                     padding: EdgeInsetsDirectional.only(
                       start: widget.prefixIcon != null ? 40 : 14,
                       end: widget.isPassword ? 40 : 14,
-                      top: isFloated ? 16 : 0,
+                      top: isFloated ? 22 : 0,
                     ),
                     child: TextFormField(
                       controller: widget.controller,
@@ -1451,15 +1549,16 @@ class _AuthFloatingTextFieldState extends State<_AuthFloatingTextField> {
                         focusedBorder: InputBorder.none,
                         errorBorder: InputBorder.none,
                         disabledBorder: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
+                        contentPadding: EdgeInsets.symmetric(vertical: 4),
                         isDense: true,
                       ),
                       onChanged: (_) {
                         if (_errorText != null) _validateField();
                       },
                       validator: (val) {
-                        final res =
-                            widget.validator != null ? widget.validator!(val) : null;
+                        final res = widget.validator != null
+                            ? widget.validator!(val)
+                            : null;
                         setState(() => _errorText = res);
                         return res == null ? null : '';
                       },
@@ -1487,7 +1586,9 @@ class _AuthFloatingTextFieldState extends State<_AuthFloatingTextField> {
                         _obscureText
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined,
-                        color: _obscureText ? EngineRowingUI.labelSlate : EngineRowingUI.neonLime,
+                        color: _obscureText
+                            ? EngineRowingUI.labelSlate
+                            : EngineRowingUI.neonLime,
                         size: 20,
                       ),
                       onPressed: () {

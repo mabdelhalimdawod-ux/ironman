@@ -74,7 +74,8 @@ class MetricsCurvePage extends StatefulWidget {
   State<MetricsCurvePage> createState() => _MetricsCurvePageState();
 }
 
-class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerProviderStateMixin {
+class _MetricsCurvePageState extends State<MetricsCurvePage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _loading = true;
 
@@ -108,7 +109,8 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this, initialIndex: 4); // فتح Zone Curve افتراضياً
+    _tabController = TabController(
+        length: 5, vsync: this, initialIndex: 4); // فتح Zone Curve افتراضياً
     _selectedPlayer = widget.initialPlayer;
     _loadInitialData();
   }
@@ -122,7 +124,8 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
   Future<void> _loadInitialData() async {
     setState(() => _loading = true);
     try {
-      _players = await DB.q('SELECT * FROM players WHERE active = 1 ORDER BY name ASC');
+      _players = await DB
+          .q('SELECT * FROM players WHERE active = 1 ORDER BY name ASC');
       if (_selectedPlayer == null && _players.isNotEmpty) {
         _selectedPlayer = _players.first;
       }
@@ -170,8 +173,11 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
     final startStr = dstr(range.start);
     final endStr = dstr(range.end);
 
-    int? playerId = _selectedPlayer != null ? (_selectedPlayer!['id'] as int?) : null;
-    int mhr = _selectedPlayer != null ? ((_selectedPlayer!['mhr'] as int?) ?? 190) : 190;
+    int? playerId =
+        _selectedPlayer != null ? (_selectedPlayer!['id'] as int?) : null;
+    int mhr = _selectedPlayer != null
+        ? ((_selectedPlayer!['mhr'] as int?) ?? 190)
+        : 190;
 
     if (playerId != null) {
       _effectiveRHR = await HeartRateZones.getEffectiveRHR(playerId);
@@ -227,7 +233,9 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
       final date = row['date'] as String? ?? '';
       final watts = (row['avg_power'] as num?)?.toDouble();
       final hr = (row['hr'] as num?)?.toInt();
-      final rowMhr = (row['hr_max'] as num?)?.toInt() ?? (row['player_mhr'] as num?)?.toInt() ?? mhr;
+      final rowMhr = (row['hr_max'] as num?)?.toInt() ??
+          (row['player_mhr'] as num?)?.toInt() ??
+          mhr;
       final rowRhr = (row['rhr'] as num?)?.toInt() ?? _effectiveRHR;
 
       // حساب كفاءة الأداء EF
@@ -238,8 +246,10 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
 
       // حساب Decoupling إن وجد
       double? decoupling;
-      if (row['player_notes'] != null && row['player_notes'].toString().contains('decoupling:')) {
-        final match = RegExp(r'decoupling:\s*([0-9.]+)').firstMatch(row['player_notes'].toString());
+      if (row['player_notes'] != null &&
+          row['player_notes'].toString().contains('decoupling:')) {
+        final match = RegExp(r'decoupling:\s*([0-9.]+)')
+            .firstMatch(row['player_notes'].toString());
         if (match != null) {
           decoupling = double.tryParse(match.group(1)!);
         }
@@ -253,7 +263,8 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
           : (row['session_zone'] as String?)?.isNotEmpty == true
               ? row['session_zone'] as String
               : (hr != null && hr > 0 && rowMhr > 0)
-                  ? HeartRateZones.determineZone(hr: hr, mhr: rowMhr, rhr: rowRhr)
+                  ? HeartRateZones.determineZone(
+                      hr: hr, mhr: rowMhr, rhr: rowRhr)
                   : null;
 
       final item = <String, dynamic>{
@@ -354,7 +365,9 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
     // بناء محتوى ملف الـ CSV مع UTF-8 BOM لدعم فتح العربي في Excel فوراً
     final buffer = StringBuffer();
     buffer.write('\uFEFF'); // UTF-8 BOM
-    buffer.writeln(s.isArabic ? 'التاريخ,الزون,متوسط الواط (W)' : 'Date,Zone,Average Watts (W)');
+    buffer.writeln(s.isArabic
+        ? 'التاريخ,الزون,متوسط الواط (W)'
+        : 'Date,Zone,Average Watts (W)');
 
     // جمع التواريخ المتاحة للزونات المحددة وترتيبها
     final allDates = <String>{};
@@ -370,7 +383,9 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
         if (_selectedZones.contains(zone)) {
           final watts = _zoneDailyWatts[zone]?[date];
           if (watts != null) {
-            final zoneName = s.isArabic ? (_zoneLabelsAr[zone] ?? zone) : (_zoneLabelsEn[zone] ?? zone);
+            final zoneName = s.isArabic
+                ? (_zoneLabelsAr[zone] ?? zone)
+                : (_zoneLabelsEn[zone] ?? zone);
             buffer.writeln('$date,"$zoneName",$watts');
             totalRows++;
           }
@@ -384,7 +399,9 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
 
   void _showExportSuccessModal(String csvContent, int rowCount) {
     final s = AppStrings.of(context);
-    final playerName = _selectedPlayer != null ? _selectedPlayer!['name'] : (s.isArabic ? 'فريق_التجديف' : 'Team');
+    final playerName = _selectedPlayer != null
+        ? _selectedPlayer!['name']
+        : (s.isArabic ? 'فريق_التجديف' : 'Team');
     final filename = 'Zone_Curve_${playerName}_${dstr(DateTime.now())}.csv';
 
     // حفظ تلقائي على القرص إن أمكن
@@ -415,7 +432,8 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                     color: _emerald.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.table_chart_rounded, color: _emerald, size: 28),
+                  child: const Icon(Icons.table_chart_rounded,
+                      color: _emerald, size: 28),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -435,7 +453,9 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                         s.isArabic
                             ? 'تم تجهيز $rowCount سجل للزونات المعلّمة فقط'
                             : '$rowCount records prepared for checked zones only',
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13),
+                        style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.7),
+                            fontSize: 13),
                       ),
                     ],
                   ),
@@ -456,7 +476,10 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                 children: [
                   Text(
                     s.isArabic ? '📄 اسم الملف المُصدّر:' : '📄 Exported File:',
-                    style: const TextStyle(color: _gold, fontSize: 12, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        color: _gold,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -475,14 +498,17 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                       foregroundColor: Colors.white,
                       side: const BorderSide(color: _cardBorder),
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: csvContent));
                       Navigator.pop(ctx);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(s.isArabic ? 'تم نسخ بيانات CSV للحافظة بنجاح ✔' : 'CSV copied to clipboard ✔'),
+                          content: Text(s.isArabic
+                              ? 'تم نسخ بيانات CSV للحافظة بنجاح ✔'
+                              : 'CSV copied to clipboard ✔'),
                           backgroundColor: _emerald,
                         ),
                       );
@@ -498,7 +524,8 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                       backgroundColor: _emerald,
                       foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                     onPressed: () => Navigator.pop(ctx),
                     icon: const Icon(Icons.check_rounded, size: 18),
@@ -527,11 +554,13 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [_navyLight, _cardSurface]),
+                gradient:
+                    const LinearGradient(colors: [_navyLight, _cardSurface]),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: _gold.withValues(alpha: 0.3)),
               ),
-              child: const Icon(Icons.auto_graph_rounded, color: _gold, size: 22),
+              child:
+                  const Icon(Icons.auto_graph_rounded, color: _gold, size: 22),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -540,11 +569,16 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                 children: [
                   Text(
                     s.metricsCurvesTitle,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                   ),
                   Text(
                     s.metricsCurvesSubtitle,
-                    style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.7)),
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.white.withValues(alpha: 0.7)),
                   ),
                 ],
               ),
@@ -587,19 +621,35 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                 ),
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2)),
+                  BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2)),
                 ],
               ),
               labelColor: _gold,
               unselectedLabelColor: Colors.white70,
-              labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 12.5),
+              labelStyle:
+                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              unselectedLabelStyle: const TextStyle(
+                  fontWeight: FontWeight.normal, fontSize: 12.5),
               tabs: [
-                Tab(icon: const Icon(Icons.speed_rounded, size: 18), text: s.curveEF),
-                Tab(icon: const Icon(Icons.bolt_rounded, size: 18), text: s.curveWatts),
-                Tab(icon: const Icon(Icons.trending_down_rounded, size: 18), text: s.curveDecoupling),
-                Tab(icon: const Icon(Icons.favorite_rounded, size: 18), text: s.curveHR),
-                Tab(icon: const Icon(Icons.stacked_line_chart_rounded, size: 18), text: s.curveZone),
+                Tab(
+                    icon: const Icon(Icons.speed_rounded, size: 18),
+                    text: s.curveEF),
+                Tab(
+                    icon: const Icon(Icons.bolt_rounded, size: 18),
+                    text: s.curveWatts),
+                Tab(
+                    icon: const Icon(Icons.trending_down_rounded, size: 18),
+                    text: s.curveDecoupling),
+                Tab(
+                    icon: const Icon(Icons.favorite_rounded, size: 18),
+                    text: s.curveHR),
+                Tab(
+                    icon:
+                        const Icon(Icons.stacked_line_chart_rounded, size: 18),
+                    text: s.curveZone),
               ],
             ),
           ),
@@ -654,7 +704,9 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<int?>(
-                  value: _selectedPlayer != null ? (_selectedPlayer!['id'] as int?) : null,
+                  value: _selectedPlayer != null
+                      ? (_selectedPlayer!['id'] as int?)
+                      : null,
                   dropdownColor: _navyDeep,
                   isExpanded: true,
                   icon: const Icon(Icons.arrow_drop_down, color: _gold),
@@ -663,7 +715,10 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                           value: p['id'] as int?,
                           child: Text(
                             p['name'] as String? ?? '',
-                            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600),
                             overflow: TextOverflow.ellipsis,
                           ),
                         )),
@@ -776,7 +831,8 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
               isStrokeCapRound: true,
               dotData: FlDotData(
                 show: spots.length <= 30,
-                getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
+                getDotPainter: (spot, percent, barData, index) =>
+                    FlDotCirclePainter(
                   radius: 4.5,
                   color: color,
                   strokeWidth: 2,
@@ -837,7 +893,8 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.checklist_rounded, color: _gold, size: 20),
+                      const Icon(Icons.checklist_rounded,
+                          color: _gold, size: 20),
                       const SizedBox(width: 8),
                       Text(
                         s.selectZonesPrompt,
@@ -854,14 +911,17 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                     style: FilledButton.styleFrom(
                       backgroundColor: _emerald,
                       foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
                     ),
                     onPressed: _exportCheckedZonesToExcel,
                     icon: const Icon(Icons.file_download_outlined, size: 18),
                     label: Text(
                       s.exportExcel,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 12),
                     ),
                   ),
                 ],
@@ -873,10 +933,13 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                 spacing: 8,
                 runSpacing: 8,
                 children: ['Z1', 'Z2', 'Z3', 'Z4', 'Z5'].map((zoneKey) {
-                  final hasData = _zoneDailyWatts[zoneKey] != null && _zoneDailyWatts[zoneKey]!.isNotEmpty;
+                  final hasData = _zoneDailyWatts[zoneKey] != null &&
+                      _zoneDailyWatts[zoneKey]!.isNotEmpty;
                   final isChecked = _selectedZones.contains(zoneKey);
                   final color = _zoneColors[zoneKey]!;
-                  final label = s.isArabic ? (_zoneLabelsAr[zoneKey] ?? zoneKey) : (_zoneLabelsEn[zoneKey] ?? zoneKey);
+                  final label = s.isArabic
+                      ? (_zoneLabelsAr[zoneKey] ?? zoneKey)
+                      : (_zoneLabelsEn[zoneKey] ?? zoneKey);
 
                   return _buildZoneCheckboxChip(
                     zoneKey: zoneKey,
@@ -937,7 +1000,9 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        s.isArabic ? 'تطور الواط للتمارين المحددة لكل زون' : 'Watts Progression Across Zone Workouts',
+                        s.isArabic
+                            ? 'تطور الواط للتمارين المحددة لكل زون'
+                            : 'Watts Progression Across Zone Workouts',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14.5,
@@ -947,8 +1012,12 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                     ],
                   ),
                   Text(
-                    s.isArabic ? 'المحور الرأسي: الواط (W)' : 'Y-Axis: Watts (W)',
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 11),
+                    s.isArabic
+                        ? 'المحور الرأسي: الواط (W)'
+                        : 'Y-Axis: Watts (W)',
+                    style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.6),
+                        fontSize: 11),
                   ),
                 ],
               ),
@@ -962,11 +1031,14 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.touch_app_rounded, size: 48, color: Colors.white.withValues(alpha: 0.3)),
+                      Icon(Icons.touch_app_rounded,
+                          size: 48, color: Colors.white.withValues(alpha: 0.3)),
                       const SizedBox(height: 12),
                       Text(
                         s.selectAtLeastOneZone,
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14),
+                        style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.7),
+                            fontSize: 14),
                       ),
                     ],
                   ),
@@ -977,39 +1049,62 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                   alignment: Alignment.center,
                   child: Text(
                     s.noData,
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 14),
+                    style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.6),
+                        fontSize: 14),
                   ),
                 )
               else
-                SizedBox(
-                  height: 300,
+                Container(
+                  height: 310,
+                  padding: const EdgeInsets.only(
+                      top: 16, right: 14, left: 6, bottom: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
                   child: LineChart(
                     LineChartData(
                       minX: 0,
-                      maxX: (sortedDates.length - 1).toDouble().clamp(1.0, 1000.0),
+                      maxX: (sortedDates.length - 1)
+                          .toDouble()
+                          .clamp(1.0, 1000.0),
                       minY: minWatts,
                       maxY: maxWatts,
                       gridData: FlGridData(
                         show: true,
                         drawVerticalLine: false,
-                        getDrawingHorizontalLine: (value) => FlLine(
-                          color: _cardBorder.withValues(alpha: 0.6),
+                        getDrawingHorizontalLine: (value) => const FlLine(
+                          color: Color(0xFFE2E8F0),
                           strokeWidth: 1,
                           dashArray: [4, 4],
                         ),
                       ),
                       titlesData: FlTitlesData(
-                        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        rightTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false)),
+                        topTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false)),
                         leftTitles: AxisTitles(
                           sideTitles: SideTitles(
                             showTitles: true,
-                            reservedSize: 45,
+                            reservedSize: 48,
                             getTitlesWidget: (v, _) => Padding(
                               padding: const EdgeInsets.only(left: 4),
                               child: Text(
                                 '${v.round()} W',
-                                style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 10),
+                                style: const TextStyle(
+                                  color: Color(0xFF334155),
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ),
@@ -1018,18 +1113,25 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                           sideTitles: SideTitles(
                             showTitles: true,
                             reservedSize: 32,
-                            interval: (sortedDates.length / 5).clamp(1.0, 100.0),
+                            interval:
+                                (sortedDates.length / 5).clamp(1.0, 100.0),
                             getTitlesWidget: (v, _) {
                               final idx = v.toInt();
                               if (idx >= 0 && idx < sortedDates.length) {
                                 final d = sortedDates[idx];
                                 final parts = d.split('-');
-                                final label = parts.length >= 3 ? '${parts[1]}/${parts[2]}' : d;
+                                final label = parts.length >= 3
+                                    ? '${parts[1]}/${parts[2]}'
+                                    : d;
                                 return Padding(
                                   padding: const EdgeInsets.only(top: 8),
                                   child: Text(
                                     label,
-                                    style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 10),
+                                    style: const TextStyle(
+                                      color: Color(0xFF334155),
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 );
                               }
@@ -1046,7 +1148,10 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                           getTooltipItems: (touchedSpots) {
                             return touchedSpots.map((spot) {
                               final idx = spot.x.toInt();
-                              final date = (idx >= 0 && idx < sortedDates.length) ? sortedDates[idx] : '';
+                              final date =
+                                  (idx >= 0 && idx < sortedDates.length)
+                                      ? sortedDates[idx]
+                                      : '';
                               return LineTooltipItem(
                                 '$date\n${spot.y.round()} W',
                                 TextStyle(
@@ -1072,7 +1177,9 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                   runSpacing: 8,
                   children: _selectedZones.map((zKey) {
                     final color = _zoneColors[zKey]!;
-                    final label = s.isArabic ? (_zoneLabelsAr[zKey] ?? zKey) : (_zoneLabelsEn[zKey] ?? zKey);
+                    final label = s.isArabic
+                        ? (_zoneLabelsAr[zKey] ?? zKey)
+                        : (_zoneLabelsEn[zKey] ?? zKey);
                     final count = _zoneDailyWatts[zKey]?.length ?? 0;
                     return Row(
                       mainAxisSize: MainAxisSize.min,
@@ -1130,11 +1237,13 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.check_box_outline_blank, color: Colors.white.withValues(alpha: 0.2), size: 18),
+            Icon(Icons.check_box_outline_blank,
+                color: Colors.white.withValues(alpha: 0.2), size: 18),
             const SizedBox(width: 6),
             Text(
               label,
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 12),
+              style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.3), fontSize: 12),
             ),
             const SizedBox(width: 6),
             Container(
@@ -1145,7 +1254,8 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
               ),
               child: Text(
                 noDataText,
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 10),
+                style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.4), fontSize: 10),
               ),
             ),
           ],
@@ -1180,7 +1290,9 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              isChecked ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
+              isChecked
+                  ? Icons.check_box_rounded
+                  : Icons.check_box_outline_blank_rounded,
               color: isChecked ? color : Colors.white60,
               size: 20,
             ),
@@ -1209,7 +1321,9 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
   // 1. منحنى معامل الكفاءة (Efficiency Factor Curve / EF Curve)
   // =========================================================================
   Widget _buildEFCurveTab(AppStrings s) {
-    final validLogs = _rawLogs.where((l) => l['ef'] != null && (l['ef'] as double) > 0).toList();
+    final validLogs = _rawLogs
+        .where((l) => l['ef'] != null && (l['ef'] as double) > 0)
+        .toList();
     final spots = <FlSpot>[];
     double totalEf = 0;
     double maxEf = 0;
@@ -1235,9 +1349,18 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
         const SizedBox(height: 14),
         _buildStatsSummaryRow(
           items: [
-            _StatCardItem(label: s.currentAvgEF, value: avgEf > 0 ? avgEf.toStringAsFixed(2) : '-', color: _cyan),
-            _StatCardItem(label: s.isArabic ? 'أعلى EF' : 'Peak EF', value: maxEf > 0 ? maxEf.toStringAsFixed(2) : '-', color: _emerald),
-            _StatCardItem(label: s.isArabic ? 'عدد التمارين' : 'Workouts', value: spots.length.toString(), color: _gold),
+            _StatCardItem(
+                label: s.currentAvgEF,
+                value: avgEf > 0 ? avgEf.toStringAsFixed(2) : '-',
+                color: _cyan),
+            _StatCardItem(
+                label: s.isArabic ? 'أعلى EF' : 'Peak EF',
+                value: maxEf > 0 ? maxEf.toStringAsFixed(2) : '-',
+                color: _emerald),
+            _StatCardItem(
+                label: s.isArabic ? 'عدد التمارين' : 'Workouts',
+                value: spots.length.toString(),
+                color: _gold),
           ],
         ),
         const SizedBox(height: 16),
@@ -1258,7 +1381,9 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
   // 2. منحنى القدرة (Watts Curve / منحنى الواط)
   // =========================================================================
   Widget _buildWattsCurveTab(AppStrings s) {
-    final validLogs = _rawLogs.where((l) => l['watts'] != null && (l['watts'] as double) > 0).toList();
+    final validLogs = _rawLogs
+        .where((l) => l['watts'] != null && (l['watts'] as double) > 0)
+        .toList();
     final spots = <FlSpot>[];
     double totalWatts = 0;
     double maxWatts = 0;
@@ -1286,8 +1411,14 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
         const SizedBox(height: 14),
         _buildStatsSummaryRow(
           items: [
-            _StatCardItem(label: s.avgWattsLabel, value: avgWatts > 0 ? '${avgWatts.round()} W' : '-', color: _gold),
-            _StatCardItem(label: s.maxWattsLabel, value: maxWatts > 0 ? '${maxWatts.round()} W' : '-', color: _coral),
+            _StatCardItem(
+                label: s.avgWattsLabel,
+                value: avgWatts > 0 ? '${avgWatts.round()} W' : '-',
+                color: _gold),
+            _StatCardItem(
+                label: s.maxWattsLabel,
+                value: maxWatts > 0 ? '${maxWatts.round()} W' : '-',
+                color: _coral),
             _StatCardItem(
               label: s.isArabic ? 'معادل Split' : 'Equiv Split',
               value: avgWatts > 0 ? formatSplit(wattsToSplit(avgWatts)) : '-',
@@ -1334,7 +1465,9 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
         ),
         const SizedBox(height: 14),
         _buildStandardChartCard(
-          title: s.isArabic ? 'منحنى التفكك والانجراف القلبي' : 'Cardiac Decoupling Drift Curve',
+          title: s.isArabic
+              ? 'منحنى التفكك والانجراف القلبي'
+              : 'Cardiac Decoupling Drift Curve',
           unit: '%',
           spots: spots,
           primaryColor: _purple,
@@ -1350,7 +1483,8 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
   // 4. منحنى النبض (Heart Rate Curve)
   // =========================================================================
   Widget _buildHRCurveTab(AppStrings s) {
-    final validLogs = _rawLogs.where((l) => l['hr'] != null && (l['hr'] as int) > 0).toList();
+    final validLogs =
+        _rawLogs.where((l) => l['hr'] != null && (l['hr'] as int) > 0).toList();
     final spots = <FlSpot>[];
     double totalHr = 0;
     int maxHr = 0;
@@ -1378,9 +1512,16 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
         const SizedBox(height: 14),
         _buildStatsSummaryRow(
           items: [
-            _StatCardItem(label: s.isArabic ? 'متوسط النبض' : 'Avg HR', value: avgHr > 0 ? '${avgHr.round()} bpm' : '-', color: _coral),
-            _StatCardItem(label: s.maxHRLabel, value: maxHr > 0 ? '$maxHr bpm' : '-', color: _gold),
-            _StatCardItem(label: s.rhrLabel, value: '$_effectiveRHR bpm', color: _cyan),
+            _StatCardItem(
+                label: s.isArabic ? 'متوسط النبض' : 'Avg HR',
+                value: avgHr > 0 ? '${avgHr.round()} bpm' : '-',
+                color: _coral),
+            _StatCardItem(
+                label: s.maxHRLabel,
+                value: maxHr > 0 ? '$maxHr bpm' : '-',
+                color: _gold),
+            _StatCardItem(
+                label: s.rhrLabel, value: '$_effectiveRHR bpm', color: _cyan),
           ],
         ),
         const SizedBox(height: 16),
@@ -1418,7 +1559,8 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
         ),
         child: Text(
           'لا توجد بيانات مسجلة في هذه الفترة',
-          style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 14),
+          style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.6), fontSize: 14),
         ),
       );
     }
@@ -1450,17 +1592,34 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
             children: [
               Text(
                 title,
-                style: const TextStyle(color: Colors.white, fontSize: 14.5, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.bold),
               ),
               Text(
                 unit,
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 11),
+                style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.6), fontSize: 11),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          SizedBox(
-            height: 280,
+          Container(
+            height: 290,
+            padding:
+                const EdgeInsets.only(top: 16, right: 14, left: 6, bottom: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
             child: LineChart(
               LineChartData(
                 minX: 0,
@@ -1470,24 +1629,31 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
-                  getDrawingHorizontalLine: (value) => FlLine(
-                    color: _cardBorder.withValues(alpha: 0.6),
+                  getDrawingHorizontalLine: (value) => const FlLine(
+                    color: Color(0xFFE2E8F0),
                     strokeWidth: 1,
                     dashArray: [4, 4],
                   ),
                 ),
                 titlesData: FlTitlesData(
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      reservedSize: 45,
+                      reservedSize: 48,
                       getTitlesWidget: (v, _) => Padding(
                         padding: const EdgeInsets.only(left: 4),
                         child: Text(
-                          v.toStringAsFixed(unit == 'W/bpm' || unit == '%' ? 1 : 0),
-                          style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 10),
+                          v.toStringAsFixed(
+                              unit == 'W/bpm' || unit == '%' ? 1 : 0),
+                          style: const TextStyle(
+                            color: Color(0xFF334155),
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
@@ -1502,12 +1668,17 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                         if (idx >= 0 && idx < dates.length) {
                           final d = dates[idx];
                           final parts = d.split('-');
-                          final label = parts.length >= 3 ? '${parts[1]}/${parts[2]}' : d;
+                          final label =
+                              parts.length >= 3 ? '${parts[1]}/${parts[2]}' : d;
                           return Padding(
                             padding: const EdgeInsets.only(top: 8),
                             child: Text(
                               label,
-                              style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 10),
+                              style: const TextStyle(
+                                color: Color(0xFF334155),
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           );
                         }
@@ -1528,7 +1699,10 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                             show: true,
                             alignment: Alignment.topRight,
                             labelResolver: (_) => refLineLabel ?? '',
-                            style: const TextStyle(color: _gold, fontSize: 10, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                                color: _gold,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold),
                           ),
                         ),
                       ])
@@ -1543,7 +1717,8 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                     isStrokeCapRound: true,
                     dotData: FlDotData(
                       show: spots.length <= 30,
-                      getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
+                      getDotPainter: (spot, percent, barData, index) =>
+                          FlDotCirclePainter(
                         radius: 4,
                         color: primaryColor,
                         strokeWidth: 2,
@@ -1569,7 +1744,8 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                     getTooltipItems: (touchedSpots) {
                       return touchedSpots.map((spot) {
                         final idx = spot.x.toInt();
-                        final date = (idx >= 0 && idx < dates.length) ? dates[idx] : '';
+                        final date =
+                            (idx >= 0 && idx < dates.length) ? dates[idx] : '';
                         return LineTooltipItem(
                           '$date\n${spot.y.toStringAsFixed(1)} $unit',
                           TextStyle(
@@ -1640,7 +1816,8 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: accentColor.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(6),
@@ -1680,7 +1857,8 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
           .map((item) => Expanded(
                 child: Container(
                   margin: const EdgeInsets.symmetric(horizontal: 4),
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
                   decoration: BoxDecoration(
                     color: _cardSurface,
                     borderRadius: BorderRadius.circular(14),
@@ -1690,7 +1868,9 @@ class _MetricsCurvePageState extends State<MetricsCurvePage> with SingleTickerPr
                     children: [
                       Text(
                         item.label,
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.65), fontSize: 11.5),
+                        style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.65),
+                            fontSize: 11.5),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 6),

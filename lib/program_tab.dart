@@ -103,7 +103,8 @@ class _ProgramTabState extends State<ProgramTab> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(s.delete),
           ),
@@ -118,10 +119,10 @@ class _ProgramTabState extends State<ProgramTab> {
   }
 
   Future<void> _pickCycleDates(ProgramCycle cycle) async {
-    final s = AppStrings.of(context);
-    DateTime selectedStart = DateTime.tryParse(cycle.startDate) ?? DateTime.now();
-    DateTime selectedEnd =
-        DateTime.tryParse(cycle.endDate) ?? selectedStart.add(const Duration(days: 27));
+    DateTime selectedStart =
+        DateTime.tryParse(cycle.startDate) ?? DateTime.now();
+    DateTime selectedEnd = DateTime.tryParse(cycle.endDate) ??
+        selectedStart.add(const Duration(days: 27));
 
     final picked = await showDateRangePicker(
       context: context,
@@ -145,6 +146,7 @@ class _ProgramTabState extends State<ProgramTab> {
       final days = picked.end.difference(picked.start).inDays + 1;
       if (days < 14 || days > 84) {
         if (!mounted) return;
+        final s = AppStrings.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(s.isArabic
@@ -190,7 +192,7 @@ class _ProgramTabState extends State<ProgramTab> {
           decoration: InputDecoration(
             hintText: s.isArabic
                 ? 'اكتب تعليق أو ملاحظات عامة حول هذه الدورة المرحلية...'
-                : 'Write a comment or notes about this phase cycle...',
+                : 'Write general comments on this phase cycle...',
             hintStyle: const TextStyle(color: EngineRowingUI.labelSlate),
             border: const OutlineInputBorder(),
           ),
@@ -198,7 +200,8 @@ class _ProgramTabState extends State<ProgramTab> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(s.cancel, style: const TextStyle(color: EngineRowingUI.labelSlate)),
+            child: Text(s.cancel,
+                style: const TextStyle(color: EngineRowingUI.labelSlate)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -227,7 +230,10 @@ class _ProgramTabState extends State<ProgramTab> {
         backgroundColor: _cardFill,
         title: Row(
           children: [
-            Icon(isPhysio ? Icons.health_and_safety_outlined : Icons.engineering_outlined,
+            Icon(
+                isPhysio
+                    ? Icons.health_and_safety_outlined
+                    : Icons.engineering_outlined,
                 color: _gold),
             const SizedBox(width: 8),
             Text(
@@ -249,7 +255,8 @@ class _ProgramTabState extends State<ProgramTab> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(s.cancel, style: const TextStyle(color: EngineRowingUI.labelSlate)),
+            child: Text(s.cancel,
+                style: const TextStyle(color: EngineRowingUI.labelSlate)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -301,7 +308,8 @@ class _ProgramTabState extends State<ProgramTab> {
             constraints: const BoxConstraints(maxWidth: 850),
             child: PinchZoomArea(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 children: [
                   // ── شريط رأس تاب Program مع زرار (+) لإضافة دورة مرحلية جديدة ──
                   _buildHeaderBar(s),
@@ -321,209 +329,117 @@ class _ProgramTabState extends State<ProgramTab> {
 
   /// رأس الصفحة التعريفي لتاب Program مع الصورة والزرار (+)
   Widget _buildHeaderBar(AppStrings s) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isMobile = constraints.maxWidth < 620;
-
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: EngineRowingUI.neonGlowBoxDecoration(
-            backgroundColor: _cardFill,
-            borderColor: _gold,
-            borderRadius: 14,
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _cardFill,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _gridLine, width: 1.2),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black38,
+            blurRadius: 14,
+            offset: Offset(0, 4),
           ),
-          child: isMobile
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+        ],
+      ),
+      child: Row(
+        children: [
+          // أيقونة / صورة تاب Program
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: EngineRowingUI.equationCardFill,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _gridLine),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.asset(
+                'assets/images/program_tab_icon.png',
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const Icon(
+                  Icons.event_repeat_rounded,
+                  color: _gold,
+                  size: 28,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: EngineRowingUI.equationCardFill,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: _gold.withAlpha(120)),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.asset(
-                              'assets/images/program_tab_icon.png',
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => const Icon(
-                                Icons.event_repeat_rounded,
-                                color: _gold,
-                                size: 26,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Wrap(
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            spacing: 8,
-                            runSpacing: 4,
-                            children: [
-                              Text(
-                                s.trainingCycles,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: EngineRowingUI.textWhite,
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: _gold.withAlpha(30),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: _gold.withAlpha(90)),
-                                ),
-                                child: const Text(
-                                  'لوحة المدربين',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: _gold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
                     Text(
-                      s.isArabic
-                          ? 'تخطيط الدورات المرحلية والدورات التدريبية وحسابات الزونات الستة والتستات'
-                          : 'Planning phase cycles, microcycles, 6 zones & testing dates',
-                      style: const TextStyle(fontSize: 12, color: EngineRowingUI.labelSlate),
-                    ),
-                    const SizedBox(height: 12),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _gold,
-                        foregroundColor: _navy,
-                        padding: const EdgeInsets.symmetric(vertical: 11),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                        elevation: 2,
+                      s.trainingCycles,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: EngineRowingUI.textWhite,
                       ),
-                      icon: const Icon(Icons.add_circle, color: _navy, size: 20),
-                      label: Text(
-                        s.addCycle,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 13.5),
-                      ),
-                      onPressed: _addNewCycle,
                     ),
-                  ],
-                )
-              : Row(
-                  children: [
+                    const SizedBox(width: 8),
                     Container(
-                      width: 48,
-                      height: 48,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: EngineRowingUI.equationCardFill,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _gold.withAlpha(120)),
+                        color: _gold.withAlpha(30),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.asset(
-                          'assets/images/program_tab_icon.png',
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(
-                            Icons.event_repeat_rounded,
-                            color: _gold,
-                            size: 28,
-                          ),
-                        ),
+                      child: const Text(
+                        'لوحة المدربين',
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: _gold),
                       ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Wrap(
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            spacing: 8,
-                            runSpacing: 4,
-                            children: [
-                              Text(
-                                s.trainingCycles,
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: EngineRowingUI.textWhite,
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: _gold.withAlpha(30),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: _gold.withAlpha(90)),
-                                ),
-                                child: const Text(
-                                  'لوحة المدربين',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: _gold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            s.isArabic
-                                ? 'تخطيط الدورات المرحلية والدورات التدريبية وحسابات الزونات الستة والتستات'
-                                : 'Planning phase cycles, microcycles, 6 zones & testing dates',
-                            style: const TextStyle(
-                                fontSize: 12.5, color: EngineRowingUI.labelSlate),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _gold,
-                        foregroundColor: _navy,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        elevation: 2,
-                      ),
-                      icon: const Icon(Icons.add_circle, color: _navy, size: 20),
-                      label: Text(
-                        s.addCycle,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 13.5),
-                      ),
-                      onPressed: _addNewCycle,
                     ),
                   ],
                 ),
-        );
-      },
+                const SizedBox(height: 3),
+                Text(
+                  s.isArabic
+                      ? 'تخطيط الدورات المرحلية والأسبوعية وحسابات الزونات الستة والتستات'
+                      : 'Phase Cycle Planning & Zone Loads',
+                  style: const TextStyle(
+                      fontSize: 12.5, color: EngineRowingUI.labelSlate),
+                ),
+              ],
+            ),
+          ),
+
+          // ── زرار علامة (+) لإضافة تاب سيكل كامل جديد ──
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _gold,
+              foregroundColor: _navy,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              elevation: 2,
+            ),
+            icon: const Icon(Icons.add_circle, color: _navy, size: 20),
+            label: Text(
+              s.addCycle,
+              style:
+                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+            ),
+            onPressed: _addNewCycle,
+          ),
+        ],
+      ),
     );
   }
 
   /// كارت لوحة الدورة المرحلية المجسمة بعرض الشاشة
   Widget _buildCyclePanel(AppStrings s, ProgramCycle cycle) {
-    final zoneTotals = _cycleZoneTotals[cycle.id] ??
-        {for (var z in kProgramZones) z: 0};
+    final zoneTotals =
+        _cycleZoneTotals[cycle.id] ?? {for (var z in kProgramZones) z: 0};
 
     final createdDateStr = cycle.createdAt.length >= 10
         ? cycle.createdAt.substring(0, 10)
@@ -534,93 +450,74 @@ class _ProgramTabState extends State<ProgramTab> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 22),
-      decoration: EngineRowingUI.neonGlowBoxDecoration(
-        backgroundColor: _cardFill,
-        borderColor: _gold,
+      decoration: neonGlowBoxDecoration(
+        fillColor: _cardFill,
+        borderColor: _gridLine,
         borderRadius: 14,
+        intensity: intensityNotifier.value,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── رأس لوحة السيكل (العنوان + زر الدخول + زر الحذف + أيقونة الكومنت) ──
-          InkWell(
-            onTap: () => _openCycleWeeklyCycles(cycle),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(13)),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-              decoration: const BoxDecoration(
-                color: EngineRowingUI.equationCardFill,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
-                border: Border(bottom: BorderSide(color: _gridLine, width: 1.0)),
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundColor: _gold,
-                    child: Text(
-                      '${cycle.id}',
-                      style: const TextStyle(
-                          color: _navy, fontWeight: FontWeight.bold, fontSize: 15),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      cycle.name,
-                      style: const TextStyle(
-                        color: EngineRowingUI.textWhite,
-                        fontSize: 18,
+          // ── رأس لوحة السيكل (العنوان + زر الحذف + أيقونة الكومنت) ──
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            decoration: const BoxDecoration(
+              color: EngineRowingUI.equationCardFill,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
+              border: Border(bottom: BorderSide(color: _gridLine, width: 1.0)),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: _gold,
+                  child: Text(
+                    '${cycle.id}',
+                    style: const TextStyle(
+                        color: _navy,
                         fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
-                      ),
+                        fontSize: 15),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    cycle.name,
+                    style: const TextStyle(
+                      color: EngineRowingUI.textWhite,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
                     ),
                   ),
+                ),
 
-                  // زر دخول الدورة المرحلية مباشرة من الرأس
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _gold,
-                      foregroundColor: _navy,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      elevation: 1,
-                    ),
-                    icon: const Icon(Icons.login_rounded, size: 16, color: _navy),
-                    label: Text(
-                      s.enterCycle,
-                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
-                    ),
-                    onPressed: () => _openCycleWeeklyCycles(cycle),
+                // زر الكومنت
+                IconButton(
+                  tooltip: s.comment,
+                  icon: Icon(
+                    cycle.comment.isNotEmpty
+                        ? Icons.comment_rounded
+                        : Icons.mode_comment_outlined,
+                    color: cycle.comment.isNotEmpty
+                        ? _gold
+                        : EngineRowingUI.labelSlate,
+                    size: 22,
                   ),
-                  const SizedBox(width: 6),
+                  onPressed: () => _showCommentDialog(cycle),
+                ),
+                const SizedBox(width: 6),
 
-                  // زر الكومنت
+                // زر حذف السيكل
+                if (_cycles.length > 1)
                   IconButton(
-                    tooltip: s.comment,
-                    icon: Icon(
-                      cycle.comment.isNotEmpty
-                          ? Icons.comment_rounded
-                          : Icons.mode_comment_outlined,
-                      color: cycle.comment.isNotEmpty ? _gold : EngineRowingUI.labelSlate,
-                      size: 22,
-                    ),
-                    onPressed: () => _showCommentDialog(cycle),
+                    tooltip: s.deleteCycle,
+                    icon: const Icon(Icons.delete_outline_rounded,
+                        color: Colors.redAccent, size: 22),
+                    onPressed: () => _deleteCycle(cycle),
                   ),
-                  const SizedBox(width: 4),
-
-                  // زر حذف السيكل
-                  if (_cycles.length > 1)
-                    IconButton(
-                      tooltip: s.deleteCycle,
-                      icon: const Icon(Icons.delete_outline_rounded,
-                          color: Colors.redAccent, size: 22),
-                      onPressed: () => _deleteCycle(cycle),
-                    ),
-                ],
-              ),
+              ],
             ),
           ),
 
@@ -659,7 +556,9 @@ class _ProgramTabState extends State<ProgramTab> {
                                 style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 12.5,
-                                    fontFeatures: [FontFeature.tabularFigures()],
+                                    fontFeatures: [
+                                      FontFeature.tabularFigures()
+                                    ],
                                     color: EngineRowingUI.textWhite),
                               ),
                             ),
@@ -768,6 +667,8 @@ class _ProgramTabState extends State<ProgramTab> {
                 const SizedBox(height: 14),
 
                 // ── 2. أربع خانات التستات الأربعة (500m, 750m, 1500m, 3000m) مع Checkbox ──
+                // ── 2. أربع خانات التستات الأربعة (500m, 750m, 1500m, 3000m) مع Checkbox موزعة بكامل العرض ──
+                // ── 2. أربع خانات التستات الأربعة (500m, 750m, 1500m, 3000m) مع Checkbox موزعة بكامل العرض ──
                 Text(
                   s.testDatesTitle,
                   style: const TextStyle(
@@ -777,10 +678,10 @@ class _ProgramTabState extends State<ProgramTab> {
                 ),
                 const SizedBox(height: 8),
                 LayoutBuilder(
-                  builder: (context, testConstraints) {
-                    final itemWidth = testConstraints.maxWidth < 500
-                        ? ((testConstraints.maxWidth - 12) / 2).clamp(135.0, 300.0)
-                        : 175.0;
+                  builder: (context, constraints) {
+                    final maxW = constraints.maxWidth;
+                    final cols = maxW < 360 ? 1 : (maxW < 680 ? 2 : 4);
+                    final itemWidth = (maxW - ((cols - 1) * 10.0)) / cols;
 
                     return Wrap(
                       spacing: 10,
@@ -797,99 +698,108 @@ class _ProgramTabState extends State<ProgramTab> {
                           ),
                         );
 
-                        return Container(
+                        return SizedBox(
                           width: itemWidth,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: EngineRowingUI.equationCardFill,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: testItem.isCompleted
-                                  ? _gold
-                                  : _gridLine,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: EngineRowingUI.equationCardFill,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: testItem.isCompleted ? _gold : _gridLine,
+                              ),
                             ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: Checkbox(
-                                      value: testItem.isCompleted,
-                                      activeColor: _gold,
-                                      checkColor: _navy,
-                                      side: const BorderSide(color: EngineRowingUI.labelSlate),
-                                      onChanged: (val) {
-                                        setState(() {
-                                          testItem.isCompleted = val ?? false;
-                                        });
-                                        ProgramService.updateProgramCycle(cycle);
-                                      },
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: Checkbox(
+                                        value: testItem.isCompleted,
+                                        activeColor: _gold,
+                                        checkColor: _navy,
+                                        side: const BorderSide(
+                                            color: EngineRowingUI.labelSlate),
+                                        onChanged: (val) {
+                                          setState(() {
+                                            testItem.isCompleted = val ?? false;
+                                          });
+                                          ProgramService.updateProgramCycle(
+                                              cycle);
+                                        },
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Expanded(
-                                    child: Directionality(
-                                      textDirection: TextDirection.ltr,
-                                      child: Text(
-                                        testType,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 11.5,
-                                          color: testItem.isCompleted
-                                              ? _gold
-                                              : EngineRowingUI.textWhite,
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Directionality(
+                                        textDirection: TextDirection.ltr,
+                                        child: Text(
+                                          testType,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 11.5,
+                                            color: testItem.isCompleted
+                                                ? _gold
+                                                : EngineRowingUI.textWhite,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              // إدخال قيمة التست المستهدفة
-                              Directionality(
-                                textDirection: TextDirection.ltr,
-                                child: TextFormField(
-                                  initialValue: testItem.targetValue,
-                                  textAlign: TextAlign.left,
-                                  inputFormatters: [
-                                    RowingNumberFormatter.englishDigitsInputFormatter,
                                   ],
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: EngineRowingUI.textWhite,
-                                    fontFeatures: [FontFeature.tabularFigures()],
-                                  ),
-                                  decoration: const InputDecoration(
-                                    hintText: 'Target split or W...',
-                                    hintStyle: TextStyle(
-                                        fontSize: 10,
-                                        color: EngineRowingUI.captionGrey),
-                                    isDense: true,
-                                    contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 6, vertical: 4),
-                                    border: OutlineInputBorder(
-                                      borderSide: BorderSide(color: _gridLine),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(color: _gridLine),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(color: _gold),
-                                    ),
-                                  ),
-                                  onChanged: (val) {
-                                    testItem.targetValue =
-                                        RowingNumberFormatter.toEnglishDigits(val.trim());
-                                    ProgramService.updateProgramCycle(cycle);
-                                  },
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 4),
+                                // إدخال قيمة التست المستهدفة
+                                Directionality(
+                                  textDirection: TextDirection.ltr,
+                                  child: TextFormField(
+                                    initialValue: testItem.targetValue,
+                                    textAlign: TextAlign.left,
+                                    inputFormatters: [
+                                      RowingNumberFormatter
+                                          .englishDigitsInputFormatter,
+                                    ],
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: EngineRowingUI.textWhite,
+                                      fontFeatures: [
+                                        FontFeature.tabularFigures()
+                                      ],
+                                    ),
+                                    decoration: const InputDecoration(
+                                      hintText: 'Target split or W...',
+                                      hintStyle: TextStyle(
+                                        fontSize: 10,
+                                        color: EngineRowingUI.captionGrey,
+                                      ),
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 4),
+                                      border: OutlineInputBorder(
+                                        borderSide:
+                                            BorderSide(color: _gridLine),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderSide:
+                                            BorderSide(color: _gridLine),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: BorderSide(color: _gold),
+                                      ),
+                                    ),
+                                    onChanged: (val) {
+                                      testItem.targetValue =
+                                          RowingNumberFormatter.toEnglishDigits(
+                                              val.trim());
+                                      ProgramService.updateProgramCycle(cycle);
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       }).toList(),
@@ -898,15 +808,15 @@ class _ProgramTabState extends State<ProgramTab> {
                 ),
                 const SizedBox(height: 18),
 
-                // ── 3. الـ 6 خانات للزونات + المنحنى الشريطي الرأسي ذو الخلفية البيضاء ──
+                // ── 3. خانات الزونات المتجاوبة والمنحنى بالخلفية البيضاء (RowingAdaptiveZoneBoxes) ──
+
+                // ── 3. خانات الزونات المتجاوبة والمنحنى بالخلفية البيضاء (RowingAdaptiveZoneBoxes) ──
                 RowingAdaptiveZoneBoxes(
-                  zoneTotals: zoneTotals,
+                  zoneSeconds: zoneTotals,
                   title: s.isArabic
                       ? 'إجمالي أحمال الزونات بالدورة المرحلية (أساسي × تكرارات + فرعي):'
-                      : 'Total Phase Cycle Zone Distribution (Basic × Reps + Secondary):',
-                  curveTitle: s.zoneParticipationTitle,
-                  formatDuration: (secs) =>
-                      ProgramService.formatDurationDetailed(secs),
+                      : 'Total Phase Cycle Zone Loads:',
+                  showCurveChart: true,
                 ),
                 const SizedBox(height: 18),
 

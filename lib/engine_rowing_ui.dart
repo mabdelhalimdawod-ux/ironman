@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 /// خيارات حدة الألوان والسطوع والإضاءة الفسفورية
-enum DisplayIntensity { normal, high, ultra }
+enum DisplayIntensity { normal, bright, high, ultra }
 
 /// 1. محرك التجاوب والمرونة التلقائية مع جميع الشاشات (Responsive Scaling Engine)
 class RowingResponsive {
@@ -77,7 +77,7 @@ class EngineRowingUI {
   static const Color equationCardFill = Color(0xFF122147);
   static const Color toastBg = Color(0xFF050C1E);
 
-  static const Color neonLime = Color(0xFFB8F229);
+  static const Color neonLime = Color(0xFF9ED82E);
   static const Color textWhite = Color(0xFFF2F4F8);
   static const Color labelSlate = Color(0xFF8596B8);
   static const Color captionGrey = Color(0xFF637599);
@@ -85,7 +85,7 @@ class EngineRowingUI {
 
   // ألوان الزونات الجديدة المعتمدة
   // اللون الفسفوري الخفيف لـ zone1
-  static const Color zone1Color = Color(0xFFB8F229);
+  static const Color zone1Color = Color(0xFF9ED82E);
   // اللون الأزرق المتوسط لـ zone2
   static const Color zone2Color = Color(0xFF2979FF);
   // اللون البرتقالي المتوسط لـ zone3
@@ -318,6 +318,7 @@ class EngineRowingUI {
         blurRadius = 6.0;
         spreadRadius = 0.5;
         break;
+      case DisplayIntensity.bright:
       case DisplayIntensity.high:
         borderOpacity = 0.80;
         blurRadius = 10.0;
@@ -402,7 +403,55 @@ class _GridPainter extends CustomPainter {
       oldDelegate.step != step;
 }
 
-/// 6. مستطيل المدخلات والمخرجات الرئيسي المرن (Responsive Metric Card - Forced English LTR)
+/// 6. مؤشر اتجاه وصعود وهبوط المعدلات (Rowing Trend Indicator)
+enum MetricTrendDirection {
+  up, // ارتفاع المعدل (أخضر فسفوري للأعلى)
+  down, // انخفاض المعدل (أحمر للأسفل)
+  neutral, // محايد / مستقر (خط أفقي رمادي)
+}
+
+class RowingTrendIndicator extends StatelessWidget {
+  final MetricTrendDirection direction;
+  final double size;
+
+  const RowingTrendIndicator({
+    super.key,
+    required this.direction,
+    this.size = 36.0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    switch (direction) {
+      case MetricTrendDirection.up:
+        return Icon(
+          Icons.change_history_rounded,
+          color: const Color(0xFFB8F229), // أخضر فسفوري مطابق لهوية التطبيق
+          size: size,
+        );
+      case MetricTrendDirection.down:
+        return Transform.rotate(
+          angle: 3.14159,
+          child: Icon(
+            Icons.change_history_rounded,
+            color: const Color(0xFFFF4D4D), // أحمر تحذيري للانخفاض
+            size: size,
+          ),
+        );
+      case MetricTrendDirection.neutral:
+        return Container(
+          width: size * 0.9,
+          height: size * 0.17,
+          decoration: BoxDecoration(
+            color: const Color(0xFF8596B8).withValues(alpha: 0.7),
+            borderRadius: BorderRadius.circular(3),
+          ),
+        );
+    }
+  }
+}
+
+/// مستطيل المدخلات والمخرجات الرئيسي المرن (Responsive Metric Card - Forced English LTR)
 enum MetricStatus { neutral, upArrow, fasterText }
 
 class RowingMetricCard extends StatelessWidget {
@@ -412,6 +461,8 @@ class RowingMetricCard extends StatelessWidget {
   final bool highlightLime;
   final MetricStatus status;
   final String? footnote;
+  final double? previousValue;
+  final MetricTrendDirection? trendDirection;
 
   const RowingMetricCard({
     super.key,
@@ -421,6 +472,8 @@ class RowingMetricCard extends StatelessWidget {
     this.highlightLime = false,
     this.status = MetricStatus.neutral,
     this.footnote,
+    this.previousValue,
+    this.trendDirection,
   });
 
   @override
@@ -496,33 +549,40 @@ class RowingMetricCard extends StatelessWidget {
   }
 
   Widget _buildStatusIndicator(BuildContext context) {
-    switch (status) {
-      case MetricStatus.upArrow:
-        return Icon(
-          Icons.change_history_rounded,
+    if (status == MetricStatus.fasterText) {
+      return Text(
+        'faster',
+        style: TextStyle(
+          fontFamily: EngineRowingUI.fontFamily,
+          fontSize: RowingResponsive.sp(context, 18),
+          fontWeight: FontWeight.w500,
           color: EngineRowingUI.neonLime,
-          size: RowingResponsive.dp(context, 36),
-        );
-      case MetricStatus.fasterText:
-        return Text(
-          'faster',
-          style: TextStyle(
-            fontFamily: EngineRowingUI.fontFamily,
-            fontSize: RowingResponsive.sp(context, 18),
-            fontWeight: FontWeight.w500,
-            color: EngineRowingUI.neonLime,
-          ),
-        );
-      case MetricStatus.neutral:
-        return Container(
-          width: RowingResponsive.dp(context, 32),
-          height: RowingResponsive.dp(context, 6),
-          decoration: BoxDecoration(
-            color: EngineRowingUI.labelSlate.withValues(alpha: 0.7),
-            borderRadius: BorderRadius.circular(RowingResponsive.dp(context, 3)),
-          ),
-        );
+        ),
+      );
     }
+
+    MetricTrendDirection direction = MetricTrendDirection.neutral;
+    if (trendDirection != null) {
+      direction = trendDirection!;
+    } else if (previousValue != null) {
+      final currentNum = double.tryParse(value.replaceAll(RegExp(r'[^0-9.]'), ''));
+      if (currentNum != null) {
+        if (currentNum > previousValue!) {
+          direction = MetricTrendDirection.up;
+        } else if (currentNum < previousValue!) {
+          direction = MetricTrendDirection.down;
+        } else {
+          direction = MetricTrendDirection.neutral;
+        }
+      }
+    } else if (status == MetricStatus.upArrow) {
+      direction = MetricTrendDirection.up;
+    }
+
+    return RowingTrendIndicator(
+      direction: direction,
+      size: RowingResponsive.dp(context, 32),
+    );
   }
 }
 
@@ -760,26 +820,114 @@ class RowingInsightBanner extends StatelessWidget {
   }
 }
 
-/// 11. لوحة الزونات والكيرف المتجاوبة بالكامل لجميع الشاشات والموبايل (Adaptive Zone Boxes & White Curve)
-/// - تمنع تماماً كسر الكلمات أو الأرقام رأسياً (Threshold و الأزمنة دائماً أفقية ومقروءة بالكامل)
-/// - تترتب أفقياً إذا اتسعت الشاشة، وتنتقل لصفوف متراصة تحت بعضها في شاشات الموبايل
-/// - خلفية كيرف المعدلات بيضاء بالكامل مع الاحتفاظ بألوان الزونات الفسفورية
-/// - حدود فسفورية متوهجة تستجيب لحدة الإضاءة
+// ════════════════════════════════════════════════════════════════
+// 11. إعدادات حدة الإضاءة والألوان ومقياس التكبير العام
+// ════════════════════════════════════════════════════════════════
+
+final ValueNotifier<DisplayIntensity> intensityNotifier =
+    RowingResponsive.intensityNotifier;
+
+final ValueNotifier<double> userScaleNotifier =
+    RowingResponsive.userScaleNotifier;
+
+/// إضاءة فسفورية خفيفة وواضحة على حدود اللوحات تستجيب لحدة الإضاءة
+BoxDecoration neonGlowBoxDecoration({
+  Color? fillColor,
+  Color borderColor = EngineRowingUI.neonLime,
+  double borderWidth = 1.0,
+  double borderRadius = 12.0,
+  DisplayIntensity intensity = DisplayIntensity.normal,
+  List<BoxShadow>? extraShadows,
+}) {
+  double blurRadius = 4.0;
+  double spreadRadius = 0.5;
+  Color glowColor = borderColor.withValues(alpha: 0.18);
+
+  switch (intensity) {
+    case DisplayIntensity.normal:
+      blurRadius = 4.0;
+      spreadRadius = 0.5;
+      glowColor = borderColor.withValues(alpha: 0.18);
+      break;
+    case DisplayIntensity.bright:
+    case DisplayIntensity.high:
+      blurRadius = 8.0;
+      spreadRadius = 1.2;
+      glowColor = borderColor.withValues(alpha: 0.38);
+      break;
+    case DisplayIntensity.ultra:
+      blurRadius = 14.0;
+      spreadRadius = 2.2;
+      glowColor = borderColor.withValues(alpha: 0.68);
+      break;
+  }
+
+  return BoxDecoration(
+    color: fillColor ?? EngineRowingUI.cardFill,
+    borderRadius: BorderRadius.circular(borderRadius),
+    border: Border.all(
+      color: intensity == DisplayIntensity.ultra
+          ? borderColor
+          : (intensity == DisplayIntensity.bright || intensity == DisplayIntensity.high
+              ? borderColor.withValues(alpha: 0.85)
+              : borderColor.withValues(alpha: 0.55)),
+      width: intensity == DisplayIntensity.ultra ? borderWidth * 1.4 : borderWidth,
+    ),
+    boxShadow: [
+      BoxShadow(
+        color: glowColor,
+        blurRadius: blurRadius,
+        spreadRadius: spreadRadius,
+      ),
+      if (extraShadows != null) ...extraShadows,
+    ],
+  );
+}
+
+/// 12. حاوية التكبير والتصغير بأصابع المستخدم (Pinch-to-Zoom Area)
+class PinchZoomArea extends StatelessWidget {
+  final Widget child;
+  final double minScale;
+  final double maxScale;
+
+  const PinchZoomArea({
+    super.key,
+    required this.child,
+    this.minScale = 0.8,
+    this.maxScale = 3.0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InteractiveViewer(
+      minScale: minScale,
+      maxScale: maxScale,
+      panEnabled: true,
+      scaleEnabled: true,
+      clipBehavior: Clip.none,
+      child: child,
+    );
+  }
+}
+
+/// 13. خانات توزيع أحمال الزونات المتجاوبة (RowingAdaptiveZoneBoxes)
+/// تمنع تماماً كسر الحروف رأسياً وتوزع الخانات أفقياً أو كشبكة حسب المساحة المتاحة
+/// مع جعل خلفية منحنيات الزونات باللون الأبيض النقي (#FFFFFF) مع الحفاظ على ألوان شرايط الزونات
 class RowingAdaptiveZoneBoxes extends StatelessWidget {
-  final Map<String, int> zoneTotals;
-  final String title;
-  final String? curveTitle;
-  final String Function(int seconds)? formatDuration;
+  final Map<String, int> zoneSeconds;
+  final String? title;
+  final bool showCurveChart;
+  final double curveHeight;
 
   const RowingAdaptiveZoneBoxes({
     super.key,
-    required this.zoneTotals,
-    this.title = 'إجمالي أحمال الزونات:',
-    this.curveTitle,
-    this.formatDuration,
+    required this.zoneSeconds,
+    this.title,
+    this.showCurveChart = true,
+    this.curveHeight = 72.0,
   });
 
-  static const List<String> defaultZones = [
+  static const List<String> zones = [
     'Z1',
     'Z2',
     'Z3',
@@ -788,18 +936,17 @@ class RowingAdaptiveZoneBoxes extends StatelessWidget {
     'Z5',
   ];
 
-  static const Map<String, Color> defaultZoneColors = {
-    'Z1': EngineRowingUI.zone1Color,
-    'Z2': EngineRowingUI.zone2Color,
-    'Z3': EngineRowingUI.zone3Color,
-    'Z4': EngineRowingUI.zone4Color,
-    'Threshold': EngineRowingUI.thresholdColor,
-    'Z5': EngineRowingUI.zone5Color,
+  static const Map<String, Color> zoneColorsMap = {
+    'Z1': Color(0xFFB8F229),
+    'Z2': Color(0xFF2979FF),
+    'Z3': Color(0xFFFF9100),
+    'Z4': Color(0xFFF4511E),
+    'Threshold': Color(0xFFE65100),
+    'Z5': Color(0xFFFF5252),
   };
 
-  String _format(int secs) {
-    if (formatDuration != null) return formatDuration!(secs);
-    if (secs == 0) return '-';
+  static String _formatSecs(int secs) {
+    if (secs <= 0) return '00:00';
     final h = secs ~/ 3600;
     final m = (secs % 3600) ~/ 60;
     final s = secs % 60;
@@ -811,262 +958,253 @@ class RowingAdaptiveZoneBoxes extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final totalAllSecs = zoneTotals.values.fold<int>(0, (a, b) => a + b);
+    final totalSecs = zones.fold<int>(0, (sum, z) => sum + (zoneSeconds[z] ?? 0));
 
     return ValueListenableBuilder<DisplayIntensity>(
-      valueListenable: RowingResponsive.intensityNotifier,
+      valueListenable: intensityNotifier,
       builder: (context, intensity, _) {
         return LayoutBuilder(
           builder: (context, constraints) {
-            final isNarrow = constraints.maxWidth < 620;
+            final w = constraints.maxWidth;
+            final isMobile = w < 620;
 
-            final zoneTiles = defaultZones.map((z) {
-              final secs = zoneTotals[z] ?? 0;
-              final color = defaultZoneColors[z] ?? EngineRowingUI.neonLime;
-              final isZero = secs == 0;
+            final boxes = _buildZoneBoxes(context, totalSecs, isMobile, w, intensity);
+            final curveWidget = showCurveChart
+                ? _buildCurveChart(totalSecs, intensity)
+                : null;
 
-              return Container(
-                constraints: const BoxConstraints(minWidth: 95),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isZero
-                      ? EngineRowingUI.equationCardFill.withValues(alpha: 0.5)
-                      : color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(9),
-                  border: Border.all(
-                    color: isZero
-                        ? EngineRowingUI.bgGridLine
-                        : color.withValues(
-                            alpha: intensity == DisplayIntensity.ultra
-                                ? 0.95
-                                : (intensity == DisplayIntensity.high
-                                    ? 0.75
-                                    : 0.55)),
-                    width: isZero ? 1.0 : (intensity == DisplayIntensity.ultra ? 1.8 : 1.3),
-                  ),
-                  boxShadow: isZero
-                      ? null
-                      : [
-                          BoxShadow(
-                            color: color.withValues(
-                                alpha: intensity == DisplayIntensity.ultra
-                                    ? 0.35
-                                    : 0.18),
-                            blurRadius: intensity == DisplayIntensity.ultra ? 8 : 4,
-                          ),
-                        ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // اسم الزون أفقي كامل بدون أي كسر رأسي
-                    Text(
-                      z,
-                      maxLines: 1,
-                      overflow: TextOverflow.visible,
-                      style: TextStyle(
-                        fontFamily: EngineRowingUI.fontFamily,
-                        fontSize: RowingResponsive.sp(context, z == 'Threshold' ? 11 : 12),
-                        fontWeight: FontWeight.bold,
-                        color: isZero ? EngineRowingUI.captionGrey : color,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    // المدة الزمنية أفقية بالكامل
-                    Directionality(
-                      textDirection: TextDirection.ltr,
-                      child: Text(
-                        isZero ? '-' : RowingNumberFormatter.toEnglishDigits(_format(secs)),
-                        maxLines: 1,
-                        overflow: TextOverflow.visible,
-                        style: TextStyle(
-                          fontFamily: EngineRowingUI.fontFamily,
-                          fontSize: RowingResponsive.sp(context, 11),
-                          fontWeight: FontWeight.bold,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                          color: isZero ? EngineRowingUI.captionGrey : EngineRowingUI.textWhite,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList();
-
-            // ── كيرف المعدلات الشريطي ذو الخلفية البيضاء ──
-            final curveWidget = Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white, // خلفية بيضاء نقية للكيرف حسب الطلب
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: EngineRowingUI.neonLime.withValues(
-                      alpha: intensity == DisplayIntensity.ultra ? 0.9 : 0.5),
-                  width: intensity == DisplayIntensity.ultra ? 2.0 : 1.4,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: EngineRowingUI.neonLime.withValues(
-                        alpha: intensity == DisplayIntensity.ultra
-                            ? 0.45
-                            : (intensity == DisplayIntensity.high ? 0.25 : 0.15)),
-                    blurRadius: intensity == DisplayIntensity.ultra ? 12 : 6,
-                    spreadRadius: intensity == DisplayIntensity.ultra ? 1 : 0.5,
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  if (curveTitle != null) ...[
-                    Text(
-                      curveTitle!,
-                      style: const TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0A1633), // داكن ليظهر على الأبيض
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                  ],
-                  Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: SizedBox(
-                      height: 56,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: defaultZones.map((z) {
-                          final secs = zoneTotals[z] ?? 0;
-                          final fraction = totalAllSecs > 0
-                              ? (secs / totalAllSecs).clamp(0.08, 1.0)
-                              : 0.08;
-                          final color = defaultZoneColors[z] ?? EngineRowingUI.neonLime;
-
-                          return Tooltip(
-                            message:
-                                '$z: ${totalAllSecs > 0 ? ((secs / totalAllSecs) * 100).toStringAsFixed(1) : 0}%',
-                            child: Container(
-                              width: 14,
-                              height: 52 * fraction,
-                              margin: const EdgeInsets.symmetric(horizontal: 2.5),
-                              decoration: BoxDecoration(
-                                color: secs > 0 ? color : Colors.grey.shade300,
-                                borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-
-            if (isNarrow) {
-              // ── شاشات الموبايل الضيقة: ترتيب الخانات في صفوف متراصة تحت بعضها ──
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (title != null && title!.isNotEmpty) ...[
                   Text(
-                    title,
+                    title!,
                     style: TextStyle(
                       fontSize: RowingResponsive.sp(context, 12),
                       fontWeight: FontWeight.bold,
                       color: EngineRowingUI.textWhite,
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  // شبكة متجاوبة بـ 3 أعمدة بحيث تظهر الخانات كاملة ومستريحة أفقياً
-                  GridView.count(
-                    crossAxisCount: 3,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                    childAspectRatio: 1.85,
-                    children: zoneTiles,
-                  ),
-                  const SizedBox(height: 12),
-                  // كيرف المعدلات بالخلفية البيضاء أسفل الزونات بكامل الوضوح
-                  curveWidget,
-                ],
-              );
-            } else {
-              // ── الشاشات الواسعة والتابلت: صف أفقي للزونات وبجواره كيرف المعدلات ──
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: RowingResponsive.sp(context, 12.5),
-                      fontWeight: FontWeight.bold,
-                      color: EngineRowingUI.textWhite,
-                    ),
-                  ),
                   const SizedBox(height: 8),
+                ],
+                if (!isMobile && curveWidget != null)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Expanded(
-                        child: Directionality(
-                          textDirection: TextDirection.ltr,
-                          child: Row(
-                            children: zoneTiles
-                                .map((t) => Expanded(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 2.5),
-                                        child: t,
-                                      ),
-                                    ))
-                                .toList(),
-                          ),
-                        ),
-                      ),
+                      Expanded(flex: 5, child: boxes),
                       const SizedBox(width: 12),
                       curveWidget,
                     ],
-                  ),
+                  )
+                else ...[
+                  boxes,
+                  if (curveWidget != null) ...[
+                    const SizedBox(height: 10),
+                    curveWidget,
+                  ],
                 ],
-              );
-            }
+              ],
+            );
           },
         );
       },
     );
   }
-}
 
-/// 12. حاوية التكبير والتصغير التفاعلية بأصابع المستخدم لجميع الشاشات (Pinch-to-Zoom Area)
-class PinchZoomArea extends StatelessWidget {
-  final Widget child;
-  final double minScale;
-  final double maxScale;
-  final bool panEnabled;
+  Widget _buildCurveChart(int totalSecs, DisplayIntensity intensity) {
+    return Container(
+      height: curveHeight,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: neonGlowBoxDecoration(
+        fillColor: Colors.white,
+        borderColor: const Color(0xFFD0D7DE),
+        borderWidth: 1.2,
+        borderRadius: 10,
+        intensity: intensity,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Icon(Icons.show_chart_rounded, size: 14, color: Color(0xFF1E293B)),
+              SizedBox(width: 4),
+              Text(
+                'منحنى توزيع الزونات',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Expanded(
+            child: Directionality(
+              textDirection: TextDirection.ltr,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: zones.map((z) {
+                  final secs = zoneSeconds[z] ?? 0;
+                  final fraction = totalSecs > 0
+                      ? (secs / totalSecs).clamp(0.08, 1.0)
+                      : 0.08;
+                  final color = zoneColorsMap[z] ?? const Color(0xFF0A1633);
 
-  const PinchZoomArea({
-    super.key,
-    required this.child,
-    this.minScale = 0.8,
-    this.maxScale = 2.5,
-    this.panEnabled = false,
-  });
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                      child: Tooltip(
+                        message:
+                            '$z: ${totalSecs > 0 ? ((secs / totalSecs) * 100).toStringAsFixed(1) : 0}%',
+                        child: Container(
+                          height: (curveHeight - 34) * fraction,
+                          decoration: BoxDecoration(
+                            color: secs > 0 ? color : const Color(0xFFE2E8F0),
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return InteractiveViewer(
-      minScale: minScale,
-      maxScale: maxScale,
-      panEnabled: panEnabled,
-      scaleEnabled: true,
-      child: child,
+  Widget _buildZoneBoxes(
+    BuildContext context,
+    int totalSecs,
+    bool isMobile,
+    double maxWidth,
+    DisplayIntensity intensity,
+  ) {
+    if (!isMobile) {
+      return Directionality(
+        textDirection: TextDirection.ltr,
+        child: Row(
+          children: zones.map((z) {
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2.5),
+                child: _buildSingleBox(context, z, totalSecs, intensity),
+              ),
+            );
+          }).toList(),
+        ),
+      );
+    }
+
+    final cols = maxWidth < 380 ? 2 : 3;
+    final itemWidth = (maxWidth - ((cols - 1) * 8.0)) / cols;
+
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Wrap(
+        spacing: 8.0,
+        runSpacing: 8.0,
+        children: zones.map((z) {
+          return SizedBox(
+            width: itemWidth,
+            child: _buildSingleBox(context, z, totalSecs, intensity),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildSingleBox(
+    BuildContext context,
+    String zone,
+    int totalSecs,
+    DisplayIntensity intensity,
+  ) {
+    final secs = zoneSeconds[zone] ?? 0;
+    final isZero = secs == 0;
+    final color = zoneColorsMap[zone] ?? EngineRowingUI.neonLime;
+    final pct = totalSecs > 0 ? ((secs / totalSecs) * 100).toStringAsFixed(1) : '0';
+    final durationStr = isZero ? '-' : _formatSecs(secs);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+      decoration: neonGlowBoxDecoration(
+        fillColor: isZero
+            ? EngineRowingUI.equationCardFill.withAlpha(160)
+            : color.withAlpha(40),
+        borderColor: isZero ? EngineRowingUI.bgGridLine : color,
+        borderWidth: isZero ? 1.0 : 1.5,
+        borderRadius: 8.0,
+        intensity: intensity,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            height: 3,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: isZero ? Colors.transparent : color,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              zone,
+              maxLines: 1,
+              softWrap: false,
+              style: TextStyle(
+                fontFamily: EngineRowingUI.fontFamily,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: isZero ? EngineRowingUI.captionGrey : color,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+          const SizedBox(height: 3),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              durationStr,
+              maxLines: 1,
+              softWrap: false,
+              style: TextStyle(
+                fontFamily: EngineRowingUI.fontFamily,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                fontFeatures: const [FontFeature.tabularFigures()],
+                color: isZero ? EngineRowingUI.captionGrey : EngineRowingUI.textWhite,
+              ),
+            ),
+          ),
+          const SizedBox(height: 2),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              isZero ? '0%' : '$pct%',
+              maxLines: 1,
+              softWrap: false,
+              style: TextStyle(
+                fontFamily: EngineRowingUI.fontFamily,
+                fontSize: 9.5,
+                fontWeight: FontWeight.w600,
+                color: isZero ? EngineRowingUI.captionGrey.withValues(alpha: 0.7) : color,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
+
 

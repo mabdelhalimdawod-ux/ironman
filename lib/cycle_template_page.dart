@@ -27,7 +27,8 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
   final Map<int, List<WorkoutSlot>> _weekSlots = {};
 
   int get _cycleId => (widget.cycle['id'] as num?)?.toInt() ?? 1;
-  String get _cycleName => widget.cycle['name'] as String? ?? 'الدورة المرحلية $_cycleId';
+  String get _cycleName =>
+      widget.cycle['name'] as String? ?? 'الدورة المرحلية $_cycleId';
 
   @override
   void initState() {
@@ -197,7 +198,8 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
         ),
         title: Text(
           s.copyTemplateToDay,
-          style: const TextStyle(color: EngineRowingUI.textWhite, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+              color: EngineRowingUI.textWhite, fontWeight: FontWeight.bold),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -207,16 +209,20 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                 ? ProgramService.weekDayNamesAr[i]
                 : ProgramService.weekDayNamesEn[i];
             return ListTile(
-              title: Text(dayName, style: const TextStyle(color: EngineRowingUI.textWhite)),
-              trailing: const Icon(Icons.copy, size: 20, color: EngineRowingUI.neonLime),
+              title: Text(dayName,
+                  style: const TextStyle(color: EngineRowingUI.textWhite)),
+              trailing: const Icon(Icons.copy,
+                  size: 20, color: EngineRowingUI.neonLime),
               onTap: () {
                 setState(() {
-                  _weekSlots[i] = _currentDaySlots.map((slot) => WorkoutSlot(
-                    slotIdx: slot.slotIdx,
-                    kind: slot.kind,
-                    time: slot.time,
-                    zone: slot.zone,
-                  )).toList();
+                  _weekSlots[i] = _currentDaySlots
+                      .map((slot) => WorkoutSlot(
+                            slotIdx: slot.slotIdx,
+                            kind: slot.kind,
+                            time: slot.time,
+                            zone: slot.zone,
+                          ))
+                      .toList();
                 });
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -232,7 +238,8 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(s.close, style: const TextStyle(color: EngineRowingUI.labelSlate)),
+            child: Text(s.close,
+                style: const TextStyle(color: EngineRowingUI.labelSlate)),
           ),
         ],
       ),
@@ -261,14 +268,17 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
         actions: [
           IconButton(
             tooltip: s.copyTemplateToDay,
-            icon: const Icon(Icons.copy_all_rounded, color: EngineRowingUI.neonLime),
+            icon: const Icon(Icons.copy_all_rounded,
+                color: EngineRowingUI.neonLime),
             onPressed: _copyToOtherDays,
           ),
         ],
       ),
       body: RowingGridBackground(
         child: _loading
-            ? const Center(child: CircularProgressIndicator(color: EngineRowingUI.neonLime))
+            ? const Center(
+                child:
+                    CircularProgressIndicator(color: EngineRowingUI.neonLime))
             : Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 850),
@@ -281,17 +291,20 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                         // شريط اختيار أيام الأسبوع (السبت - الجمعة)
                         _buildDaySelector(s),
 
-                        // قائمة خانات التمرين لهذا اليوم (حتى 6 خانات)
-                        Expanded(
-                          child: currentDaySlots.isEmpty
-                              ? _buildEmptyDayState(s)
-                              : ListView.separated(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  itemCount: currentDaySlots.length,
-                                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                                  itemBuilder: (ctx, idx) => _buildSlotCard(s, idx, currentDaySlots[idx]),
-                                ),
-                        ),
+                      // قائمة خانات التمرين لهذا اليوم (حتى 6 خانات)
+                      Expanded(
+                        child: currentDaySlots.isEmpty
+                            ? _buildEmptyDayState(s)
+                            : ListView.separated(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
+                                itemCount: currentDaySlots.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(height: 12),
+                                itemBuilder: (ctx, idx) => _buildSlotCard(
+                                    s, idx, currentDaySlots[idx]),
+                              ),
+                      ),
 
                         // شريط الإجراءات السفلي (إضافة خانة + حفظ)
                         _buildBottomActionBar(s, currentDaySlots.length),
@@ -324,7 +337,8 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: EngineRowingUI.bgGridLine),
             ),
-            child: const Icon(Icons.calendar_month, color: EngineRowingUI.neonLime, size: 22),
+            child: const Icon(Icons.calendar_month,
+                color: EngineRowingUI.neonLime, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -343,7 +357,8 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                   textDirection: TextDirection.ltr,
                   child: Text(
                     '${RowingNumberFormatter.toEnglishDigits(start)} ➔ ${RowingNumberFormatter.toEnglishDigits(end)} • ${s.weeklyTemplateSubtitle}',
-                    style: const TextStyle(fontSize: 12, color: EngineRowingUI.labelSlate),
+                    style: const TextStyle(
+                        fontSize: 12, color: EngineRowingUI.labelSlate),
                   ),
                 ),
               ],
@@ -379,9 +394,12 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                   if (count > 0) ...[
                     const SizedBox(width: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 1),
                       decoration: BoxDecoration(
-                        color: isSelected ? EngineRowingUI.bgNavy : EngineRowingUI.equationCardFill,
+                        color: isSelected
+                            ? EngineRowingUI.bgNavy
+                            : EngineRowingUI.equationCardFill,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
@@ -389,7 +407,9 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: isSelected ? EngineRowingUI.neonLime : EngineRowingUI.labelSlate,
+                          color: isSelected
+                              ? EngineRowingUI.neonLime
+                              : EngineRowingUI.labelSlate,
                           fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),
@@ -401,7 +421,9 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
               selectedColor: EngineRowingUI.neonLime,
               backgroundColor: EngineRowingUI.cardFill,
               labelStyle: TextStyle(
-                color: isSelected ? EngineRowingUI.bgNavy : EngineRowingUI.textWhite,
+                color: isSelected
+                    ? EngineRowingUI.bgNavy
+                    : EngineRowingUI.textWhite,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
               onSelected: (val) {
@@ -423,11 +445,15 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.event_available_outlined, size: 64, color: EngineRowingUI.labelSlate),
+          const Icon(Icons.event_available_outlined,
+              size: 64, color: EngineRowingUI.labelSlate),
           const SizedBox(height: 12),
           Text(
             'لا توجد تمارين مجدولة ليوم $dayName (يوم راحة)',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: EngineRowingUI.textWhite),
+            style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: EngineRowingUI.textWhite),
           ),
           const SizedBox(height: 6),
           const Text(
@@ -443,7 +469,8 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
             icon: const Icon(Icons.add, color: EngineRowingUI.bgNavy),
             label: Text(
               s.addSlot,
-              style: const TextStyle(color: EngineRowingUI.bgNavy, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                  color: EngineRowingUI.bgNavy, fontWeight: FontWeight.bold),
             ),
             onPressed: _addSlot,
           ),
@@ -493,7 +520,8 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                 const Spacer(),
                 IconButton(
                   tooltip: s.removeSlot,
-                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 22),
+                  icon: const Icon(Icons.delete_outline,
+                      color: Colors.redAccent, size: 22),
                   onPressed: () => _removeSlot(index),
                 ),
               ],
@@ -511,29 +539,40 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                     children: [
                       Text(
                         s.workoutType,
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: EngineRowingUI.labelSlate),
+                        style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: EngineRowingUI.labelSlate),
                       ),
                       const SizedBox(height: 4),
                       DropdownButtonFormField<String>(
-                        initialValue: ProgramService.workoutKinds.contains(slot.kind) ? slot.kind : 'إرج',
+                        initialValue:
+                            ProgramService.workoutKinds.contains(slot.kind)
+                                ? slot.kind
+                                : 'إرج',
                         dropdownColor: EngineRowingUI.equationCardFill,
-                        style: const TextStyle(color: EngineRowingUI.textWhite, fontSize: 14),
+                        style: const TextStyle(
+                            color: EngineRowingUI.textWhite, fontSize: 14),
                         decoration: InputDecoration(
                           isDense: true,
                           filled: true,
                           fillColor: EngineRowingUI.equationCardFill,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 10),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
+                            borderSide: const BorderSide(
+                                color: EngineRowingUI.bgGridLine),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
+                            borderSide: const BorderSide(
+                                color: EngineRowingUI.bgGridLine),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: EngineRowingUI.neonLime),
+                            borderSide: const BorderSide(
+                                color: EngineRowingUI.neonLime),
                           ),
                         ),
                         items: ProgramService.workoutKinds.map((k) {
@@ -556,16 +595,21 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                     children: [
                       Text(
                         s.workoutTime,
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: EngineRowingUI.labelSlate),
+                        style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: EngineRowingUI.labelSlate),
                       ),
                       const SizedBox(height: 4),
                       InkWell(
                         onTap: () => _pickTime(index),
                         borderRadius: BorderRadius.circular(8),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 10),
                           decoration: BoxDecoration(
-                            border: Border.all(color: EngineRowingUI.bgGridLine),
+                            border:
+                                Border.all(color: EngineRowingUI.bgGridLine),
                             borderRadius: BorderRadius.circular(8),
                             color: EngineRowingUI.equationCardFill,
                           ),
@@ -575,15 +619,19 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  RowingNumberFormatter.toEnglishDigits(slot.time),
+                                  RowingNumberFormatter.toEnglishDigits(
+                                      slot.time),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
                                     color: EngineRowingUI.textWhite,
-                                    fontFeatures: [FontFeature.tabularFigures()],
+                                    fontFeatures: [
+                                      FontFeature.tabularFigures()
+                                    ],
                                   ),
                                 ),
-                                const Icon(Icons.access_time, size: 18, color: EngineRowingUI.neonLime),
+                                const Icon(Icons.access_time,
+                                    size: 18, color: EngineRowingUI.neonLime),
                               ],
                             ),
                           ),
@@ -602,11 +650,17 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                     children: [
                       Text(
                         s.selectZone,
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: EngineRowingUI.labelSlate),
+                        style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: EngineRowingUI.labelSlate),
                       ),
                       const SizedBox(height: 4),
                       DropdownButtonFormField<String>(
-                        initialValue: ProgramService.targetZones.contains(slot.zone) ? slot.zone : 'Z2',
+                        initialValue:
+                            ProgramService.targetZones.contains(slot.zone)
+                                ? slot.zone
+                                : 'Z2',
                         dropdownColor: EngineRowingUI.equationCardFill,
                         style: const TextStyle(
                           color: EngineRowingUI.textWhite,
@@ -617,22 +671,27 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                           isDense: true,
                           filled: true,
                           fillColor: EngineRowingUI.equationCardFill,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 10),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
+                            borderSide: const BorderSide(
+                                color: EngineRowingUI.bgGridLine),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
+                            borderSide: const BorderSide(
+                                color: EngineRowingUI.bgGridLine),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: EngineRowingUI.neonLime),
+                            borderSide: const BorderSide(
+                                color: EngineRowingUI.neonLime),
                           ),
                         ),
                         items: ProgramService.targetZones.map((z) {
-                          final color = EngineRowingUI.zoneColors[z] ?? EngineRowingUI.neonLime;
+                          final color = EngineRowingUI.zoneColors[z] ??
+                              EngineRowingUI.neonLime;
                           return DropdownMenuItem(
                             value: z,
                             child: Row(
@@ -640,7 +699,8 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                                 Container(
                                   width: 8,
                                   height: 8,
-                                  decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                                  decoration: BoxDecoration(
+                                      color: color, shape: BoxShape.circle),
                                 ),
                                 const SizedBox(width: 6),
                                 Text(z),
@@ -679,12 +739,15 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(0, 48),
                   side: const BorderSide(color: EngineRowingUI.neonLime),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
                 icon: const Icon(Icons.add, color: EngineRowingUI.neonLime),
                 label: Text(
                   s.addSlot,
-                  style: const TextStyle(color: EngineRowingUI.neonLime, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      color: EngineRowingUI.neonLime,
+                      fontWeight: FontWeight.bold),
                 ),
                 onPressed: currentCount < 6 ? _addSlot : null,
               ),
@@ -697,13 +760,15 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                   minimumSize: const Size(0, 48),
                   backgroundColor: EngineRowingUI.neonLime,
                   foregroundColor: EngineRowingUI.bgNavy,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
                 icon: _isSaving
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: EngineRowingUI.bgNavy),
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: EngineRowingUI.bgNavy),
                       )
                     : const Icon(Icons.save, color: EngineRowingUI.bgNavy),
                 label: Text(
