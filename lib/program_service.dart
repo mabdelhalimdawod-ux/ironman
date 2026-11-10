@@ -1114,20 +1114,24 @@ class ProgramService {
     return sessions;
   }
 
-  /// تكرار اسم اللوحة السابقة مع زيادة رقمها التسلسلي (مثال: إحماء 1 -> إحماء 2 أو الحصة 1 -> الحصة 2)
-  static String incrementBoardTitle(String? prevTitle, String defaultPrefix, int targetIndex) {
-    if (prevTitle == null || prevTitle.trim().isEmpty) {
-      return '$defaultPrefix $targetIndex';
+  /// تكرار اسم اللوحة السابقة مع زيادة رقمها التسلسلي (يدعم استدعاء ثنائي أو ثلاثي المعاملات)
+  static String incrementBoardTitle(String? prevTitle,
+      [dynamic arg2 = 'الحصة', int? targetIndex]) {
+    final title = prevTitle?.trim() ?? '';
+    final defaultPrefix = (arg2 is String) ? arg2 : 'لوحة';
+    final count = (arg2 is int) ? arg2 : (targetIndex ?? 1);
+
+    if (title.isEmpty) {
+      return '$defaultPrefix $count';
     }
-    final trimmed = prevTitle.trim();
     final regex = RegExp(r'^(.*?)\s*(\d+)$');
-    final match = regex.firstMatch(trimmed);
+    final match = regex.firstMatch(title);
     if (match != null) {
       final prefix = match.group(1)!.trim();
-      final number = int.tryParse(match.group(2)!) ?? (targetIndex - 1);
+      final number = int.tryParse(match.group(2)!) ?? (count - 1);
       return '$prefix ${number + 1}';
     }
-    return '$trimmed $targetIndex';
+    return '$title ${count + 1}';
   }
 
   /// إضافة حصة تدريبية جديدة لليوم مع تكرار اسم الحصة السابقة وزيادة رقمها
@@ -1361,19 +1365,6 @@ class ProgramService {
     final end = cycle['end'] as String? ?? '';
     if (start.isEmpty || end.isEmpty) return false;
     return start.compareTo(todayStr) <= 0 && end.compareTo(todayStr) >= 0;
-  }
-
-  /// توليد اسم اللوحة التالية عند الضغط على (+) مع تكرار الاسم وزيادة العدد الخاص بها
-  static String incrementBoardTitle(String currentTitle, int existingCount) {
-    final trimmed = currentTitle.trim();
-    if (trimmed.isEmpty) return 'لوحة ${existingCount + 1}';
-    final match = RegExp(r'^(.*?)\s*(\d+)$').firstMatch(trimmed);
-    if (match != null) {
-      final base = match.group(1)?.trim() ?? '';
-      final num = int.tryParse(match.group(2) ?? '1') ?? 1;
-      return '$base ${num + 1}';
-    }
-    return '$trimmed ${existingCount + 1}';
   }
 
   // --------------------------------------------------------------------------

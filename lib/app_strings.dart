@@ -96,13 +96,8 @@ class AppStrings {
   String get cycleProgress => isArabic ? 'تقدم الدورة المرحلية' : 'Phase Cycle Progress';
 
   // ==================== Program & Cycles Strings (المرحلة الثانية) ====================
-<<<<<<< HEAD
   String get trainingCycles => isArabic ? 'الدورات المرحلية للتدريب' : 'Training Phase Cycles';
   String get cyclesSubtitle => isArabic ? 'نظام الدورات المرحلية والدورات الأسبوعية' : 'Training Phase Cycles & Weekly Microcycles';
-=======
-  String get trainingCycles => isArabic ? 'الدورات المرحلية التدريبية' : 'Training Phase Cycles';
-  String get cyclesSubtitle => isArabic ? 'نظام الدورات المرحلية التدريبية والدورات الأسبوعية' : 'Training Phase Cycles & Weekly Microcycles';
->>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
   String get cycleNumber => isArabic ? 'الدورة المرحلية' : 'Phase Cycle';
   String cycleTitle(int num) => isArabic ? 'الدورة المرحلية $num' : 'Phase Cycle $num';
   String get addCycle => isArabic ? 'إضافة دورة مرحلية جديدة' : 'Add New Phase Cycle';
@@ -129,11 +124,7 @@ class AppStrings {
   String get technicalNote => isArabic ? 'ملاحظة فنية' : 'Technical Note';
   String get addNote => isArabic ? 'إضافة ملاحظة' : 'Add Note';
   String get testDatesTitle => isArabic ? 'تواريخ التستات المقررة للدورة المرحلية' : 'Scheduled Phase Cycle Tests';
-<<<<<<< HEAD
   String get zoneParticipationTitle => isArabic ? 'نسب مشاركة الزونات بالدورة المرحلية' : 'Zone Distribution';
-=======
-  String get zoneParticipationTitle => isArabic ? 'نسب مشاركة الزونات بالدورة المرحلية' : 'Phase Cycle Zone Distribution';
->>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
 
   // المستوى 2: الدورات الأسبوعية الأساسية والفرعية
   String get basicWeeklyCycleTitle => isArabic ? 'الدورة التدريبية الأسبوعية الأساسية' : 'Basic Weekly Training Cycle';
@@ -480,9 +471,9 @@ class AppStrings {
   String get exportToPdf => isArabic ? 'تحويل البيانات إلى تقرير PDF' : 'Export Report to PDF';
   String get shareReportAction => isArabic ? 'مشاركة التقرير عبر البريد أو الفريق' : 'Share Report via Email / Chat';
 
-<<<<<<< HEAD
   // ==================== Display Settings, Zoom & Intensity ====================
   String get displayScaleTitle => isArabic ? 'مقياس الرؤية والتكبير' : 'Display Scale & Zoom';
+  String get displayControlTitle => displayScaleTitle;
   String get displayScaleDesc => isArabic ? 'تكبير أو تصغير عناصر الواجهة للموبايل' : 'Scale UI elements for mobile';
   String get colorIntensityTitle => isArabic ? 'حدة الألوان والإضاءة' : 'Color & Light Intensity';
   String get colorIntensityDesc => isArabic ? 'التحكم في قوة إضاءة الخطوط والأرقام والحدود' : 'Control brightness & contrast of text & neon borders';
@@ -491,17 +482,67 @@ class AppStrings {
   String get intensityUltra => isArabic ? 'فائق الإضاءة (نيون)' : 'Ultra Neon';
   String get pinchZoomHint => isArabic ? 'يمكنك التكبير والتصغير بأصابعك على الشاشة' : 'Pinch with two fingers to zoom anywhere';
   String get defaultBoardName => isArabic ? 'إحماء' : 'Warm-up';
-=======
-  // ==================== Display Scaling & Intensity Control ====================
-  String get displayControlTitle => isArabic ? 'التحكم في مقاسات الرؤية والسطوع' : 'Display Scale & Brightness Control';
-  String get viewScale => isArabic ? 'مقاس الرؤية والتكبير' : 'Display Scale';
-  String get colorIntensity => isArabic ? 'حدة الألوان وإضاءة الحروف والحدود' : 'Color Intensity & Neon Glow';
-  String get intensityNormal => isArabic ? 'عادي (متوازن)' : 'Normal (Balanced)';
-  String get intensityHigh => isArabic ? 'عالي (تباين واضح)' : 'High Contrast';
-  String get intensityUltra => isArabic ? 'فسفوري فائق (إضاءة نيون قوية)' : 'Ultra Vivid Neon';
-  String get boardWarmupPrefix => isArabic ? 'إحماء' : 'Warmup';
-  String get boardMainPrefix => isArabic ? 'تمرين' : 'Workout';
-  String get boardCooldownPrefix => isArabic ? 'تهدئة' : 'Cooldown';
-  String boardItemTitle(String prefix, int num) => '$prefix $num';
->>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
+
+  // ==================== Progress Tab Strings ====================
+  String get tabProgress => isArabic ? 'التقدم' : 'Progress';
+  String get progressTitle => isArabic ? 'مؤشرات التطور والتقدم' : 'Progress & Analytics';
+  String get progressSubtitle =>
+      isArabic ? 'تحليل الأداء الفسيولوجي، الأحمال التدريبية (PMC)، ومراقبة الزونات' : 'Physiological performance, PMC training load & zone monitoring';
+  String get allTeamAthletes => isArabic ? 'جميع اللاعبين (متوسط الفريق)' : 'All Athletes (Team Average)';
+  String get filter7d => isArabic ? '7D' : '7D';
+  String get filter30d => isArabic ? '30D' : '30D';
+  String get filter90d => isArabic ? '90D' : '90D';
+  String get filterAll => isArabic ? 'All' : 'All';
+  String get filterCustom => isArabic ? 'Custom' : 'Custom';
+  String get completeInputsWarning =>
+      isArabic ? 'رجاء أستكمال المدخلات لضمان دقة النتائج' : 'Please complete all inputs to ensure accurate results';
+  String get pmcTitle => isArabic ? 'مخطط إدارة الأداء (PMC)' : 'Performance Management Chart (PMC)';
+  String get pmcExplanation => isArabic
+      ? 'يوضح اللياقة التراكمية (CTL) والإرهاق الحاد (ATL) وفارق الجاهزية (TSB) لمراقبة ذروة الأداء ومنع الإجهاد الزائد.'
+      : 'Tracks Chronic Training Load (CTL), Acute Training Load (ATL), and Training Stress Balance (TSB).';
+  String get ctlLabel => isArabic ? 'اللياقة التراكمية (CTL)' : 'Fitness (CTL)';
+  String get atlLabel => isArabic ? 'الإرهاق الحاد (ATL)' : 'Fatigue (ATL)';
+  String get tsbLabel => isArabic ? 'مؤشر الجاهزية (TSB)' : 'Form / Balance (TSB)';
+  String get estimatedCurveOnly => isArabic ? 'منحنى تقديري فقط' : 'Estimated curve only';
+  String get zoneBaselinesTitle => isArabic ? 'مراقبة الزونات وخط الأساس (Personal Best)' : 'Zone Baselines & Progress Tracking';
+  String get hrvTitle => isArabic ? 'تغير معدل النبض (HRV)' : 'Heart Rate Variability (HRV)';
+  String get hrvExplanation => isArabic
+      ? 'مؤشر توازن الجهاز العصبي اللاإرادي ومستوى الجاهزية والاستشفاء اليومي.'
+      : 'Autonomic nervous system recovery and daily readiness index.';
+  String get rhrTitle => isArabic ? 'نبض الراحة الصباحي (RHR)' : 'Resting Heart Rate (RHR)';
+  String get rhrExplanation => isArabic
+      ? 'انخفاض نبض الراحة يعكس تحسن الكفاءة القلبية، وارتفاعه المفاجئ يشير لإجهاد أو نقص استشفاء.'
+      : 'Resting heart rate reflects cardiovascular conditioning and recovery status.';
+  String get sleepWeightTitle => isArabic ? 'مؤشرات النوم والوزن' : 'Sleep & Body Weight';
+  String get sleepWeightExplanation =>
+      isArabic ? 'مراقبة جودة واستقرار النوم اليومي والتغير في وزن الجسم.' : 'Daily sleep duration and body weight tracking.';
+  String get eupneaTitle => isArabic ? 'معدل التنفس أثناء الراحة (Eupnea)' : 'Resting Breathing Rate (Eupnea)';
+  String get eupneaExplanation => isArabic
+      ? 'معدل التنفس الطبيعي في الدقيقة؛ مؤشر دقيق للجهد الفسيولوجي والاستشفاء.'
+      : 'Resting respiratory rate in breaths per minute.';
+  String get decouplingTitle => isArabic ? 'التفكك القلبي الهوائي (Decoupling)' : 'Aerobic Cardiac Decoupling';
+  String get decouplingExplanation => isArabic
+      ? 'يقيس الانجراف في النبض مقارنة بالواط؛ نسبة أقل من 5% تعني كفاءة هوائية ممتازة وثباتاً عضلياً.'
+      : 'Cardiac drift relative to power output; below 5% indicates solid aerobic base.';
+  String get efTitle => isArabic ? 'معامل الكفاءة الهوائية (EF)' : 'Aerobic Efficiency Factor (EF)';
+  String get efExplanation => isArabic
+      ? 'حاصل قسمة الواط المعياري أو المتوسط على النبض (Watts/HR)؛ ارتفاعه يدل على زيادة القوة بنفس الجهد القلبي.'
+      : 'Normalized power divided by average heart rate (Watts/HR).';
+  String get movingAverage7Legend => isArabic ? 'متوسط متحرك 7 أيام' : '7-day moving average';
+  String get chipWatts => isArabic ? 'واط' : 'Watts';
+  String get chipHR => isArabic ? 'نبض' : 'Heart Rate';
+  String get chipDecoupling => isArabic ? 'Decoupling' : 'Decoupling';
+  String get chipTime => isArabic ? 'الزمن' : 'Time';
+  String get chipEF => isArabic ? 'معامل الكفاءة (EF)' : 'Efficiency (EF)';
+  String get chipHRV => isArabic ? 'HRV' : 'HRV';
+  String get chipRHR => isArabic ? 'نبض الراحة' : 'Resting HR';
+  String get chipSleep => isArabic ? 'النوم' : 'Sleep';
+  String get chipWeight => isArabic ? 'الوزن' : 'Weight';
+  String get chipEupnea => isArabic ? 'التنفس (Eupnea)' : 'Eupnea';
+  String get chipCTL => isArabic ? 'اللياقة (CTL)' : 'Fitness (CTL)';
+  String get chipATL => isArabic ? 'الإرهاق (ATL)' : 'Fatigue (ATL)';
+  String get chipTSB => isArabic ? 'الجاهزية (TSB)' : 'Form (TSB)';
+  String get chipSplit => isArabic ? 'السبليت' : 'Split';
+  String get chipZone => isArabic ? 'الزون' : 'Zone';
+  String get notEnoughData => isArabic ? 'لا توجد بيانات كافية' : 'Not enough data';
 }

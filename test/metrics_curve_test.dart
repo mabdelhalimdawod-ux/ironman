@@ -13,16 +13,20 @@ void main() {
       // Z4: 80% to < 90% -> 170 to < 185
       // Z5: >= 90% -> >= 185
 
-      expect(HeartRateZones.determineZone(hr: 130, mhr: mhr, rhr: rhr),
+      expect(HeartRateZones.determineZone(hr: 140, mhr: mhr, rhr: rhr),
           equals('Z1'));
-      expect(HeartRateZones.determineZone(hr: 145, mhr: mhr, rhr: rhr),
+      expect(HeartRateZones.determineZone(hr: 155, mhr: mhr, rhr: rhr),
           equals('Z2'));
-      expect(HeartRateZones.determineZone(hr: 160, mhr: mhr, rhr: rhr),
+      expect(HeartRateZones.determineZone(hr: 170, mhr: mhr, rhr: rhr),
           equals('Z3'));
-      expect(HeartRateZones.determineZone(hr: 175, mhr: mhr, rhr: rhr),
+      expect(HeartRateZones.determineZone(hr: 181, mhr: mhr, rhr: rhr),
           equals('Z4'));
-      expect(HeartRateZones.determineZone(hr: 190, mhr: mhr, rhr: rhr),
+      expect(HeartRateZones.determineZone(hr: 188, mhr: mhr, rhr: rhr),
+          equals('Threshold'));
+      expect(HeartRateZones.determineZone(hr: 194, mhr: mhr, rhr: rhr),
           equals('Z5'));
+      expect(HeartRateZones.determineZone(hr: 200, mhr: mhr, rhr: rhr),
+          equals('VO2 max'));
     });
 
     test('Daily aggregation for same zone averages watts correctly', () {
@@ -59,11 +63,13 @@ void main() {
     });
 
     test('Zone colors and display names mapping', () {
-      expect(HeartRateZones.zoneColor('Z1').value, equals(0xFFB8F229));
-      expect(HeartRateZones.zoneColor('Z2').value, equals(0xFF2979FF));
-      expect(HeartRateZones.zoneColor('Z3').value, equals(0xFFFF9100));
-      expect(HeartRateZones.zoneColor('Z4').value, equals(0xFFE65100));
-      expect(HeartRateZones.zoneColor('Z5').value, equals(0xFFFF5252));
+      expect(HeartRateZones.zoneColor('Z1').toARGB32(), equals(0xFF2979FF));
+      expect(HeartRateZones.zoneColor('Z2').toARGB32(), equals(0xFF00E676));
+      expect(HeartRateZones.zoneColor('Z3').toARGB32(), equals(0xFFFFD600));
+      expect(HeartRateZones.zoneColor('Z4').toARGB32(), equals(0xFFFF9100));
+      expect(HeartRateZones.zoneColor('Threshold').toARGB32(), equals(0xFFE65100));
+      expect(HeartRateZones.zoneColor('Z5').toARGB32(), equals(0xFFFF5252));
+      expect(HeartRateZones.zoneColor('VO2 max').toARGB32(), equals(0xFF8B0000));
     });
   });
 }

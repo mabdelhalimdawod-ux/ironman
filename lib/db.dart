@@ -22,13 +22,27 @@ const cpPowerZones = {
 };
 
 /// أنواع اختبارات CP
-const cpTestTypes = ['2000m', '5000m', '500m', '6min', '12min', '30min', 'مخصص'];
+const cpTestTypes = [
+  '2000m',
+  '5000m',
+  '500m',
+  '6min',
+  '12min',
+  '30min',
+  'مخصص'
+];
 
 /// تسميات مستوى الإرهاق
 const fatigueLabels = {1: 'ممتاز', 2: 'جيد', 3: 'مقبول', 4: 'متعب', 5: 'مرهق'};
 
 /// تسميات مستوى الجاهزية
-const readinessLabels = {1: 'مرهق', 2: 'غير جاهز', 3: 'متوسط', 4: 'جاهز', 5: 'جاهز تمامًا'};
+const readinessLabels = {
+  1: 'مرهق',
+  2: 'غير جاهز',
+  3: 'متوسط',
+  4: 'جاهز',
+  5: 'جاهز تمامًا'
+};
 
 String dstr(DateTime d) =>
     '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
@@ -147,9 +161,9 @@ double estimateCPFromSingle(double avgPower, int durationSeconds) {
   // كلما زادت المدة كلما اقترب المتوسط من CP
   if (durationSeconds >= 1800) return avgPower * 0.97; // 30+ دقيقة
   if (durationSeconds >= 1200) return avgPower * 0.93; // 20 دقيقة
-  if (durationSeconds >= 720) return avgPower * 0.90;  // 12 دقيقة
-  if (durationSeconds >= 360) return avgPower * 0.85;  // 6 دقائق
-  if (durationSeconds >= 120) return avgPower * 0.78;  // 2 دقيقة
+  if (durationSeconds >= 720) return avgPower * 0.90; // 12 دقيقة
+  if (durationSeconds >= 360) return avgPower * 0.85; // 6 دقائق
+  if (durationSeconds >= 120) return avgPower * 0.78; // 2 دقيقة
   return avgPower * 0.70; // أقل من دقيقتين
 }
 
@@ -280,11 +294,11 @@ String tsbDescription(double tsb) {
 }
 
 int tsbColor(double tsb) {
-  if (tsb > 15) return 0xFF2196F3;   // أزرق - جاهز/مستريح
-  if (tsb > 0) return 0xFF4CAF50;    // أخضر - متوازن
-  if (tsb > -15) return 0xFFFFC107;  // أصفر - إجهاد بنّاء
-  if (tsb > -30) return 0xFFFF9800;  // برتقالي - إجهاد
-  return 0xFFF44336;                  // أحمر - إفراط
+  if (tsb > 15) return 0xFF2196F3; // أزرق - جاهز/مستريح
+  if (tsb > 0) return 0xFF4CAF50; // أخضر - متوازن
+  if (tsb > -15) return 0xFFFFC107; // أصفر - إجهاد بنّاء
+  if (tsb > -30) return 0xFFFF9800; // برتقالي - إجهاد
+  return 0xFFF44336; // أحمر - إفراط
 }
 
 // ==================== قاعدة البيانات ====================
@@ -292,20 +306,20 @@ int tsbColor(double tsb) {
 class DB {
   static Database? _db;
   static Future<Database> get db async => _db ??= await _open();
+  static set testDatabase(Database? db) => _db = db;
 
   static Future<Database> _open() async {
     final path = join(await getDatabasesPath(), 'rowing.db');
-    return openDatabase(path, version: 4,
-        onCreate: (d, v) async {
-          await d.execute(
-              'CREATE TABLE players(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mhr INTEGER, active INTEGER DEFAULT 1)');
-          await d.execute(
-              'CREATE TABLE cycles(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, start TEXT, end TEXT)');
-          await d.execute(
-              'CREATE TABLE sessions(date TEXT, idx INTEGER, kind TEXT, zone TEXT, PRIMARY KEY(date, idx))');
-          await d.execute(
-              'CREATE TABLE notes(date TEXT PRIMARY KEY, general TEXT, tech TEXT)');
-          await d.execute('''
+    return openDatabase(path, version: 4, onCreate: (d, v) async {
+      await d.execute(
+          'CREATE TABLE players(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mhr INTEGER, active INTEGER DEFAULT 1)');
+      await d.execute(
+          'CREATE TABLE cycles(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, start TEXT, end TEXT)');
+      await d.execute(
+          'CREATE TABLE sessions(date TEXT, idx INTEGER, kind TEXT, zone TEXT, PRIMARY KEY(date, idx))');
+      await d.execute(
+          'CREATE TABLE notes(date TEXT PRIMARY KEY, general TEXT, tech TEXT)');
+      await d.execute('''
             CREATE TABLE logs(
               player_id INTEGER,
               date TEXT,
@@ -330,7 +344,7 @@ class DB {
               PRIMARY KEY(player_id, date, idx)
             )
           ''');
-          await d.execute('''
+      await d.execute('''
             CREATE TABLE cp_tests(
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               player_id INTEGER,
@@ -346,7 +360,7 @@ class DB {
               notes TEXT
             )
           ''');
-          await d.execute('''
+      await d.execute('''
             CREATE TABLE cp_values(
               player_id INTEGER,
               date TEXT,
@@ -356,23 +370,22 @@ class DB {
               PRIMARY KEY(player_id, date)
             )
           ''');
-        },
-        onUpgrade: (d, oldVersion, newVersion) async {
-          if (oldVersion < 2) {
-            await d.execute('ALTER TABLE logs ADD COLUMN hr_max INTEGER');
-            await d.execute('ALTER TABLE logs ADD COLUMN hr_post INTEGER');
-            await d.execute('ALTER TABLE logs ADD COLUMN hr_1min INTEGER');
-            await d.execute('ALTER TABLE logs ADD COLUMN fatigue INTEGER');
-            await d.execute('ALTER TABLE logs ADD COLUMN sleep_hours REAL');
-            await d.execute('ALTER TABLE logs ADD COLUMN readiness INTEGER');
-            await d.execute('ALTER TABLE logs ADD COLUMN player_notes TEXT');
-          }
-          if (oldVersion < 3) {
-            await d.execute('ALTER TABLE logs ADD COLUMN avg_power REAL');
-            await d.execute('ALTER TABLE logs ADD COLUMN max_power REAL');
-            await d.execute('ALTER TABLE logs ADD COLUMN duration_seconds INTEGER');
-            await d.execute('ALTER TABLE logs ADD COLUMN distance INTEGER');
-            await d.execute('''
+    }, onUpgrade: (d, oldVersion, newVersion) async {
+      if (oldVersion < 2) {
+        await d.execute('ALTER TABLE logs ADD COLUMN hr_max INTEGER');
+        await d.execute('ALTER TABLE logs ADD COLUMN hr_post INTEGER');
+        await d.execute('ALTER TABLE logs ADD COLUMN hr_1min INTEGER');
+        await d.execute('ALTER TABLE logs ADD COLUMN fatigue INTEGER');
+        await d.execute('ALTER TABLE logs ADD COLUMN sleep_hours REAL');
+        await d.execute('ALTER TABLE logs ADD COLUMN readiness INTEGER');
+        await d.execute('ALTER TABLE logs ADD COLUMN player_notes TEXT');
+      }
+      if (oldVersion < 3) {
+        await d.execute('ALTER TABLE logs ADD COLUMN avg_power REAL');
+        await d.execute('ALTER TABLE logs ADD COLUMN max_power REAL');
+        await d.execute('ALTER TABLE logs ADD COLUMN duration_seconds INTEGER');
+        await d.execute('ALTER TABLE logs ADD COLUMN distance INTEGER');
+        await d.execute('''
               CREATE TABLE IF NOT EXISTS cp_tests(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 player_id INTEGER,
@@ -388,7 +401,7 @@ class DB {
                 notes TEXT
               )
             ''');
-            await d.execute('''
+        await d.execute('''
               CREATE TABLE IF NOT EXISTS cp_values(
                 player_id INTEGER,
                 date TEXT,
@@ -398,15 +411,16 @@ class DB {
                 PRIMARY KEY(player_id, date)
               )
             ''');
-          }
-          if (oldVersion < 4) {
-            await d.execute('ALTER TABLE logs ADD COLUMN split_500 REAL');
-            await d.execute('ALTER TABLE logs ADD COLUMN ef REAL');
-          }
-        });
+      }
+      if (oldVersion < 4) {
+        await d.execute('ALTER TABLE logs ADD COLUMN split_500 REAL');
+        await d.execute('ALTER TABLE logs ADD COLUMN ef REAL');
+      }
+    });
   }
 
-  static Future<List<Map<String, Object?>>> q(String sql, [List<Object?>? a]) async =>
+  static Future<List<Map<String, Object?>>> q(String sql,
+          [List<Object?>? a]) async =>
       (await db).rawQuery(sql, a);
 
   static Future<void> put(String table, Map<String, Object?> v) async =>
@@ -418,11 +432,15 @@ class DB {
   static Future<List<Map<String, Object?>>> sessions(String date) =>
       q('SELECT * FROM sessions WHERE date=? ORDER BY idx', [date]);
 
+  static Future<List<Map<String, Object?>>> players() =>
+      q('SELECT * FROM players WHERE active=1 ORDER BY name ASC');
+
   // ==================== اختبارات CP ====================
 
   /// جلب جميع اختبارات CP للاعب
-  static Future<List<Map<String, Object?>>> cpTests(int playerId) =>
-      q('SELECT * FROM cp_tests WHERE player_id=? ORDER BY date DESC', [playerId]);
+  static Future<List<Map<String, Object?>>> cpTests(int playerId) => q(
+      'SELECT * FROM cp_tests WHERE player_id=? ORDER BY date DESC',
+      [playerId]);
 
   /// إضافة اختبار CP
   static Future<void> addCPTest(Map<String, Object?> test) async {
@@ -507,9 +525,12 @@ class DB {
   // ==================== تحليلات التمرين ====================
 
   /// جلب جميع سجلات لاعب مرتبة بالتاريخ
-  static Future<List<Map<String, Object?>>> playerLogs(int playerId, {int limit = 90}) =>
-      q('SELECT l.*, s.kind, s.zone FROM logs l LEFT JOIN sessions s ON l.date=s.date AND l.idx=s.idx WHERE l.player_id=? ORDER BY l.date DESC, l.idx DESC LIMIT ?',
-          [playerId, limit]);
+  static Future<
+      List<
+          Map<String,
+              Object?>>> playerLogs(int playerId, {int limit = 90}) => q(
+      'SELECT l.*, s.kind, s.zone FROM logs l LEFT JOIN sessions s ON l.date=s.date AND l.idx=s.idx WHERE l.player_id=? ORDER BY l.date DESC, l.idx DESC LIMIT ?',
+      [playerId, limit]);
 
   /// جلب آخر سجل للاعب
   static Future<Map<String, Object?>?> latestLog(int playerId) async {
@@ -520,7 +541,8 @@ class DB {
   }
 
   /// خط الأساس (متوسط آخر n يوم)
-  static Future<Map<String, double>> playerBaseline(int playerId, {int days = 14}) async {
+  static Future<Map<String, double>> playerBaseline(int playerId,
+      {int days = 14}) async {
     final cutoff = dstr(DateTime.now().subtract(Duration(days: days)));
     final r = await q('''
       SELECT 
@@ -556,7 +578,8 @@ class DB {
   }
 
   /// بيانات الاستشفاء
-  static Future<List<Map<String, dynamic>>> playerRecoveryData(int playerId, {int limit = 30}) async {
+  static Future<List<Map<String, dynamic>>> playerRecoveryData(int playerId,
+      {int limit = 30}) async {
     final logs = await q('''
       SELECT date, hr, hr_post, hr_1min 
       FROM logs 
@@ -590,7 +613,8 @@ class DB {
   }
 
   /// توزيع مناطق التدريب
-  static Future<Map<String, int>> playerZoneDistribution(int playerId, {int days = 30}) async {
+  static Future<Map<String, int>> playerZoneDistribution(int playerId,
+      {int days = 30}) async {
     final cutoff = dstr(DateTime.now().subtract(Duration(days: days)));
     final r = await q('''
       SELECT s.zone, COUNT(*) as c 
@@ -611,7 +635,8 @@ class DB {
 
   /// حساب مخطط إدارة الأداء (CTL, ATL, TSB) بناءً على CP
   /// هذا هو مقياس التوازن الرئيسي
-  static Future<List<Map<String, dynamic>>> playerPMC(int playerId, {int days = 90}) async {
+  static Future<List<Map<String, dynamic>>> playerPMC(int playerId,
+      {int days = 90}) async {
     final cp = await playerCP(playerId);
     if (cp == null || cp <= 0) return [];
 
@@ -631,7 +656,8 @@ class DB {
       final date = l['date'] as String;
       final power = (l['avg_power'] as num).toDouble();
       final duration = l['duration_seconds'] as int;
-      final tss = calculateTSS(avgPower: power, durationSeconds: duration, cp: cp);
+      final tss =
+          calculateTSS(avgPower: power, durationSeconds: duration, cp: cp);
       dailyTSS[date] = (dailyTSS[date] ?? 0) + tss;
     }
 
@@ -644,8 +670,8 @@ class DB {
       final tss = dailyTSS[date] ?? 0;
 
       ctl = ctl + (tss - ctl) / 42; // الحمل المزمن (لياقة) - 42 يوم
-      atl = atl + (tss - atl) / 7;  // الحمل الحاد (إجهاد) - 7 أيام
-      final tsb = ctl - atl;         // توازن الضغط التدريبي
+      atl = atl + (tss - atl) / 7; // الحمل الحاد (إجهاد) - 7 أيام
+      final tsb = ctl - atl; // توازن الضغط التدريبي
 
       results.add({
         'date': date,
@@ -677,8 +703,8 @@ class DB {
     final tsb = await playerTSB(playerId);
 
     final scores = <String, double>{
-      'القدرة الحرجة CP': 50,     // المحور الرئيسي
-      'التوازن التدريبي': 50,      // TSB
+      'القدرة الحرجة CP': 50, // المحور الرئيسي
+      'التوازن التدريبي': 50, // TSB
       'القلب والأوعية': 50,
       'التوازن العصبي': 50,
       'الاستشفاء': 50,
@@ -720,7 +746,8 @@ class DB {
 
     // ═══ 3. القلب والأوعية (RHR) ═══
     final rhrBase = baseline['avg_rhr'] ?? 0;
-    final rhrRecent = recent.isNotEmpty ? (recent['avg_rhr'] ?? rhrBase) : rhrBase;
+    final rhrRecent =
+        recent.isNotEmpty ? (recent['avg_rhr'] ?? rhrBase) : rhrBase;
     if (rhrBase > 0) {
       final diff = rhrRecent - rhrBase;
       scores['القلب والأوعية'] = (85 - diff * 4).clamp(0, 100);
@@ -728,7 +755,8 @@ class DB {
 
     // ═══ 4. التوازن العصبي (HRV) ═══
     final hrvBase = baseline['avg_hrv'] ?? 0;
-    final hrvRecent = recent.isNotEmpty ? (recent['avg_hrv'] ?? hrvBase) : hrvBase;
+    final hrvRecent =
+        recent.isNotEmpty ? (recent['avg_hrv'] ?? hrvBase) : hrvBase;
     if (hrvBase > 0) {
       final ratio = hrvRecent / hrvBase;
       scores['التوازن العصبي'] = (ratio * 80).clamp(0, 100);
@@ -783,7 +811,8 @@ class DB {
       final oldCP = (cpHist[cpHist.length - 2]['cp'] as num).toDouble();
       final currentCP = (cpHist.last['cp'] as num).toDouble();
       if (currentCP < oldCP * 0.95) {
-        alerts.add('⚠️ تراجع في القدرة الحرجة (${oldCP.round()}W → ${currentCP.round()}W)');
+        alerts.add(
+            '⚠️ تراجع في القدرة الحرجة (${oldCP.round()}W → ${currentCP.round()}W)');
       }
     }
 
@@ -817,7 +846,8 @@ class DB {
 
   /// جاهزية جميع اللاعبين (مع TSB)
   static Future<List<Map<String, dynamic>>> allPlayersReadiness() async {
-    final players = await q('SELECT * FROM players WHERE active=1 ORDER BY name');
+    final players =
+        await q('SELECT * FROM players WHERE active=1 ORDER BY name');
     final results = <Map<String, dynamic>>[];
 
     for (final p in players) {

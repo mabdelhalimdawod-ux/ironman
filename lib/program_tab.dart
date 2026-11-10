@@ -119,7 +119,6 @@ class _ProgramTabState extends State<ProgramTab> {
   }
 
   Future<void> _pickCycleDates(ProgramCycle cycle) async {
-    final s = AppStrings.of(context);
     DateTime selectedStart =
         DateTime.tryParse(cycle.startDate) ?? DateTime.now();
     DateTime selectedEnd = DateTime.tryParse(cycle.endDate) ??

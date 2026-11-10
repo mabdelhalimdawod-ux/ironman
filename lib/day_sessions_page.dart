@@ -249,7 +249,6 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
                 constraints: const BoxConstraints(maxWidth: 850),
                 child: PinchZoomArea(
                   child: ListView(
-<<<<<<< HEAD
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 14),
                     children: [
@@ -274,30 +273,6 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
                                     color: EngineRowingUI.labelSlate,
                                     height: 1.4),
                               ),
-=======
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    children: [
-                    // هيدر توضيحي
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: _cardFill,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _gridLine),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.info_outline_rounded,
-                              color: _gold, size: 22),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'الحصص التدريبية ليوم ${widget.dayName} • كل حصة تحتوي على خانة التوقيت، وحسابات الـ 6 زونات، وملاحظات وزر الدخول للتمارين.',
-                              style: const TextStyle(
-                                  fontSize: 12.5,
-                                  color: EngineRowingUI.labelSlate,
-                                  height: 1.4),
->>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
                             ),
                           ],
                         ),
@@ -337,7 +312,6 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
                 ),
               ),
             ),
-          ),
     );
   }
 
@@ -347,18 +321,11 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
-<<<<<<< HEAD
       decoration: neonGlowBoxDecoration(
         fillColor: _cardFill,
         borderColor: _gridLine,
         borderRadius: 14,
         intensity: intensityNotifier.value,
-=======
-      decoration: EngineRowingUI.neonGlowBoxDecoration(
-        backgroundColor: _cardFill,
-        borderColor: _gridLine,
-        borderRadius: 14,
->>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -473,7 +440,6 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
                 ),
                 const SizedBox(height: 16),
 
-<<<<<<< HEAD
                 // ── الخانات المتجاوبة لتوزيع أحمال الزونات والمنحنى بالخلفية البيضاء (RowingAdaptiveZoneBoxes) ──
                 RowingAdaptiveZoneBoxes(
                   zoneSeconds: zoneDurations,
@@ -481,19 +447,6 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
                       ? 'أحمال الزونات لهذه الحصة (تحسب تلقائياً من التمارين):'
                       : 'Session Zone Loads:',
                   showCurveChart: true,
-=======
-                // ── الخانات الـ 6 المتجاورة أسفل لوحة الحصة (Z1 - Z5 + Threshold) ──
-                // تبدأ من اليسار: zone1, zone2, zone3, zone4, Threshold, zone5
-                // ── لوحة الزونات والكيرف المتجاوبة بالكامل لجميع الشاشات والموبايل مع الخلفية البيضاء ──
-                RowingAdaptiveZoneBoxes(
-                  zoneTotals: zoneDurations,
-                  title: s.isArabic
-                      ? 'أحمال الزونات لهذه الحصة (تحسب تلقائياً من التمارين):'
-                      : 'Session Zone Distribution:',
-                  curveTitle: s.zoneParticipationTitle,
-                  formatDuration: (secs) =>
-                      ProgramService.formatDurationDetailed(secs),
->>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
                 ),
                 const SizedBox(height: 16),
                 const Divider(height: 1, color: _gridLine),

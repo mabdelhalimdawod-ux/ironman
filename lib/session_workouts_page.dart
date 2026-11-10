@@ -52,16 +52,11 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
       final prevItems =
           _session.workouts.where((w) => w.section == section).toList();
       final last = template ?? (prevItems.isNotEmpty ? prevItems.last : null);
-      final defaultPrefix = section == 'warmup'
-          ? 'إحماء'
-          : (section == 'main' ? 'تمرين' : 'تهدئة');
-      final nextIdx = prevItems.length + 1;
-      final newName = ProgramService.incrementBoardTitle(
-          last?.details, defaultPrefix, nextIdx);
 
       String nextTitle;
       if (last != null && last.details.trim().isNotEmpty) {
-        nextTitle = ProgramService.incrementBoardTitle(last.details, prevItems.length);
+        nextTitle =
+            ProgramService.incrementBoardTitle(last.details, prevItems.length);
       } else {
         final baseName = section == 'warmup'
             ? 'إحماء'
@@ -78,8 +73,7 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
         durationSeconds: 0,
         hrPercent: last?.hrPercent ??
             (section == 'main' ? 80 : (section == 'warmup' ? 60 : 50)),
-        hrRange: last?.hrRange ??
-            (section == 'main' ? '75%:85%' : '55%:65%'),
+        hrRange: last?.hrRange ?? (section == 'main' ? '75%:85%' : '55%:65%'),
         distanceMeters:
             last?.distanceMeters ?? (section == 'main' ? 6000 : 1500),
         reps: last?.reps ?? 1,
@@ -88,14 +82,8 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
                 ? 'Stretch'
                 : (section == 'main' ? 'Erg' : 'Mob')),
         zone: last?.zone ??
-            (section == 'main'
-                ? 'zone3 = 75%:85%'
-                : 'zone1 = 55%:65%'),
-<<<<<<< HEAD
+            (section == 'main' ? 'zone3 = 75%:85%' : 'zone1 = 55%:65%'),
         details: nextTitle,
-=======
-        details: newName,
->>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
       ));
     });
   }
@@ -167,7 +155,8 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(s.cancel, style: const TextStyle(color: EngineRowingUI.labelSlate)),
+            child: Text(s.cancel,
+                style: const TextStyle(color: EngineRowingUI.labelSlate)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -229,7 +218,9 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
               _session.comment.isNotEmpty
                   ? Icons.comment_rounded
                   : Icons.mode_comment_outlined,
-              color: _session.comment.isNotEmpty ? _gold : EngineRowingUI.labelSlate,
+              color: _session.comment.isNotEmpty
+                  ? _gold
+                  : EngineRowingUI.labelSlate,
             ),
             onPressed: _showCommentDialog,
           ),
@@ -310,17 +301,10 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
 
           // قائمة الصفوف الثلاثة: 1. الإحماء 2. الرئيسي 3. التهدئة مع التكبير بالأصابع
           Expanded(
-<<<<<<< HEAD
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 850),
                 child: PinchZoomArea(
-=======
-            child: PinchZoomArea(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 850),
->>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
                   child: ListView(
                     padding: const EdgeInsets.all(16),
                     children: [
@@ -456,8 +440,7 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: const BoxDecoration(
               color: EngineRowingUI.equationCardFill,
-              borderRadius:
-                  BorderRadius.vertical(top: Radius.circular(13)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
               border: Border(bottom: BorderSide(color: _gridLine)),
             ),
             child: Row(
@@ -490,15 +473,16 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
                     backgroundColor: _gold,
                     foregroundColor: _navy,
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
                   ),
                   icon: const Icon(Icons.add_rounded, size: 18),
-                  label: Text('إضافة ${section == 'warmup' ? 'إحماء' : (section == 'main' ? 'تمرين' : 'تهدئة')} (+)',
-                      style:
-                          const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  label: Text(
+                      'إضافة ${section == 'warmup' ? 'إحماء' : (section == 'main' ? 'تمرين' : 'تهدئة')} (+)',
+                      style: const TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.bold)),
                   onPressed: onAdd,
                 ),
               ],
@@ -619,24 +603,16 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
-<<<<<<< HEAD
       decoration: neonGlowBoxDecoration(
         fillColor: EngineRowingUI.equationCardFill,
         borderColor: zoneColor.withValues(alpha: 0.6),
         borderWidth: 1.2,
         borderRadius: 12,
         intensity: intensityNotifier.value,
-=======
-      decoration: EngineRowingUI.neonGlowBoxDecoration(
-        backgroundColor: EngineRowingUI.equationCardFill,
-        borderColor: zoneColor,
-        borderRadius: 12,
->>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-<<<<<<< HEAD
           // ── الشريط العلوي للخانة: رقم التمرين + اسم اللوحة + وقت التمرين + زر (+) بجوار الخانات + زر الحذف (متجاوب تماماً) ──
           Wrap(
             alignment: WrapAlignment.spaceBetween,
@@ -659,24 +635,19 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                     ),
                   ),
                   const SizedBox(width: 6),
-
                   ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 120),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 7, vertical: 3),
                       decoration: BoxDecoration(
                         color: _gold.withAlpha(30),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: _gold.withAlpha(120), width: 1.0),
+                        border:
+                            Border.all(color: _gold.withAlpha(120), width: 1.0),
                       ),
                       child: Text(
-                        widget.item.details.trim().isNotEmpty
-                            ? widget.item.details.trim()
-                            : (widget.item.section == 'warmup'
-                                ? 'إحماء ${widget.index + 1}'
-                                : (widget.item.section == 'main'
-                                    ? 'رئيسي ${widget.index + 1}'
-                                    : 'تهدئة ${widget.index + 1}')),
+                        boardTitle,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: _gold,
@@ -687,26 +658,6 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                     ),
                   ),
                 ],
-=======
-          // ── الشريط العلوي للخانة: اسم اللوحة المتكرر + رقم التمرين + وقت التمرين + زر (+) + زر الحذف ──
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _gold.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: _gold, width: 1.2),
-                ),
-                child: Text(
-                  boardTitle,
-                  style: const TextStyle(
-                    color: _gold,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
->>>>>>> 779fbe8a2322044296e21b26026850e835c8babb
               ),
 
               // 1. خانة وقت التمرين السريع
@@ -789,8 +740,8 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                 width: 105,
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 4, vertical: 10),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
                     side: const BorderSide(color: _gridLine),
                     backgroundColor: _cardFill,
                     shape: RoundedRectangleBorder(
@@ -808,7 +759,8 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                         child: Directionality(
                           textDirection: TextDirection.ltr,
                           child: Text(
-                            RowingNumberFormatter.toEnglishDigits(widget.item.time),
+                            RowingNumberFormatter.toEnglishDigits(
+                                widget.item.time),
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                                 fontSize: 12,
@@ -842,14 +794,18 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                     ),
                     decoration: const InputDecoration(
                       labelText: 'مدة التمرين (د)',
-                      labelStyle: TextStyle(fontSize: 11, color: EngineRowingUI.labelSlate),
+                      labelStyle: TextStyle(
+                          fontSize: 11, color: EngineRowingUI.labelSlate),
                       filled: true,
                       fillColor: _cardFill,
                       contentPadding:
                           EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                      border: OutlineInputBorder(borderSide: BorderSide(color: _gridLine)),
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: _gridLine)),
-                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: _gold)),
+                      border: OutlineInputBorder(
+                          borderSide: BorderSide(color: _gridLine)),
+                      enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: _gridLine)),
+                      focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: _gold)),
                       isDense: true,
                     ),
                     onChanged: (val) {
@@ -879,14 +835,18 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                     ),
                     decoration: const InputDecoration(
                       labelText: 'المسافة (متر)',
-                      labelStyle: TextStyle(fontSize: 11, color: EngineRowingUI.labelSlate),
+                      labelStyle: TextStyle(
+                          fontSize: 11, color: EngineRowingUI.labelSlate),
                       filled: true,
                       fillColor: _cardFill,
                       contentPadding:
                           EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                      border: OutlineInputBorder(borderSide: BorderSide(color: _gridLine)),
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: _gridLine)),
-                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: _gold)),
+                      border: OutlineInputBorder(
+                          borderSide: BorderSide(color: _gridLine)),
+                      enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: _gridLine)),
+                      focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: _gold)),
                       isDense: true,
                     ),
                     onChanged: (val) {
@@ -916,14 +876,18 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                     ),
                     decoration: const InputDecoration(
                       labelText: 'التكرار',
-                      labelStyle: TextStyle(fontSize: 11, color: EngineRowingUI.labelSlate),
+                      labelStyle: TextStyle(
+                          fontSize: 11, color: EngineRowingUI.labelSlate),
                       filled: true,
                       fillColor: _cardFill,
                       contentPadding:
                           EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                      border: OutlineInputBorder(borderSide: BorderSide(color: _gridLine)),
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: _gridLine)),
-                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: _gold)),
+                      border: OutlineInputBorder(
+                          borderSide: BorderSide(color: _gridLine)),
+                      enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: _gridLine)),
+                      focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: _gold)),
                       isDense: true,
                     ),
                     onChanged: (val) {
@@ -946,14 +910,18 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                   isDense: true,
                   decoration: const InputDecoration(
                     labelText: 'نوع التمرين',
-                    labelStyle: TextStyle(fontSize: 11, color: EngineRowingUI.labelSlate),
+                    labelStyle: TextStyle(
+                        fontSize: 11, color: EngineRowingUI.labelSlate),
                     filled: true,
                     fillColor: _cardFill,
                     contentPadding:
                         EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                    border: OutlineInputBorder(borderSide: BorderSide(color: _gridLine)),
-                    enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: _gridLine)),
-                    focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: _gold)),
+                    border: OutlineInputBorder(
+                        borderSide: BorderSide(color: _gridLine)),
+                    enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: _gridLine)),
+                    focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: _gold)),
                   ),
                   items: kProgramWorkoutKinds.map((k) {
                     return DropdownMenuItem(
@@ -994,20 +962,27 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                     ),
                     decoration: InputDecoration(
                       labelText: 'نسبة النبض %',
-                      labelStyle: const TextStyle(fontSize: 11, color: EngineRowingUI.labelSlate),
+                      labelStyle: const TextStyle(
+                          fontSize: 11, color: EngineRowingUI.labelSlate),
                       hintText: '55%:65%',
-                      hintStyle: const TextStyle(fontSize: 10, color: EngineRowingUI.captionGrey),
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                      border: OutlineInputBorder(borderSide: BorderSide(color: zoneColor)),
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: zoneColor.withAlpha(120))),
-                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: zoneColor, width: 2)),
+                      hintStyle: const TextStyle(
+                          fontSize: 10, color: EngineRowingUI.captionGrey),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 8),
+                      border: OutlineInputBorder(
+                          borderSide: BorderSide(color: zoneColor)),
+                      enabledBorder: OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: zoneColor.withAlpha(120))),
+                      focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: zoneColor, width: 2)),
                       isDense: true,
                       filled: true,
                       fillColor: zoneColor.withAlpha(25),
                     ),
                     onChanged: (val) {
-                      widget.item.hrRange = RowingNumberFormatter.toEnglishDigits(val);
+                      widget.item.hrRange =
+                          RowingNumberFormatter.toEnglishDigits(val);
                       widget.onDataChanged();
                     },
                   ),
@@ -1024,12 +999,16 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                   isDense: true,
                   decoration: InputDecoration(
                     labelText: 'Zone التمرين',
-                    labelStyle: const TextStyle(fontSize: 11, color: EngineRowingUI.labelSlate),
+                    labelStyle: const TextStyle(
+                        fontSize: 11, color: EngineRowingUI.labelSlate),
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                    border: OutlineInputBorder(borderSide: BorderSide(color: _gridLine)),
-                    enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: _gridLine)),
-                    focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: _gold)),
+                    border: OutlineInputBorder(
+                        borderSide: BorderSide(color: _gridLine)),
+                    enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: _gridLine)),
+                    focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: _gold)),
                     filled: true,
                     fillColor: zoneColor.withAlpha(20),
                   ),
@@ -1108,18 +1087,25 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
           // 9. ملاحظات أو تفاصيل إضافية (تمتد بكامل العرض لاستغلال المساحة المتاحة دون هدر)
           TextFormField(
             controller: _detailsCtrl,
-            style: const TextStyle(fontSize: 12.5, color: EngineRowingUI.textWhite),
+            style: const TextStyle(
+                fontSize: 12.5, color: EngineRowingUI.textWhite),
             decoration: InputDecoration(
               labelText: s.workoutDetails,
-              labelStyle: const TextStyle(fontSize: 11, color: EngineRowingUI.labelSlate),
+              labelStyle: const TextStyle(
+                  fontSize: 11, color: EngineRowingUI.labelSlate),
               hintText: 'ملاحظة أو تفاصيل التمرين...',
-              hintStyle: const TextStyle(fontSize: 10.5, color: EngineRowingUI.captionGrey),
+              hintStyle: const TextStyle(
+                  fontSize: 10.5, color: EngineRowingUI.captionGrey),
               filled: true,
               fillColor: _cardFill,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              border: const OutlineInputBorder(borderSide: BorderSide(color: _gridLine)),
-              enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: _gridLine)),
-              focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: _gold)),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              border: const OutlineInputBorder(
+                  borderSide: BorderSide(color: _gridLine)),
+              enabledBorder: const OutlineInputBorder(
+                  borderSide: BorderSide(color: _gridLine)),
+              focusedBorder: const OutlineInputBorder(
+                  borderSide: BorderSide(color: _gold)),
               isDense: true,
             ),
             onChanged: (val) {

@@ -32,47 +32,101 @@ class HeartRateZoneRange {
 /// 1. احتياطي النبض (HRR) = الحد الأقصى للنبض (MHR) - نبض الراحة (RHR)
 /// 2. النبض المستهدف = (احتياطي النبض × النسبة) + نبض الراحة
 ///
-/// نسب المناطق من احتياطي النبض:
-/// - Z1: 50% - 60%
-/// - Z2: 60% - 70%
-/// - Z3: 70% - 80%
-/// - Z4: 80% - 90%
-/// - Z5: 90% - 100%
+/// نسب المناطق المعتمدة في التطبيق كله (التعديل الثاني للـ ZONES):
+/// - (zone1 - UT3): 55% - 65% (متوسط النبض المخزن 60%)
+/// - (zone2 - UT2): 65% - 75% (متوسط النبض المخزن 70%)
+/// - (zone3 - UT1): 75% - 85% (متوسط النبض المخزن 85%)
+/// - (zone4 - AT): 85% - 90% (متوسط النبض المخزن 88%)
+/// - (Threshold - AT): 90% - 95% (متوسط النبض المخزن 92%)
+/// - (zone5 - TR): 95% - 98% (متوسط النبض المخزن 96%)
+/// - (VO2 max - AN): 98% - 105% (متوسط النبض المخزن 103%)
 class HeartRateZones {
+  /// قائمة مفاتيح الزونات السبعة بالترتيب
+  static const List<String> orderedZones = [
+    'Z1',
+    'Z2',
+    'Z3',
+    'Z4',
+    'Threshold',
+    'Z5',
+    'VO2 max',
+  ];
+
   /// نسب الزونات الأساسية
   static const Map<String, List<double>> zonePercentages = {
-    'Z1': [0.50, 0.60],
-    'Z2': [0.60, 0.70],
-    'Z3': [0.70, 0.80],
-    'Z4': [0.80, 0.90],
-    'Z5': [0.90, 1.00],
+    'Z1': [0.55, 0.65],
+    'Z2': [0.65, 0.75],
+    'Z3': [0.75, 0.85],
+    'Z4': [0.85, 0.90],
+    'Threshold': [0.90, 0.95],
+    'Z5': [0.95, 0.98],
+    'VO2 max': [0.98, 1.05],
   };
 
-  /// استخراج الزون الأساسي النظيف (Z1 إلى Z5) حتى لو كان النص يحتوي مسميات مثل "Z4 Threshold"
+  /// متوسطات نسب النبض المخزونة
+  static const Map<String, double> zoneMidPercentages = {
+    'Z1': 0.60,
+    'Z2': 0.70,
+    'Z3': 0.85,
+    'Z4': 0.88,
+    'Threshold': 0.92,
+    'Z5': 0.96,
+    'VO2 max': 1.03,
+  };
+
+  /// استخراج الزون الأساسي النظيف (Z1 إلى VO2 max)
   static String normalizeZoneKey(String zone) {
     final trimmed = zone.trim().toUpperCase();
-    if (trimmed.startsWith('Z1')) return 'Z1';
-    if (trimmed.startsWith('Z2')) return 'Z2';
-    if (trimmed.startsWith('Z3')) return 'Z3';
-    if (trimmed.startsWith('Z4')) return 'Z4';
-    if (trimmed.startsWith('Z5')) return 'Z5';
+    if (trimmed.contains('VO2') ||
+        trimmed.contains('MAX') ||
+        trimmed.contains('AN')) {
+      return 'VO2 max';
+    }
+    if (trimmed.contains('THRESHOLD') || trimmed.contains('THR')) {
+      return 'Threshold';
+    }
+    if (trimmed.startsWith('Z1') ||
+        trimmed.contains('ZONE1') ||
+        trimmed.contains('UT3')) {
+      return 'Z1';
+    }
+    if (trimmed.startsWith('Z2') ||
+        trimmed.contains('ZONE2') ||
+        trimmed.contains('UT2')) {
+      return 'Z2';
+    }
+    if (trimmed.startsWith('Z3') ||
+        trimmed.contains('ZONE3') ||
+        trimmed.contains('UT1')) {
+      return 'Z3';
+    }
+    if (trimmed.startsWith('Z4') ||
+        trimmed.contains('ZONE4') ||
+        (trimmed.contains('AT') && !trimmed.contains('THRESHOLD'))) {
+      return 'Z4';
+    }
+    if (trimmed.startsWith('Z5') ||
+        trimmed.contains('ZONE5') ||
+        trimmed.contains('TR')) {
+      return 'Z5';
+    }
     return 'Z2'; // القيمة الافتراضية
   }
 
   /// تحديد الزون تلقائياً بمعادلة كارفونين من نبض التمرين:
   /// HRR = MHR − RHR
   /// النسبة = (النبض − RHR) ÷ HRR
-  /// أقل من 60% → Z1
-  /// 60% إلى أقل من 70% → Z2
-  /// 70% إلى أقل من 80% → Z3
-  /// 80% إلى أقل من 90% → Z4
-  /// 90% فأكتر → Z5
   static String? determineZone({
     required int? hr,
     required int? mhr,
     required int? rhr,
   }) {
-    if (hr == null || mhr == null || rhr == null || hr <= 0 || mhr <= 0 || rhr <= 0) {
+    if (hr == null ||
+        mhr == null ||
+        rhr == null ||
+        hr <= 0 ||
+        mhr <= 0 ||
+        rhr <= 0) {
       return null;
     }
     if (mhr <= rhr) {
@@ -81,11 +135,13 @@ class HeartRateZones {
     final hrr = mhr - rhr;
     if (hrr <= 0) return 'Z1';
     final pct = (hr - rhr) / hrr;
-    if (pct < 0.60) return 'Z1';
-    if (pct < 0.70) return 'Z2';
-    if (pct < 0.80) return 'Z3';
+    if (pct < 0.65) return 'Z1';
+    if (pct < 0.75) return 'Z2';
+    if (pct < 0.85) return 'Z3';
     if (pct < 0.90) return 'Z4';
-    return 'Z5';
+    if (pct < 0.95) return 'Threshold';
+    if (pct < 0.98) return 'Z5';
+    return 'VO2 max';
   }
 
   /// اسم الزون المعروض
@@ -93,37 +149,45 @@ class HeartRateZones {
     final clean = normalizeZoneKey(zone);
     switch (clean) {
       case 'Z1':
-        return isArabic ? 'Z1 Recovery (استشفاء)' : 'Z1 Recovery';
+        return '(zone1 - UT3) = 55%:65%';
       case 'Z2':
-        return isArabic ? 'Z2 UT2 (هوائي أساسي)' : 'Z2 UT2';
+        return '(zone2 - UT2) = 65%:75%';
       case 'Z3':
-        return isArabic ? 'Z3 UT1 (هوائي مكثف)' : 'Z3 UT1';
+        return '(zone3 - UT1) = 75%:85%';
       case 'Z4':
-        return isArabic ? 'Z4 AT (عتبة لاهوائية)' : 'Z4 AT';
+        return '(zone4 - AT) = 85%:90%';
+      case 'Threshold':
+        return '(Threshold - AT) = 90%:95%';
       case 'Z5':
-        return isArabic ? 'Z5 TR / Max (أقصى جهد)' : 'Z5 TR / Max';
+        return '(zone5 - TR) = 95%:98%';
+      case 'VO2 max':
+        return '(VO2 max - AN) = 98%:105%';
       default:
         return zone;
     }
   }
 
-  /// لون الشارة للزون المعتمد في الهوية البصرية الجديدة:
-  /// Z1 فسفوري خفيف (#B8F229)، Z2 أزرق متوسط (#2979FF)، Z3 برتقالي متوسط (#FF9100)، Z4 برتقالي غامق (#E65100)، Z5 أحمر خفيف (#FF5252)
+  /// لون الشارة للزون المعتمد في الهوية المحدثة من الـ Theme
+  /// Z1 أزرق، Z2 أخضر، Z3 أصفر، Z4 برتقالي، Threshold برتقالي غامق، Z5 أحمر، VO2 max أحمر داكن
   static Color zoneColor(String zone) {
     final clean = normalizeZoneKey(zone);
     switch (clean) {
       case 'Z1':
-        return const Color(0xFFB8F229); // فسفوري خفيف
+        return const Color(0xFF2979FF); // أزرق
       case 'Z2':
-        return const Color(0xFF2979FF); // أزرق متوسط
+        return const Color(0xFF00E676); // أخضر
       case 'Z3':
-        return const Color(0xFFFF9100); // برتقالي متوسط
+        return const Color(0xFFFFD600); // أصفر
       case 'Z4':
-        return const Color(0xFFE65100); // برتقالي غامق
+        return const Color(0xFFFF9100); // برتقالي
+      case 'Threshold':
+        return const Color(0xFFE65100); // برتقالي داكن / Threshold
       case 'Z5':
-        return const Color(0xFFFF5252); // أحمر خفيف
+        return const Color(0xFFFF5252); // أحمر
+      case 'VO2 max':
+        return const Color(0xFF8B0000); // أحمر داكن (Dark Red)
       default:
-        return const Color(0xFFB8F229);
+        return const Color(0xFF2979FF);
     }
   }
 
