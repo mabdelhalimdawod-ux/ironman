@@ -9,6 +9,7 @@ import 'engine_rowing_ui.dart';
 import 'login_page.dart';
 import 'metrics_curve_page.dart';
 import 'program_tab.dart';
+import 'progress_tab.dart';
 import 'workouts_tab.dart';
 
 const Color navy = EngineRowingUI.bgNavy;
@@ -147,6 +148,7 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
         DashboardTab(user: widget.user),
         const ProgramTab(),
         const WorkoutsTab(),
+        ProgressTab(user: widget.user),
       ];
 
   void _toggleSideNav() {
@@ -250,6 +252,8 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
       ),
       _SideNavItemData(
           Icons.fitness_center_outlined, Icons.fitness_center, s.tabWorkouts),
+      _SideNavItemData(
+          Icons.auto_graph_outlined, Icons.auto_graph_rounded, s.tabProgress),
     ];
 
     // ════════════════════════════════════════
@@ -283,7 +287,12 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  [s.tabHome, s.tabProgram, s.tabWorkouts][_currentIndex],
+                  [
+                    s.tabHome,
+                    s.tabProgram,
+                    s.tabWorkouts,
+                    s.tabProgress,
+                  ][_currentIndex],
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -496,6 +505,51 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
     if (isMobile) {
       return Scaffold(
         backgroundColor: EngineRowingUI.bgNavy,
+        bottomNavigationBar: Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF071126),
+            border: Border(
+              top: BorderSide(color: EngineRowingUI.bgGridLine, width: 1.0),
+            ),
+          ),
+          child: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: (index) {
+              setState(() {
+                _currentIndex = index;
+                _navWidth = 0.0;
+              });
+            },
+            backgroundColor: const Color(0xFF071126),
+            selectedItemColor: yellow,
+            unselectedItemColor: EngineRowingUI.captionGrey,
+            type: BottomNavigationBarType.fixed,
+            selectedFontSize: 11,
+            unselectedFontSize: 10,
+            items: [
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.home_outlined),
+                activeIcon: const Icon(Icons.home),
+                label: s.tabHome,
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.event_repeat_outlined),
+                activeIcon: const Icon(Icons.event_repeat),
+                label: s.tabProgram,
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.fitness_center_outlined),
+                activeIcon: const Icon(Icons.fitness_center),
+                label: s.tabWorkouts,
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.auto_graph_outlined),
+                activeIcon: const Icon(Icons.auto_graph_rounded),
+                label: s.tabProgress,
+              ),
+            ],
+          ),
+        ),
         body: Stack(
           children: [
             Positioned.fill(

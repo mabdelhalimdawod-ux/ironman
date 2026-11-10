@@ -1,252 +1,124 @@
-import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
 import 'dart:math';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
+import 'app_strings.dart';
+import 'auth_service.dart';
+import 'db.dart';
+import 'engine_rowing_ui.dart';
+import 'heart_rate_zones.dart';
+import 'progress_calcs.dart';
+import 'progress_panel.dart';
 
-const kinds = ['Erg', 'Water', 'Fitness', 'Running'];
-const zones = {
-  'Z1': [50, 60],
-  'Z2': [60, 70],
-  'Z3': [70, 80],
-  'Z4 Threshold': [80, 90],
-  'Z5 VO2 Max': [90, 100],
-};
+/// تبويب التقدم والتحليلات (Progress Tab)
+/// يعرض مؤشرات الأداء الفسيولوجي، مخطط إدارة الأداء (PMC)،
+/// خط الأساس ومراقبة الزونات السبعة، ومنحنيات التطور الزمني.
+class ProgressTab extends StatefulWidget {
+  final AppUser? user;
 
-/// مناطق القدرة بناءً على الـ Critical Power
-const cpPowerZones = {
-  'Z1 استشفاء': [0, 55],
-  'Z2 تحمل هوائي': [56, 75],
-  'Z3 إيقاع': [76, 90],
-  'Z4 عتبة (CP)': [91, 105],
-  'Z5 VO2max': [106, 120],
-  'Z6 لا هوائي': [121, 200],
-};
+  const ProgressTab({super.key, this.user});
 
-/// أنواع اختبارات CP
-const cpTestTypes = ['2000m', '5000m', '500m', '6min', '12min', '30min', 'مخصص'];
-
-/// تسميات مستوى الإرهاق
-const fatigueLabels = {1: 'ممتاز', 2: 'جيد', 3: 'مقبول', 4: 'متعب', 5: 'مرهق'};
-
-/// تسميات مستوى الجاهزية
-const readinessLabels = {1: 'مرهق', 2: 'غير جاهز', 3: 'متوسط', 4: 'جاهز', 5: 'جاهز تمامًا'};
-
-String dstr(DateTime d) =>
-    '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-
-/// نطاق النبض المستهدف للاعب حسب الـ MHR والـ Zone
-String hrRange(int mhr, String zone) {
-  final z = zones[zone] ?? [60, 70];
-  return '${(mhr * z[0] / 100).round()} - ${(mhr * z[1] / 100).round()}';
+  @override
+  State<ProgressTab> createState() => _ProgressTabState();
 }
 
-/// نطاق القدرة المستهدف للاعب بناءً على CP ومنطقة القدرة
-String cpRange(double cp, String powerZone) {
-  final z = cpPowerZones[powerZone] ?? [56, 75];
-  return '${(cp * z[0] / 100).round()} - ${(cp * z[1] / 100).round()} W';
-}
+class _ProgressTabState extends State<ProgressTab> {
+  bool _loading = true;
+  List<Map<String, Object?>> _players = [];
+  int? _selectedPlayerId;
+  String _selectedFilter = '30D'; // '7D', '30D', '90D', 'All'
 
-/// تحديد منطقة القدرة من الواط الفعلي والـ CP
-String powerZoneFromWatts(double watts, double cp) {
-  if (cp <= 0) return '-';
-  final pct = (watts / cp * 100).round();
-  for (final e in cpPowerZones.entries) {
-    if (pct >= e.value[0] && pct <= e.value[1]) return e.key;
-  }
-  return pct > 200 ? 'Z6 لا هوائي' : 'Z1 استشفاء';
-}
+  // ── نقاط المنحنيات ──
+  List<DateValuePoint> _ctlPoints = [];
+  List<DateValuePoint> _atlPoints = [];
+  List<DateValuePoint> _tsbPoints = [];
+  double _currentCTL = 0.0;
+  double _currentATL = 0.0;
+  double _currentTSB = 0.0;
 
-// ==================== حسابات الأرقو (Concept2) ====================
-
-/// تحويل زمن 500م (بالثواني) إلى واط
-double splitToWatts(double splitSeconds) {
-  if (splitSeconds <= 0) return 0;
-  final pace = splitSeconds / 500; // ثانية لكل متر
-  return 2.80 / (pace * pace * pace);
-}
-
-/// تحويل الواط إلى زمن 500م (بالثواني)
-double wattsToSplit(double watts) {
-  if (watts <= 0) return 0;
-  final pace = pow(2.80 / watts, 1.0 / 3.0); // ثانية لكل متر
-  return (pace * 500).toDouble();
-}
-
-/// تنسيق زمن السبليت: 105.3 ثانية → "1:45.3"
-String formatSplit(double seconds) {
-  if (seconds <= 0) return '-';
-  final mins = (seconds / 60).floor();
-  final secs = seconds - mins * 60;
-  return '$mins:${secs.toStringAsFixed(1).padLeft(4, '0')}';
-}
+  Map<String, ZoneBaseline> _zoneBaselines = {};
+  final Map<String, List<DateValuePoint>> _zoneWattsPoints = {};
   final Map<String, List<DateValuePoint>> _zoneSplitPoints = {};
   final Map<String, List<DateValuePoint>> _zoneDecouplingPoints = {};
 
-/// تنسيق الوقت بالدقائق والثواني: 480 ثانية → "8:00"
-String formatDuration(int seconds) {
-  final mins = seconds ~/ 60;
-  final secs = seconds % 60;
-  return '$mins:${secs.toString().padLeft(2, '0')}';
-}
+  List<DateValuePoint> _hrvPoints = [];
+  List<DateValuePoint> _rhrPoints = [];
+  List<DateValuePoint> _sleepPoints = [];
+  List<DateValuePoint> _weightPoints = [];
+  List<DateValuePoint> _eupneaPoints = [];
+  List<DateValuePoint> _decouplingPoints = [];
+  List<DateValuePoint> _efPoints = [];
+
+  bool _hasIncompleteInputs = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInitialData();
+  }
 
   Future<void> _loadInitialData() async {
     setState(() => _loading = true);
     try {
-      await DB.db; // التأكد من تهيئة قاعدة البيانات
-
-      // جلب قائمة اللاعبين
+      await DB.db;
       final players = await DB.players();
       _players = players;
 
-      // إذا كان المستخدم لاعب، نثبت حسابه تلقائياً
       if (widget.user != null && widget.user!.isAthlete) {
         _selectedPlayerId = widget.user!.id;
+      } else if (_players.isNotEmpty && _selectedPlayerId == null) {
+        _selectedPlayerId = _players.first['id'] as int?;
       }
 
       await _fetchDataForSelection();
-    } catch (e) {
-      // تجاهل الأخطاء العابرة أثناء التهيئة
+    } catch (_) {
+      // تجاهل أخطاء التهيئة العابرة
     } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
+      if (mounted) setState(() => _loading = false);
     }
   }
 
-  // طريقة الانحدار الخطي (3+ نقاط)
-  // W (الشغل الكلي) = CP × t + W'
-  // المنحدر = CP, التقاطع = W'
-  final n = tests.length.toDouble();
-  double sumT = 0, sumW = 0, sumTW = 0, sumT2 = 0;
-  for (final test in tests) {
-    final t = (test['duration_seconds'] as int).toDouble();
-    final w = (test['avg_power'] as num).toDouble() * t;
-    sumT += t;
-    sumW += w;
-    sumTW += t * w;
-    sumT2 += t * t;
-  }
-
-  final denom = n * sumT2 - sumT * sumT;
-  if (denom == 0) return {};
-
-  final cp = (n * sumTW - sumT * sumW) / denom;
-  final wPrime = (sumW - cp * sumT) / n;
-
-  if (cp <= 0) return {};
-  return {'cp': cp, 'w_prime': wPrime.abs()};
-}
-
-/// تقدير CP من اختبار واحد (أقل دقة)
-/// يستخدم عامل تقريبي حسب مدة الاختبار
-double estimateCPFromSingle(double avgPower, int durationSeconds) {
-  // كلما زادت المدة كلما اقترب المتوسط من CP
-  if (durationSeconds >= 1800) return avgPower * 0.97; // 30+ دقيقة
-  if (durationSeconds >= 1200) return avgPower * 0.93; // 20 دقيقة
-  if (durationSeconds >= 720) return avgPower * 0.90;  // 12 دقيقة
-  if (durationSeconds >= 360) return avgPower * 0.85;  // 6 دقائق
-  if (durationSeconds >= 120) return avgPower * 0.78;  // 2 دقيقة
-  return avgPower * 0.70; // أقل من دقيقتين
-}
-
-// ==================== حساب حمل التدريب (TSS) ====================
-
-/// حساب Training Stress Score
-/// TSS = (t × P²) / (CP² × 3600) × 100
-double calculateTSS({
-  required double avgPower,
-  required int durationSeconds,
-  required double cp,
-}) {
-  if (cp <= 0 || durationSeconds <= 0 || avgPower <= 0) return 0;
-  final intensityFactor = avgPower / cp;
-  return (durationSeconds * avgPower * intensityFactor) / (cp * 3600) * 100;
-}
-
-/// حساب Intensity Factor
-double intensityFactor(double avgPower, double cp) {
-  if (cp <= 0) return 0;
-  return avgPower / cp;
-}
-
-// ==================== حساب التوازن والجاهزية ====================
-
-/// حساب نسبة الاستشفاء
-double? recoveryRate(int? hrDuring, int? hrPost) {
-  if (hrDuring == null || hrPost == null || hrDuring == 0) return null;
-  return ((hrDuring - hrPost) / hrDuring) * 100;
-}
-
-/// حساب مؤشر الجاهزية الشامل (مبني على CP + الفسيولوجيا)
-double calculateReadiness({
-  int? rhr,
-  double? rhrBaseline,
-  int? hrv,
-  double? hrvBaseline,
-  int? fatigue,
-  double? sleepHours,
-  double? tsb, // Training Stress Balance - المؤشر الرئيسي
-}) {
-  double score = 70;
-
-  // ═══ TSB هو المقياس الرئيسي (الأهم - مبني على CP) ═══
-  if (tsb != null) {
-    if (tsb > 20) {
-      score += 20; // جاهز جدًا
-    } else if (tsb > 5) {
-      score += 12; // جاهز
-    } else if (tsb > -10) {
-      score += 0; // متوازن
-    } else if (tsb > -25) {
-      score -= 12; // إجهاد تدريبي
-    } else {
-      score -= 25; // إفراط تدريبي
+  int _getFilterDays() {
+    switch (_selectedFilter) {
+      case '7D':
+        return 7;
+      case '30D':
+        return 30;
+      case '90D':
+        return 90;
+      case 'All':
+      default:
+        return 365;
     }
   }
 
-  // RHR مقارنة بالخط الأساسي
-  if (rhr != null && rhrBaseline != null && rhrBaseline > 0) {
-    final diff = rhr - rhrBaseline;
-    if (diff > 8) {
-      score -= 15;
-    } else if (diff > 5) {
-      score -= 8;
-    } else if (diff > 3) {
-      score -= 4;
-    } else if (diff < -2) {
-      score += 3;
+  Future<void> _fetchDataForSelection() async {
+    if (_selectedPlayerId == null) {
+      _hasIncompleteInputs = true;
+      return;
     }
-  }
 
-  // HRV مقارنة بالخط الأساسي
-  if (hrv != null && hrvBaseline != null && hrvBaseline > 0) {
-    final ratio = hrv / hrvBaseline;
-    if (ratio < 0.7) {
-      score -= 15;
-    } else if (ratio < 0.85) {
-      score -= 7;
-    } else if (ratio > 1.1) {
-      score += 5;
-    }
-  }
+    final limitDays = _getFilterDays();
+    final logs = await DB.playerLogs(_selectedPlayerId!, limit: limitDays);
 
-  // الإرهاق المحسوس
-  if (fatigue != null) {
-    score += (fatigue - 3) * -5.0;
-  }
+    _hasIncompleteInputs = logs.isEmpty ||
+        logs.any((l) =>
+            l['rhr'] == null || l['hrv'] == null || l['avg_power'] == null);
 
-  // النوم
-  if (sleepHours != null) {
-    if (sleepHours < 5) {
-      score -= 12;
-    } else if (sleepHours < 6) {
-      score -= 7;
-    } else if (sleepHours >= 8) {
-      score += 3;
-    }
-  }
+    // 1. حساب خط الأساس لكل زون
+    _zoneBaselines = ProgressCalcs.computeZoneBaselines(logs);
 
-  return score.clamp(0, 100);
-}
+    // 2. إعداد نقاط المنحنيات الفسيولوجية
+    final Map<String, List<double>> hrvByDate = {};
+    final Map<String, List<double>> rhrByDate = {};
+    final Map<String, List<double>> sleepByDate = {};
+    final Map<String, List<double>> weightByDate = {};
+    final Map<String, List<double>> eupneaByDate = {};
+    final Map<String, List<double>> decouplingByDate = {};
+    final Map<String, List<double>> efByDate = {};
+
+    final Map<String, Map<String, List<double>>> zoneWattsByDate = {
+      for (final z in HeartRateZones.orderedZones) z: {},
+    };
     final Map<String, Map<String, List<double>>> zoneSplitByDate = {
       for (final z in HeartRateZones.orderedZones) z: {},
     };
@@ -254,173 +126,34 @@ double calculateReadiness({
       for (final z in HeartRateZones.orderedZones) z: {},
     };
 
-/// لون مؤشر الجاهزية
-int readinessColor(double score) {
-  if (score >= 80) return 0xFF4CAF50;
-  if (score >= 60) return 0xFFFFC107;
-  if (score >= 40) return 0xFFFF9800;
-  return 0xFFF44336;
-}
+    final List<Map<String, dynamic>> dailyTssInput = [];
 
-/// نص مؤشر الجاهزية
-String readinessText(double score) {
-  if (score >= 80) return 'ممتاز';
-  if (score >= 60) return 'جيد';
-  if (score >= 40) return 'انتبه';
-  return 'خطر';
-}
+    for (final r in logs) {
+      final dateStr = r['date'] as String?;
+      if (dateStr == null) continue;
 
-/// نص وصف TSB
-String tsbDescription(double tsb) {
-  if (tsb > 25) return 'جاهز تمامًا - يمكن المنافسة';
-  if (tsb > 10) return 'مستريح - مناسب لتمرين قوي';
-  if (tsb > -5) return 'متوازن - تدريب مثالي';
-  if (tsb > -15) return 'إجهاد خفيف - بناء لياقة';
-  if (tsb > -30) return 'إجهاد - يحتاج مراقبة';
-  return 'إفراط تدريبي - يحتاج راحة!';
-}
+      final date = DateTime.tryParse(dateStr);
+      if (date == null) continue;
 
-int tsbColor(double tsb) {
-  if (tsb > 15) return 0xFF2196F3;   // أزرق - جاهز/مستريح
-  if (tsb > 0) return 0xFF4CAF50;    // أخضر - متوازن
-  if (tsb > -15) return 0xFFFFC107;  // أصفر - إجهاد بنّاء
-  if (tsb > -30) return 0xFFFF9800;  // برتقالي - إجهاد
-  return 0xFFF44336;                  // أحمر - إفراط
-}
-
-// ==================== قاعدة البيانات ====================
-
-class DB {
-  static Database? _db;
-  static Future<Database> get db async => _db ??= await _open();
-  static set testDatabase(Database? db) => _db = db;
-
-  static Future<Database> _open() async {
-    final path = join(await getDatabasesPath(), 'rowing.db');
-    return openDatabase(path, version: 4,
-        onCreate: (d, v) async {
-          await d.execute(
-              'CREATE TABLE players(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mhr INTEGER, active INTEGER DEFAULT 1)');
-          await d.execute(
-              'CREATE TABLE cycles(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, start TEXT, end TEXT)');
-          await d.execute(
-              'CREATE TABLE sessions(date TEXT, idx INTEGER, kind TEXT, zone TEXT, PRIMARY KEY(date, idx))');
-          await d.execute(
-              'CREATE TABLE notes(date TEXT PRIMARY KEY, general TEXT, tech TEXT)');
-          await d.execute('''
-            CREATE TABLE logs(
-              player_id INTEGER,
-              date TEXT,
-              idx INTEGER,
-              rhr INTEGER,
-              hrv INTEGER,
-              hr INTEGER,
-              hr_max INTEGER,
-              hr_post INTEGER,
-              hr_1min INTEGER,
-              weight REAL,
-              fatigue INTEGER,
-              sleep_hours REAL,
-              readiness INTEGER,
-              player_notes TEXT,
-              avg_power REAL,
-              max_power REAL,
-              duration_seconds INTEGER,
-              distance INTEGER,
-              split_500 REAL,
-              ef REAL,
-              PRIMARY KEY(player_id, date, idx)
-            )
-          ''');
-          await d.execute('''
-            CREATE TABLE cp_tests(
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              player_id INTEGER,
-              date TEXT,
-              test_type TEXT,
-              duration_seconds INTEGER,
-              avg_power REAL,
-              max_power REAL,
-              distance INTEGER,
-              avg_hr INTEGER,
-              max_hr INTEGER,
-              split_500 REAL,
-              notes TEXT
-            )
-          ''');
-          await d.execute('''
-            CREATE TABLE cp_values(
-              player_id INTEGER,
-              date TEXT,
-              cp REAL,
-              w_prime REAL,
-              method TEXT,
-              PRIMARY KEY(player_id, date)
-            )
-          ''');
-        },
-        onUpgrade: (d, oldVersion, newVersion) async {
-          if (oldVersion < 2) {
-            await d.execute('ALTER TABLE logs ADD COLUMN hr_max INTEGER');
-            await d.execute('ALTER TABLE logs ADD COLUMN hr_post INTEGER');
-            await d.execute('ALTER TABLE logs ADD COLUMN hr_1min INTEGER');
-            await d.execute('ALTER TABLE logs ADD COLUMN fatigue INTEGER');
-            await d.execute('ALTER TABLE logs ADD COLUMN sleep_hours REAL');
-            await d.execute('ALTER TABLE logs ADD COLUMN readiness INTEGER');
-            await d.execute('ALTER TABLE logs ADD COLUMN player_notes TEXT');
-          }
-          if (oldVersion < 3) {
-            await d.execute('ALTER TABLE logs ADD COLUMN avg_power REAL');
-            await d.execute('ALTER TABLE logs ADD COLUMN max_power REAL');
-            await d.execute('ALTER TABLE logs ADD COLUMN duration_seconds INTEGER');
-            await d.execute('ALTER TABLE logs ADD COLUMN distance INTEGER');
-            await d.execute('''
-              CREATE TABLE IF NOT EXISTS cp_tests(
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                player_id INTEGER,
-                date TEXT,
-                test_type TEXT,
-                duration_seconds INTEGER,
-                avg_power REAL,
-                max_power REAL,
-                distance INTEGER,
-                avg_hr INTEGER,
-                max_hr INTEGER,
-                split_500 REAL,
-                notes TEXT
-              )
-            ''');
-            await d.execute('''
-              CREATE TABLE IF NOT EXISTS cp_values(
-                player_id INTEGER,
-                date TEXT,
-                cp REAL,
-                w_prime REAL,
-                method TEXT,
-                PRIMARY KEY(player_id, date)
-              )
-            ''');
-          }
-          if (oldVersion < 4) {
-            await d.execute('ALTER TABLE logs ADD COLUMN split_500 REAL');
-            await d.execute('ALTER TABLE logs ADD COLUMN ef REAL');
-          }
-        });
-  }
-
-  static Future<List<Map<String, Object?>>> q(String sql, [List<Object?>? a]) async =>
-      (await db).rawQuery(sql, a);
-
-  static Future<void> put(String table, Map<String, Object?> v) async =>
-      (await db).insert(table, v, conflictAlgorithm: ConflictAlgorithm.replace);
-
-  static Future<void> del(String table, String where, List<Object?> a) async =>
-      (await db).delete(table, where: where, whereArgs: a);
-
+      final rhr = (r['rhr'] as num?)?.toDouble();
+      final hrv = (r['hrv'] as num?)?.toDouble();
+      final sleep = (r['sleep_hours'] as num?)?.toDouble();
+      final weight = (r['weight'] as num?)?.toDouble();
+      final eupnea = (r['eupnea'] as num?)?.toDouble();
+      final decoupling = (r['decoupling'] as num?)?.toDouble();
+      final ef = (r['ef'] as num?)?.toDouble();
+      final watts = (r['avg_power'] as num?)?.toDouble();
       final split = (r['split_500'] as num?)?.toDouble();
+      final dur = (r['duration_seconds'] as num?)?.toInt() ?? 0;
+      final actualZone = r['zone'] as String?;
 
-  static Future<List<Map<String, Object?>>> sessions(String date) =>
-      q('SELECT * FROM sessions WHERE date=? ORDER BY idx', [date]);
+      if (rhr != null && rhr > 0) rhrByDate.putIfAbsent(dateStr, () => []).add(rhr);
+      if (hrv != null && hrv > 0) hrvByDate.putIfAbsent(dateStr, () => []).add(hrv);
+      if (sleep != null && sleep > 0) sleepByDate.putIfAbsent(dateStr, () => []).add(sleep);
+      if (weight != null && weight > 0) weightByDate.putIfAbsent(dateStr, () => []).add(weight);
+      if (eupnea != null && eupnea > 0) eupneaByDate.putIfAbsent(dateStr, () => []).add(eupnea);
+      if (decoupling != null && decoupling > 0) decouplingByDate.putIfAbsent(dateStr, () => []).add(decoupling);
+      if (ef != null && ef > 0) efByDate.putIfAbsent(dateStr, () => []).add(ef);
 
       if (actualZone != null) {
         final normZone = HeartRateZones.normalizeZoneKey(actualZone);
@@ -435,16 +168,33 @@ class DB {
         }
       }
 
-  // ==================== اختبارات CP ====================
+      // TSS
+      if (watts != null && watts > 0 && dur > 0) {
+        final cp = await DB.playerCP(_selectedPlayerId!) ?? 250.0;
+        final tss = calculateTSS(avgPower: watts, durationSeconds: dur, cp: cp);
+        dailyTssInput.add({'date': date, 'tss': tss});
+      }
+    }
 
-  /// جلب جميع اختبارات CP للاعب
-  static Future<List<Map<String, Object?>>> cpTests(int playerId) =>
-      q('SELECT * FROM cp_tests WHERE player_id=? ORDER BY date DESC', [playerId]);
+    List<DateValuePoint> mapToPoints(Map<String, List<double>> data) {
+      final sortedKeys = data.keys.toList()..sort();
+      return sortedKeys.map((k) {
+        final vals = data[k]!;
+        final avg = vals.reduce((a, b) => a + b) / vals.length;
+        return DateValuePoint(
+          date: DateTime.parse(k),
+          value: double.parse(avg.toStringAsFixed(1)),
+        );
+      }).toList();
+    }
 
-  /// إضافة اختبار CP
-  static Future<void> addCPTest(Map<String, Object?> test) async {
-    await (await db).insert('cp_tests', test);
-  }
+    _hrvPoints = mapToPoints(hrvByDate);
+    _rhrPoints = mapToPoints(rhrByDate);
+    _sleepPoints = mapToPoints(sleepByDate);
+    _weightPoints = mapToPoints(weightByDate);
+    _eupneaPoints = mapToPoints(eupneaByDate);
+    _decouplingPoints = mapToPoints(decouplingByDate);
+    _efPoints = mapToPoints(efByDate);
 
     _zoneWattsPoints.clear();
     _zoneSplitPoints.clear();
@@ -455,187 +205,376 @@ class DB {
       _zoneDecouplingPoints[z] = mapToPoints(zoneDecouplingByDate[z] ?? {});
     }
 
-  /// جلب آخر قيمة CP محسوبة للاعب
-  static Future<double?> playerCP(int playerId) async {
-    final r = await q(
-        'SELECT cp FROM cp_values WHERE player_id=? ORDER BY date DESC LIMIT 1',
-        [playerId]);
-    if (r.isEmpty) return null;
-    return (r.first['cp'] as num?)?.toDouble();
+    // 3. حسابات PMC
+    final pmcResult = ProgressCalcs.calculatePMC(dailyTssList: dailyTssInput);
+    _ctlPoints = (pmcResult['ctlPoints'] as List<dynamic>?)?.cast<DateValuePoint>() ?? [];
+    _atlPoints = (pmcResult['atlPoints'] as List<dynamic>?)?.cast<DateValuePoint>() ?? [];
+    _tsbPoints = (pmcResult['tsbPoints'] as List<dynamic>?)?.cast<DateValuePoint>() ?? [];
+    _currentCTL = (pmcResult['currentCTL'] as num?)?.toDouble() ?? 0.0;
+    _currentATL = (pmcResult['currentATL'] as num?)?.toDouble() ?? 0.0;
+    _currentTSB = (pmcResult['currentTSB'] as num?)?.toDouble() ?? 0.0;
   }
 
-  /// جلب آخر قيمة W' للاعب
-  static Future<double?> playerWPrime(int playerId) async {
-    final r = await q(
-        'SELECT w_prime FROM cp_values WHERE player_id=? ORDER BY date DESC LIMIT 1',
-        [playerId]);
-    if (r.isEmpty) return null;
-    return (r.first['w_prime'] as num?)?.toDouble();
+  void _showInfoDialog(String title, String explanation) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: EngineRowingUI.cardFill,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: EngineRowingUI.neonLime, width: 1.0),
+        ),
+        title: Row(
+          children: [
+            const Icon(Icons.info_outline_rounded,
+                color: EngineRowingUI.neonLime, size: 22),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  color: EngineRowingUI.textWhite,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          explanation,
+          style: const TextStyle(
+            color: EngineRowingUI.labelSlate,
+            fontSize: 14,
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: EngineRowingUI.neonLime,
+              foregroundColor: EngineRowingUI.bgNavy,
+            ),
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(AppStrings.of(context).close),
+          ),
+        ],
+      ),
+    );
   }
 
-  /// جلب سجل CP عبر الزمن للاعب
-  static Future<List<Map<String, Object?>>> cpHistory(int playerId) =>
-      q('SELECT * FROM cp_values WHERE player_id=? ORDER BY date', [playerId]);
+  String _formatSplit(double seconds) {
+    if (seconds <= 0) return '--';
+    final mins = (seconds / 60).floor();
+    final secs = seconds - mins * 60;
+    return '$mins:${secs.toStringAsFixed(1).padLeft(4, '0')}';
+  }
 
-  /// حساب وحفظ CP من الاختبارات المتاحة
-  static Future<Map<String, double>> computeAndSaveCP(int playerId) async {
-    final tests = await cpTests(playerId);
-    if (tests.isEmpty) return {};
+  MetricTrendDirection _toDir(ProgressTrend t) {
+    switch (t) {
+      case ProgressTrend.up:
+        return MetricTrendDirection.up;
+      case ProgressTrend.down:
+        return MetricTrendDirection.down;
+      case ProgressTrend.neutral:
+        return MetricTrendDirection.neutral;
+    }
+  }
 
-    // تجميع أحدث اختبار لكل مدة مختلفة
-    final byDuration = <int, Map<String, Object?>>{};
-    for (final t in tests) {
-      final dur = t['duration_seconds'] as int;
-      if (!byDuration.containsKey(dur)) {
-        byDuration[dur] = t;
-      }
+  @override
+  Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+
+    if (_loading) {
+      return const Center(
+        child: CircularProgressIndicator(color: EngineRowingUI.neonLime),
+      );
     }
 
-    final testList = byDuration.values
-        .map((t) => {
-              'duration_seconds': t['duration_seconds'] as int,
-              'avg_power': (t['avg_power'] as num).toDouble(),
-            })
-        .toList();
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // ── 1. رأس الصفحة (العنوان + اختيار اللاعب والفلتر) ──
+          _buildHeaderSection(s),
+          const SizedBox(height: 12),
 
-    Map<String, double> result;
-    String method;
+          // ── 2. شريط تحذير استكمال المدخلات ──
+          if (_hasIncompleteInputs) ...[
+            _buildWarningBanner(s),
+            const SizedBox(height: 12),
+          ],
 
-    if (testList.length >= 2) {
-      result = calculateCP(testList);
-      method = testList.length >= 3 ? 'regression' : 'two_point';
-    } else {
-      // تقدير من اختبار واحد
-      final t = testList.first;
-      final estimated = estimateCPFromSingle(
-          (t['avg_power'] as num).toDouble(), t['duration_seconds'] as int);
-      result = {'cp': estimated, 'w_prime': 0};
-      method = 'estimated';
-    }
+          // ── 3. قسم مخطط إدارة الأداء PMC ──
+          _buildPmcSection(s),
+          const SizedBox(height: 14),
 
-    if (result.isNotEmpty && (result['cp'] ?? 0) > 0) {
-      await put('cp_values', {
-        'player_id': playerId,
-        'date': dstr(DateTime.now()),
-        'cp': result['cp'],
-        'w_prime': result['w_prime'],
-        'method': method,
-      });
-    }
+          // ── 4. قسم خط الأساس ومراقبة الزونات السبعة ──
+          _buildZoneBaselinesSection(s),
+          const SizedBox(height: 14),
 
-    return result;
+          // ── 5. قسم المنحنيات الفسيولوجية ومنحنيات الزونات ──
+          _buildCurvesSection(s),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
   }
 
-  // ==================== تحليلات التمرين ====================
+  // ════════════════════════════════════════════════════════════════
+  // 1. قسم الرأس والفلترة واختيار اللاعب
+  // ════════════════════════════════════════════════════════════════
+  Widget _buildHeaderSection(AppStrings s) {
+    final isAthlete = widget.user != null && widget.user!.isAthlete;
 
-  /// جلب جميع سجلات لاعب مرتبة بالتاريخ
-  static Future<List<Map<String, Object?>>> playerLogs(int playerId, {int limit = 90}) =>
-      q('SELECT l.*, s.kind, s.zone FROM logs l LEFT JOIN sessions s ON l.date=s.date AND l.idx=s.idx WHERE l.player_id=? ORDER BY l.date DESC, l.idx DESC LIMIT ?',
-          [playerId, limit]);
+    return ProgressPanel(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.auto_graph_rounded,
+                  color: EngineRowingUI.neonLime, size: 24),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  s.progressTitle,
+                  style: const TextStyle(
+                    color: EngineRowingUI.textWhite,
+                    fontSize: 16.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            s.progressSubtitle,
+            style: const TextStyle(
+              color: EngineRowingUI.captionGrey,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 12),
 
-  /// جلب آخر سجل للاعب
-  static Future<Map<String, Object?>?> latestLog(int playerId) async {
-    final r = await q(
-        'SELECT * FROM logs WHERE player_id=? ORDER BY date DESC, idx DESC LIMIT 1',
-        [playerId]);
-    return r.isEmpty ? null : r.first;
+          // اختيار اللاعب + فلاتر المدة
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            alignment: WrapAlignment.spaceBetween,
+            children: [
+              // اختيار اللاعب
+              if (isAthlete)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.person,
+                        color: EngineRowingUI.neonLime, size: 18),
+                    const SizedBox(width: 6),
+                    Text(
+                      widget.user!.name,
+                      style: const TextStyle(
+                        color: EngineRowingUI.textWhite,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: EngineRowingUI.equationCardFill,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: EngineRowingUI.neonLime.withValues(alpha: 0.4),
+                      width: 1.0,
+                    ),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<int>(
+                      value: _selectedPlayerId,
+                      dropdownColor: EngineRowingUI.cardFill,
+                      icon: const Icon(Icons.arrow_drop_down,
+                          color: EngineRowingUI.neonLime),
+                      style: const TextStyle(
+                        color: EngineRowingUI.textWhite,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      onChanged: (newId) async {
+                        if (newId != null) {
+                          setState(() {
+                            _selectedPlayerId = newId;
+                            _loading = true;
+                          });
+                          await _fetchDataForSelection();
+                          if (mounted) setState(() => _loading = false);
+                        }
+                      },
+                      items: _players.map((p) {
+                        return DropdownMenuItem<int>(
+                          value: p['id'] as int,
+                          child: Text(p['name'] as String? ?? '--'),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+
+              // فلاتر المدة الزمنية: 7D, 30D, 90D, All
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: ['7D', '30D', '90D', 'All'].map((filter) {
+                  final isSelected = _selectedFilter == filter;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    child: InkWell(
+                      onTap: () async {
+                        if (_selectedFilter != filter) {
+                          setState(() {
+                            _selectedFilter = filter;
+                            _loading = true;
+                          });
+                          await _fetchDataForSelection();
+                          if (mounted) setState(() => _loading = false);
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? EngineRowingUI.neonLime
+                              : EngineRowingUI.equationCardFill,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: isSelected
+                                ? EngineRowingUI.neonLime
+                                : EngineRowingUI.bgGridLine,
+                            width: 1.0,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (isSelected) ...[
+                              const RowingTrendIndicator(
+                                direction: MetricTrendDirection.up,
+                                size: 10,
+                              ),
+                              const SizedBox(width: 4),
+                            ],
+                            Text(
+                              filter,
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                                color: isSelected
+                                    ? EngineRowingUI.bgNavy
+                                    : EngineRowingUI.labelSlate,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
-  /// خط الأساس (متوسط آخر n يوم)
-  static Future<Map<String, double>> playerBaseline(int playerId, {int days = 14}) async {
-    final cutoff = dstr(DateTime.now().subtract(Duration(days: days)));
-    final r = await q('''
-      SELECT 
-        AVG(rhr) as avg_rhr,
-        AVG(hrv) as avg_hrv,
-        AVG(hr) as avg_hr,
-        AVG(weight) as avg_weight,
-        AVG(fatigue) as avg_fatigue,
-        AVG(sleep_hours) as avg_sleep,
-        AVG(avg_power) as avg_power,
-        MIN(rhr) as min_rhr,
-        MAX(hrv) as max_hrv,
-        COUNT(*) as count
-      FROM logs 
-      WHERE player_id=? AND date>=? AND rhr IS NOT NULL
-    ''', [playerId, cutoff]);
-
-    if (r.isEmpty || r.first['count'] == 0) return {};
-
-    final row = r.first;
-    return {
-      'avg_rhr': (row['avg_rhr'] as num?)?.toDouble() ?? 0,
-      'avg_hrv': (row['avg_hrv'] as num?)?.toDouble() ?? 0,
-      'avg_hr': (row['avg_hr'] as num?)?.toDouble() ?? 0,
-      'avg_weight': (row['avg_weight'] as num?)?.toDouble() ?? 0,
-      'avg_fatigue': (row['avg_fatigue'] as num?)?.toDouble() ?? 0,
-      'avg_sleep': (row['avg_sleep'] as num?)?.toDouble() ?? 0,
-      'avg_power': (row['avg_power'] as num?)?.toDouble() ?? 0,
-      'min_rhr': (row['min_rhr'] as num?)?.toDouble() ?? 0,
-      'max_hrv': (row['max_hrv'] as num?)?.toDouble() ?? 0,
-      'count': (row['count'] as num?)?.toDouble() ?? 0,
-    };
+  // ════════════════════════════════════════════════════════════════
+  // 2. شريط تحذير استكمال المدخلات
+  // ════════════════════════════════════════════════════════════════
+  Widget _buildWarningBanner(AppStrings s) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2E1A04),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: const Color(0xFFFF9100).withValues(alpha: 0.7),
+          width: 1.0,
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.warning_amber_rounded,
+              color: Color(0xFFFF9100), size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              s.completeInputsWarning,
+              style: const TextStyle(
+                color: Color(0xFFFFCC80),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  /// بيانات الاستشفاء
-  static Future<List<Map<String, dynamic>>> playerRecoveryData(int playerId, {int limit = 30}) async {
-    final logs = await q('''
-      SELECT date, hr, hr_post, hr_1min 
-      FROM logs 
-      WHERE player_id=? AND hr IS NOT NULL AND (hr_post IS NOT NULL OR hr_1min IS NOT NULL)
-      ORDER BY date DESC 
-      LIMIT ?
-    ''', [playerId, limit]);
-
-    return logs.map((l) {
-      final hr = l['hr'] as int;
-      final hrPost = l['hr_post'] as int?;
-      final hr1min = l['hr_1min'] as int?;
-      return {
-        'date': l['date'],
-        'hr': hr,
-        'hr_post': hrPost,
-        'hr_1min': hr1min,
-        'recovery_rate_post': recoveryRate(hr, hrPost),
-        'recovery_rate_1min': recoveryRate(hr, hr1min),
-      };
-    }).toList();
-  }
-
-  /// عدد الحصص
-  static Future<int> playerSessionCount(int playerId, {int days = 7}) async {
-    final cutoff = dstr(DateTime.now().subtract(Duration(days: days)));
-    final r = await q(
-        'SELECT COUNT(*) as c FROM logs WHERE player_id=? AND date>=?',
-        [playerId, cutoff]);
-    return (r.first['c'] as int?) ?? 0;
-  }
-
-  /// توزيع مناطق التدريب
-  static Future<Map<String, int>> playerZoneDistribution(int playerId, {int days = 30}) async {
-    final cutoff = dstr(DateTime.now().subtract(Duration(days: days)));
-    final r = await q('''
-      SELECT s.zone, COUNT(*) as c 
-      FROM logs l 
-      JOIN sessions s ON l.date=s.date AND l.idx=s.idx 
-      WHERE l.player_id=? AND l.date>=?
-      GROUP BY s.zone
-    ''', [playerId, cutoff]);
-
-    final dist = <String, int>{};
-    for (final row in r) {
-      dist[row['zone'] as String? ?? 'غير محدد'] = (row['c'] as int?) ?? 0;
-    }
-    return dist;
-  }
-
-  // ==================== PMC - Performance Management Chart ====================
-
-  /// حساب مخطط إدارة الأداء (CTL, ATL, TSB) بناءً على CP
-  /// هذا هو مقياس التوازن الرئيسي
-  static Future<List<Map<String, dynamic>>> playerPMC(int playerId, {int days = 90}) async {
-    final cp = await playerCP(playerId);
-    if (cp == null || cp <= 0) return [];
+  // ════════════════════════════════════════════════════════════════
+  // 3. قسم PMC (Performance Management Chart)
+  // ════════════════════════════════════════════════════════════════
+  Widget _buildPmcSection(AppStrings s) {
+    return ProgressPanel(
+      title: s.pmcTitle,
+      leading: const Icon(Icons.analytics_rounded,
+          color: EngineRowingUI.neonLime, size: 20),
+      trailing: IconButton(
+        icon: const Icon(Icons.info_outline_rounded,
+            color: EngineRowingUI.neonLime, size: 18),
+        tooltip: s.pmcTitle,
+        onPressed: () => _showInfoDialog(s.pmcTitle, s.pmcExplanation),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // كروت إحصائيات سريعة CTL, ATL, TSB
+          Row(
+            children: [
+              Expanded(
+                child: _buildPmcStatCard(
+                  label: s.ctlLabel,
+                  value: _currentCTL,
+                  color: const Color(0xFF2979FF),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildPmcStatCard(
+                  label: s.atlLabel,
+                  value: _currentATL,
+                  color: const Color(0xFFFF9100),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildPmcStatCard(
+                  label: s.tsbLabel,
+                  value: _currentTSB,
+                  color: EngineRowingUI.neonLime,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
 
           // رسم بياني للـ PMC
           if (_ctlPoints.isEmpty)
@@ -736,57 +675,80 @@ class DB {
                 ),
               ),
             ),
+          const SizedBox(height: 6),
 
-    // جلب TSS اليومي من سجلات القدرة
-    final logs = await q('''
-      SELECT date, avg_power, duration_seconds
-      FROM logs
-      WHERE player_id=? AND date>=? AND avg_power IS NOT NULL AND duration_seconds IS NOT NULL
-      ORDER BY date
-    ''', [playerId, dstr(startDate)]);
+          // النص الثابت الإلزامي تحت المنحنى
+          _buildEstimatedCurveNotice(s),
+          const SizedBox(height: 8),
 
-    // تجميع TSS يومي
-    final dailyTSS = <String, double>{};
-    for (final l in logs) {
-      final date = l['date'] as String;
-      final power = (l['avg_power'] as num).toDouble();
-      final duration = l['duration_seconds'] as int;
-      final tss = calculateTSS(avgPower: power, durationSeconds: duration, cp: cp);
-      dailyTSS[date] = (dailyTSS[date] ?? 0) + tss;
-    }
-
-    // حساب CTL و ATL و TSB
-    double ctl = 0, atl = 0;
-    final results = <Map<String, dynamic>>[];
-
-    for (int d = 0; d <= days; d++) {
-      final date = dstr(startDate.add(Duration(days: d)));
-      final tss = dailyTSS[date] ?? 0;
-
-      ctl = ctl + (tss - ctl) / 42; // الحمل المزمن (لياقة) - 42 يوم
-      atl = atl + (tss - atl) / 7;  // الحمل الحاد (إجهاد) - 7 أيام
-      final tsb = ctl - atl;         // توازن الضغط التدريبي
-
-      results.add({
-        'date': date,
-        'tss': tss,
-        'ctl': ctl,
-        'atl': atl,
-        'tsb': tsb,
-      });
-    }
-
-    return results;
+          // صف أسماء المدخلات الكاملة (Chips)
+          _buildChipsRow([
+            s.chipCTL,
+            s.chipATL,
+            s.chipTSB,
+            s.chipWatts,
+            s.chipTime,
+          ]),
+        ],
+      ),
+    );
   }
 
-  /// جلب آخر قيمة TSB (التوازن التدريبي) للاعب
-  static Future<double?> playerTSB(int playerId) async {
-    final pmc = await playerPMC(playerId, days: 50);
-    if (pmc.isEmpty) return null;
-    return pmc.last['tsb'] as double;
+  Widget _buildPmcStatCard({
+    required String label,
+    required double value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: EngineRowingUI.equationCardFill,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.4), width: 1.0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 10.5,
+              color: EngineRowingUI.captionGrey,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            RowingNumberFormatter.toEnglishDigits(value.toStringAsFixed(1)),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  // ==================== التوازن الفسيولوجي (مبني على CP) ====================
+  // ════════════════════════════════════════════════════════════════
+  // 4. قسم خط الأساس ومراقبة الزونات السبعة
+  // ════════════════════════════════════════════════════════════════
+  Widget _buildZoneBaselinesSection(AppStrings s) {
+    return ProgressPanel(
+      title: s.zoneBaselinesTitle,
+      leading: const Icon(Icons.speed_rounded,
+          color: EngineRowingUI.neonLime, size: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth > 550;
+              final itemWidth = isWide
+                  ? (constraints.maxWidth - 16) / 2
+                  : constraints.maxWidth;
 
               return Wrap(
                 spacing: 8,
@@ -831,7 +793,8 @@ class DB {
     required double? currentDecoupling,
   }) {
     final color = HeartRateZones.zoneColor(zone);
-    final displayName = HeartRateZones.zoneDisplayName(zone, isArabic: s.isArabic);
+    final displayName =
+        HeartRateZones.zoneDisplayName(zone, isArabic: s.isArabic);
 
     final wattsTrend = currentWatts != null && baseline?.bestWatts != null
         ? ProgressCalcs.evalWattsTrend(
@@ -847,23 +810,13 @@ class DB {
           )
         : ProgressTrend.neutral;
 
-    final decTrend = currentDecoupling != null && baseline?.bestDecoupling != null
-        ? ProgressCalcs.evalDecouplingTrend(
-            currentDecoupling: currentDecoupling,
-            baselineDecoupling: baseline!.bestDecoupling,
-          )
-        : ProgressTrend.neutral;
-
-    MetricTrendDirection toDir(ProgressTrend t) {
-      switch (t) {
-        case ProgressTrend.up:
-          return MetricTrendDirection.up;
-        case ProgressTrend.down:
-          return MetricTrendDirection.down;
-        case ProgressTrend.neutral:
-          return MetricTrendDirection.neutral;
-      }
-    }
+    final decTrend =
+        currentDecoupling != null && baseline?.bestDecoupling != null
+            ? ProgressCalcs.evalDecouplingTrend(
+                currentDecoupling: currentDecoupling,
+                baselineDecoupling: baseline!.bestDecoupling,
+              )
+            : ProgressTrend.neutral;
 
     return Container(
       padding: const EdgeInsets.all(10),
@@ -897,7 +850,7 @@ class DB {
                 ),
               ),
               RowingTrendIndicator(
-                direction: toDir(wattsTrend),
+                direction: _toDir(wattsTrend),
                 size: 14,
               ),
             ],
@@ -939,7 +892,7 @@ class DB {
                   ),
                   const SizedBox(width: 4),
                   RowingTrendIndicator(
-                    direction: toDir(wattsTrend),
+                    direction: _toDir(wattsTrend),
                     size: 13,
                   ),
                 ],
@@ -962,7 +915,7 @@ class DB {
               Row(
                 children: [
                   Text(
-                    currentSplit != null ? formatSplit(currentSplit) : '--',
+                    currentSplit != null ? _formatSplit(currentSplit) : '--',
                     style: const TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.bold,
@@ -972,7 +925,7 @@ class DB {
                   const SizedBox(width: 4),
                   Text(
                     baseline?.bestSplitSeconds != null
-                        ? '(${formatSplit(baseline!.bestSplitSeconds!)})'
+                        ? '(${_formatSplit(baseline!.bestSplitSeconds!)})'
                         : '(--)',
                     style: TextStyle(
                       fontSize: 10,
@@ -981,7 +934,7 @@ class DB {
                   ),
                   const SizedBox(width: 4),
                   RowingTrendIndicator(
-                    direction: toDir(splitTrend),
+                    direction: _toDir(splitTrend),
                     size: 13,
                   ),
                 ],
@@ -1025,7 +978,7 @@ class DB {
                   ),
                   const SizedBox(width: 4),
                   RowingTrendIndicator(
-                    direction: toDir(decTrend),
+                    direction: _toDir(decTrend),
                     size: 13,
                   ),
                 ],
@@ -1037,38 +990,90 @@ class DB {
     );
   }
 
-  // ==================== تنبيهات (محسّنة مع CP) ====================
+  // ════════════════════════════════════════════════════════════════
+  // 5. قسم المنحنيات الفسيولوجية والزونات
+  // ════════════════════════════════════════════════════════════════
+  Widget _buildCurvesSection(AppStrings s) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // منحنى HRV
+        _buildSingleCurvePanel(
+          s: s,
+          title: s.hrvTitle,
+          explanation: s.hrvExplanation,
+          points: _hrvPoints,
+          lineColor: const Color(0xFF00E5FF),
+          unit: 'ms',
+          chipKeys: [s.chipHRV, s.chipRHR, s.chipTime],
+          enableMovingAverage: true,
+        ),
+        const SizedBox(height: 12),
 
-  /// كشف مؤشرات الإفراط التدريبي - مع تحليل CP
-  static Future<List<String>> overtrainingAlerts(int playerId) async {
-    final alerts = <String>[];
-    final baseline = await playerBaseline(playerId);
-    if (baseline.isEmpty || (baseline['count'] ?? 0) < 3) return alerts;
+        // منحنى RHR
+        _buildSingleCurvePanel(
+          s: s,
+          title: s.rhrTitle,
+          explanation: s.rhrExplanation,
+          points: _rhrPoints,
+          lineColor: const Color(0xFFFF5252),
+          unit: 'bpm',
+          chipKeys: [s.chipRHR, s.chipHRV, s.chipTime],
+          enableMovingAverage: true,
+        ),
+        const SizedBox(height: 12),
 
-    final recent = await playerBaseline(playerId, days: 3);
-    if (recent.isEmpty || (recent['count'] ?? 0) < 1) return alerts;
+        // منحنى النوم والوزن
+        _buildSingleCurvePanel(
+          s: s,
+          title: s.sleepWeightTitle,
+          explanation: s.sleepWeightExplanation,
+          points: _sleepPoints,
+          lineColor: const Color(0xFF7C4DFF),
+          unit: 'hrs',
+          chipKeys: [s.chipSleep, s.chipWeight, s.chipTime],
+          enableMovingAverage: true,
+        ),
+        if (_weightPoints.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _buildSingleCurvePanel(
+            s: s,
+            title: s.chipWeight,
+            explanation: s.sleepWeightExplanation,
+            points: _weightPoints,
+            lineColor: const Color(0xFFB388FF),
+            unit: 'kg',
+            chipKeys: [s.chipWeight, s.chipTime],
+            enableMovingAverage: true,
+          ),
+        ],
+        const SizedBox(height: 12),
 
-    // 1. تحليل TSB (المقياس الرئيسي)
-    final tsb = await playerTSB(playerId);
-    if (tsb != null) {
-      if (tsb < -30) {
-        alerts.add('🔴 إفراط تدريبي! TSB = ${tsb.round()} — يحتاج راحة فورية');
-      } else if (tsb < -15) {
-        alerts.add('🟠 إجهاد تدريبي مرتفع (TSB = ${tsb.round()}) — خفف الحمل');
-      } else if (tsb > 30) {
-        alerts.add('🔵 فقدان لياقة محتمل (TSB = ${tsb.round()}) — ارفع الحمل');
-      }
-    }
+        // منحنى التنفس (Eupnea)
+        _buildSingleCurvePanel(
+          s: s,
+          title: s.eupneaTitle,
+          explanation: s.eupneaExplanation,
+          points: _eupneaPoints,
+          lineColor: const Color(0xFF69F0AE),
+          unit: 'br/min',
+          chipKeys: [s.chipEupnea, s.chipHR, s.chipTime],
+          enableMovingAverage: true,
+        ),
+        const SizedBox(height: 12),
 
-    // 2. تراجع CP
-    final cpHist = await cpHistory(playerId);
-    if (cpHist.length >= 2) {
-      final oldCP = (cpHist[cpHist.length - 2]['cp'] as num).toDouble();
-      final currentCP = (cpHist.last['cp'] as num).toDouble();
-      if (currentCP < oldCP * 0.95) {
-        alerts.add('⚠️ تراجع في القدرة الحرجة (${oldCP.round()}W → ${currentCP.round()}W)');
-      }
-    }
+        // منحنى Decoupling
+        _buildSingleCurvePanel(
+          s: s,
+          title: s.decouplingTitle,
+          explanation: s.decouplingExplanation,
+          points: _decouplingPoints,
+          lineColor: const Color(0xFFFFAB00),
+          unit: '%',
+          chipKeys: [s.chipDecoupling, s.chipWatts, s.chipHR, s.chipTime],
+          enableMovingAverage: true,
+        ),
+        const SizedBox(height: 12),
 
         // منحنى EF
         _buildSingleCurvePanel(
@@ -1078,8 +1083,8 @@ class DB {
           points: _efPoints,
           lineColor: EngineRowingUI.neonLime,
           unit: 'W/bpm',
-          chipKeys: ['ef', 'watts', 'hr', 'time'],
-          enableMovingAverage: false, // مستثنى لأنه متوسط
+          chipKeys: [s.chipEF, s.chipWatts, s.chipHR, s.chipTime],
+          enableMovingAverage: false, // مستثنى لأنه متوسط أسبوعي
         ),
 
         // ── منحنيات الواط لكل زون من الزونات السبعة ──
@@ -1087,12 +1092,20 @@ class DB {
           const SizedBox(height: 12),
           _buildSingleCurvePanel(
             s: s,
-            title: '${s.chipWatts} - ${HeartRateZones.zoneDisplayName(zone, isArabic: s.isArabic)}',
-            explanation: '${HeartRateZones.zoneDisplayName(zone, isArabic: s.isArabic)}\n${s.zoneCurvePurpose}',
+            title:
+                '${s.chipWatts} - ${HeartRateZones.zoneDisplayName(zone, isArabic: s.isArabic)}',
+            explanation:
+                '${HeartRateZones.zoneDisplayName(zone, isArabic: s.isArabic)}\n${s.zoneCurvePurpose}',
             points: _zoneWattsPoints[zone] ?? [],
             lineColor: HeartRateZones.zoneColor(zone),
             unit: 'W',
-            chipKeys: ['watts', 'split', 'hr', 'zone', 'time'],
+            chipKeys: [
+              s.chipWatts,
+              s.chipSplit,
+              s.chipHR,
+              s.chipZone,
+              s.chipTime,
+            ],
             enableMovingAverage: true,
           ),
         ],
@@ -1100,12 +1113,19 @@ class DB {
     );
   }
 
-    // 4. انخفاض HRV
-    final hrvBase = baseline['avg_hrv'] ?? 0;
-    final hrvRecent = recent['avg_hrv'] ?? 0;
-    if (hrvBase > 0 && hrvRecent > 0 && hrvRecent / hrvBase < 0.7) {
-      alerts.add('⚠️ HRV منخفض بشكل ملحوظ — علامة إجهاد');
-    }
+  Widget _buildSingleCurvePanel({
+    required AppStrings s,
+    required String title,
+    required String explanation,
+    required List<DateValuePoint> points,
+    required Color lineColor,
+    required String unit,
+    required List<String> chipKeys,
+    required bool enableMovingAverage,
+  }) {
+    final maPoints = enableMovingAverage
+        ? ProgressCalcs.movingAverage7(points)
+        : <DateValuePoint>[];
 
     MetricTrendDirection? curveTrend;
     if (points.length >= 2) {
@@ -1251,48 +1271,71 @@ class DB {
               ),
             ),
             const SizedBox(height: 6),
+          ],
 
-    return alerts;
+          // النص الثابت الإلزامي تحت المنحنى
+          _buildEstimatedCurveNotice(s),
+          const SizedBox(height: 8),
+
+          // صف شارات المدخلات الكاملة
+          _buildChipsRow(chipKeys),
+        ],
+      ),
+    );
   }
 
-  // ==================== الصفحة الرئيسية ====================
+  Widget _buildEmptyDataNotice(AppStrings s) {
+    return Container(
+      height: 100,
+      alignment: Alignment.center,
+      child: Text(
+        s.notEnoughData,
+        style: const TextStyle(
+          color: EngineRowingUI.captionGrey,
+          fontSize: 13,
+        ),
+      ),
+    );
+  }
 
-  /// جاهزية جميع اللاعبين (مع TSB)
-  static Future<List<Map<String, dynamic>>> allPlayersReadiness() async {
-    final players = await q('SELECT * FROM players WHERE active=1 ORDER BY name');
-    final results = <Map<String, dynamic>>[];
+  Widget _buildEstimatedCurveNotice(AppStrings s) {
+    return Center(
+      child: Text(
+        s.estimatedCurveOnly,
+        style: const TextStyle(
+          color: EngineRowingUI.captionGrey,
+          fontSize: 10.5,
+          fontStyle: FontStyle.italic,
+        ),
+      ),
+    );
+  }
 
-    for (final p in players) {
-      final id = p['id'] as int;
-      final latest = await latestLog(id);
-      final baseline = await playerBaseline(id);
-      final tsb = await playerTSB(id);
-      final cp = await playerCP(id);
-
-      double score = 70;
-      if (latest != null || tsb != null) {
-        score = calculateReadiness(
-          rhr: latest?['rhr'] as int?,
-          rhrBaseline: baseline.isNotEmpty ? baseline['avg_rhr'] : null,
-          hrv: latest?['hrv'] as int?,
-          hrvBaseline: baseline.isNotEmpty ? baseline['avg_hrv'] : null,
-          fatigue: latest?['fatigue'] as int?,
-          sleepHours: latest?['sleep_hours'] as double?,
-          tsb: tsb,
+  Widget _buildChipsRow(List<String> chipNames) {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: chipNames.map((name) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: EngineRowingUI.equationCardFill,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(
+              color: EngineRowingUI.bgGridLine,
+              width: 0.8,
+            ),
+          ),
+          child: Text(
+            name,
+            style: const TextStyle(
+              fontSize: 10,
+              color: EngineRowingUI.labelSlate,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         );
-      }
-
-      results.add({
-        'player': p,
-        'readiness': score,
-        'latest': latest,
-        'baseline': baseline,
-        'tsb': tsb,
-        'cp': cp,
-        'has_data': latest != null,
-      });
-    }
-
-    return results;
+      }).toList(),
+    );
   }
 }
