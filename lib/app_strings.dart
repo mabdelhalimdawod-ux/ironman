@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// نظام إدارة وتوطين النصوص (Localization & Strings Dictionary)
@@ -545,5 +545,87 @@ class AppStrings {
   String get chipSplit => isArabic ? 'السبليت' : 'Split';
   String get chipZone => isArabic ? 'الزون' : 'Zone';
   String get notEnoughData => isArabic ? 'لا توجد بيانات كافية' : 'Not enough data';
+
+  // ==================== Progress Dafaa 1 Menu & Shared Filter/Header ====================
+  String get matrixZoneTitle => 'Matrix Zone';
+  String get matrixZoneDesc => isArabic
+      ? 'مقارنة شاملة لمناطق الأداء على محورين مشتركين'
+      : 'Shared dual-axis athlete zone comparison';
+  String get efDecouplingTitle => isArabic ? 'EF و Decoupling' : 'EF & Decoupling';
+  String get efDecouplingDesc => isArabic
+      ? 'تطور معامل الكفاءة والتفكك القلبي الهوائي'
+      : 'Aerobic efficiency factor & cardiac drift';
+  String get wattsCurveTitle => isArabic ? 'الواط' : 'Watts';
+  String get wattsCurveDesc => isArabic
+      ? 'منحنيات القدرة (الواط) عبر الزمن والزونات السبعة'
+      : 'Power progression across time and 7 HR zones';
+  String get pmcLoadTitle => isArabic ? 'PMC (الحمل)' : 'PMC (Load)';
+  String get pmcLoadDesc => isArabic
+      ? 'اللياقة التراكمية والتعب ومؤشر الجاهزية (CTL / ATL / TSB)'
+      : 'Fitness, Fatigue & Form (CTL / ATL / TSB)';
+  String get recoveryCurvesTitle => isArabic ? 'الاستشفاء' : 'Recovery';
+  String get recoveryCurvesDesc => isArabic
+      ? 'أربع منحنيات (HRV، RHR، النوم، الوزن) + منحنى Eupnea'
+      : '4 curves (HRV, RHR, Sleep, Weight) + Eupnea curve';
+  String get zoneHoursTitle => isArabic ? 'ساعات الزونات' : 'Zone Hours';
+  String get zoneHoursDesc => isArabic
+      ? 'جدول توزيع ساعات التدريب والنسب المئوية لكل زون'
+      : 'Training hours & percentage distribution per zone';
+  String get cpTestsCurveTitle => isArabic ? 'اختبارات CP' : 'CP Tests';
+  String get cpTestsCurveDesc => isArabic
+      ? 'سجل وتطور القدرة الحرجة (CP) والاختبارات الرسمية'
+      : 'Critical Power (CP) history & official tests';
+
+  String get periodFilterWeek => isArabic ? 'أسبوع' : 'Week';
+  String get periodFilterCycle => isArabic ? 'سايكل' : 'Cycle';
+  String get periodFilterCustom => isArabic ? 'مدة مخصصة' : 'Custom range';
+  String get noCyclesRecorded =>
+      isArabic ? 'لسه مفيش سايكلات متسجلة' : 'No cycles recorded yet';
+  String get prevWeek => isArabic ? 'الأسبوع السابق' : 'Previous week';
+  String get nextWeek => isArabic ? 'الأسبوع التالي' : 'Next week';
+  String get pickWeekTooltip => isArabic ? 'اختيار أسبوع آخر' : 'Pick another week';
+  String get pickCycleHint => isArabic ? 'اختر السايكل' : 'Select cycle';
+  String get pickCustomDates => isArabic ? 'تحديد من - إلى' : 'Pick start - end';
+
+  String curveHeaderTitle(String curveName, DateTime start, DateTime end) {
+    final sDate = '${start.day}/${start.month}/${start.year}';
+    final eDate = '${end.day}/${end.month}/${end.year}';
+    if (isArabic) {
+      return '$curveName، من $sDate إلى $eDate';
+    }
+    return '$curveName, From $sDate to $eDate';
+  }
+
+  String get teamAthletesPrompt => isArabic
+      ? 'اضغط على اسم اللاعب لإظهار أو إخفاء منحناه'
+      : 'Tap an athlete to show or hide their curve';
+  String get selectAtLeastOneAthlete => isArabic
+      ? 'اختر لاعبًا واحدًا على الأقل لعرض البيانات'
+      : 'Select at least one athlete to display data';
+  String get matrixZoneComparisonNote => isArabic
+      ? 'وضع المقارنة المشترك لماتركس الزون: محور أفقي (% احتياطي النبض) ومحور رأسي (الواط) — التفاصيل الكاملة في الدفعة 2'
+      : 'Shared dual-axis Matrix Zone chart (% HRR vs Watts) — full details in Batch 2';
+
+  String get zoneColHeader => isArabic ? 'الزون' : 'Zone';
+  String get zoneDescColHeader => isArabic ? 'الوصف' : 'Description';
+  String get totalHoursColHeader => isArabic ? 'إجمالي الساعات' : 'Total Hours';
+  String get percentageColHeader => isArabic ? 'النسبة %' : 'Percentage %';
+  String get noZoneName => isArabic ? 'بدون زون' : 'No Zone';
+  String get noZoneDesc =>
+      isArabic ? 'تمارين بدون نبض مسجل' : 'Workouts without recorded HR';
+
+  String get tsbExcessRest => isArabic ? 'راحة زيادة' : 'Too Much Rest';
+  String get tsbRaceReady => isArabic ? 'جاهز للسباق' : 'Race Ready';
+  String get tsbNeutral => isArabic ? 'محايد' : 'Neutral';
+  String get tsbProductiveBuild => isArabic ? 'بناء منتج' : 'Productive Build';
+  String get tsbOverreachRisk =>
+      isArabic ? 'خطر إجهاد زيادة' : 'Overreaching Risk';
+  String get missingCpNotice => isArabic
+      ? 'تمارين بدون قيمة CP: يظهر TSS كـ "--" ولا تدخل في حساب CTL و ATL'
+      : 'Workouts without CP show TSS as "--" and are excluded from CTL & ATL';
+  String get ctlLineLabel => isArabic ? 'CTL (لياقة)' : 'CTL (Fitness)';
+  String get atlLineLabel => isArabic ? 'ATL (تعب)' : 'ATL (Fatigue)';
+  String get tsbBarLabel => isArabic ? 'TSB (الجاهزية)' : 'TSB (Form)';
+  String get todayLabel => isArabic ? 'النهارده' : 'Today';
 }
 
