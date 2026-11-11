@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// نظام إدارة وتوطين النصوص (Localization & Strings Dictionary)
@@ -100,7 +100,7 @@ class AppStrings {
   String get cyclesSubtitle => isArabic ? 'نظام الدورات المرحلية والدورات الأسبوعية' : 'Training Phase Cycles & Weekly Microcycles';
   String get cycleNumber => isArabic ? 'الدورة المرحلية' : 'Phase Cycle';
   String cycleTitle(int num) => isArabic ? 'الدورة المرحلية $num' : 'Phase Cycle $num';
-  String get addCycle => isArabic ? 'إضافة دورة مرحلية جديدة' : 'Add New Phase Cycle';
+  String get addCycle => isArabic ? '+ دورة جديدة' : '+ New Cycle';
   String get deleteCycle => isArabic ? 'حذف الدورة المرحلية' : 'Delete Phase Cycle';
   String get deleteCycleConfirm => isArabic ? 'هل أنت متأكد من حذف هذه الدورة المرحلية؟' : 'Are you sure you want to delete this phase cycle?';
   String get cannotDeleteLastCycle => isArabic ? 'لا يمكن حذف الدورة المرحلية الوحيدة المتبقية' : 'Cannot delete the only remaining phase cycle';
@@ -116,7 +116,7 @@ class AppStrings {
   String get trainingLocationHint => isArabic ? 'مثال: مجرى التجديف الدولي' : 'e.g. International Rowing Course';
   String get creationDate => isArabic ? 'تاريخ الإنشاء' : 'Created Date';
   String get lastEditDate => isArabic ? 'آخر تعديل' : 'Last Edit';
-  String get weeksCountCalculated => isArabic ? 'عدد الدورات الأسبوعية بالدورة المرحلية' : 'Total Weeks in Phase Cycle';
+  String get weeksCountCalculated => isArabic ? 'الأسابيع' : 'Weeks';
   String get enterCycle => isArabic ? 'دخول' : 'Enter';
   String get comment => isArabic ? 'تعليق' : 'Comment';
   String get addComment => isArabic ? 'إضافة تعليق' : 'Add Comment';
@@ -546,3 +546,4 @@ class AppStrings {
   String get chipZone => isArabic ? 'الزون' : 'Zone';
   String get notEnoughData => isArabic ? 'لا توجد بيانات كافية' : 'Not enough data';
 }
+
