@@ -427,14 +427,18 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
                   '${widget.player['name']}',
                   style: const TextStyle(
                     color: EngineRowingUI.textWhite,
-                    fontSize: 18,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '${s.workoutType}: ${widget.session['kind']} ($zone)',
-                  style: const TextStyle(color: EngineRowingUI.neonLime, fontSize: 14),
+                  style: const TextStyle(
+                    color: EngineRowingUI.neonLime,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
@@ -446,12 +450,16 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
                 textDirection: TextDirection.ltr,
                 child: Text(
                   '${s.maxHRLabel}: $mhr bpm',
-                  style: const TextStyle(color: EngineRowingUI.labelSlate, fontSize: 13),
+                  style: const TextStyle(
+                    color: EngineRowingUI.labelSlate,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: EngineRowingUI.equationCardFill,
                   borderRadius: BorderRadius.circular(8),
@@ -463,7 +471,7 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
                     '$targetHR bpm',
                     style: const TextStyle(
                       color: EngineRowingUI.neonLime,
-                      fontSize: 12,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -479,12 +487,12 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
   Widget _buildSectionHeader(String title, IconData icon, Color color) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: color),
+        Icon(icon, size: 24, color: color),
         const SizedBox(width: 8),
         Text(
           title,
           style: TextStyle(
-            fontSize: 15,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
             color: color,
           ),
@@ -510,29 +518,35 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
           style: const TextStyle(
             color: EngineRowingUI.textWhite,
             fontFamily: EngineRowingUI.fontFamily,
-            fontSize: 14,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            fontFeatures: [FontFeature.tabularFigures()],
           ),
           inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
           decoration: InputDecoration(
             labelText: label,
-            labelStyle: const TextStyle(color: EngineRowingUI.labelSlate, fontSize: 13),
+            labelStyle: const TextStyle(
+              color: EngineRowingUI.labelSlate,
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+            ),
             hintText: hint,
-            hintStyle: const TextStyle(color: EngineRowingUI.captionGrey, fontSize: 12),
+            hintStyle: const TextStyle(color: EngineRowingUI.captionGrey, fontSize: 13),
             isDense: true,
             filled: true,
             fillColor: EngineRowingUI.equationCardFill,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: EngineRowingUI.neonLime, width: 1.5),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: EngineRowingUI.neonLime, width: 2.0),
             ),
           ),
         ),
@@ -560,20 +574,20 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
                   color: EngineRowingUI.equationCardFill,
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: const Icon(Icons.star, color: EngineRowingUI.neonLime, size: 18),
+                child: const Icon(Icons.star, color: EngineRowingUI.neonLime, size: 20),
               ),
               const SizedBox(width: 8),
               Text(
                 s.keyAthletesSection,
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: EngineRowingUI.textWhite,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
           // الحقل الأول: واط NP (قراءات متعددة)
           Directionality(
@@ -583,57 +597,67 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
               keyboardType: TextInputType.text,
               textInputAction: TextInputAction.next,
               textAlign: TextAlign.left,
-              style: const TextStyle(color: EngineRowingUI.textWhite, fontSize: 13),
+              style: const TextStyle(
+                color: EngineRowingUI.textWhite,
+                fontFamily: EngineRowingUI.fontFamily,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                fontFeatures: [FontFeature.tabularFigures()],
+              ),
               inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
               decoration: InputDecoration(
                 labelText: s.npWattsLabel,
-                labelStyle: const TextStyle(color: EngineRowingUI.labelSlate, fontSize: 13),
+                labelStyle: const TextStyle(
+                  color: EngineRowingUI.labelSlate,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
                 hintText: s.npWattsHint,
-                hintStyle: const TextStyle(color: EngineRowingUI.captionGrey, fontSize: 12),
-                prefixIcon: const Icon(Icons.electric_bolt, color: EngineRowingUI.neonLime, size: 20),
+                hintStyle: const TextStyle(color: EngineRowingUI.captionGrey, fontSize: 13),
+                prefixIcon: const Icon(Icons.electric_bolt, color: EngineRowingUI.neonLime, size: 22),
                 isDense: true,
                 filled: true,
                 fillColor: EngineRowingUI.equationCardFill,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: EngineRowingUI.neonLime),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: EngineRowingUI.neonLime, width: 2.0),
                 ),
               ),
             ),
           ),
           if (_calculatedNP != null) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: EngineRowingUI.equationCardFill,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: EngineRowingUI.bgGridLine),
               ),
               child: Directionality(
                 textDirection: TextDirection.ltr,
                 child: Row(
                   children: [
-                    const Icon(Icons.check_circle, color: EngineRowingUI.neonLime, size: 18),
+                    const Icon(Icons.check_circle, color: EngineRowingUI.neonLime, size: 20),
                     const SizedBox(width: 8),
                     Text(
                       '${s.calculatedNP}: ',
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: EngineRowingUI.textWhite),
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: EngineRowingUI.textWhite),
                     ),
                     Text(
                       '${_calculatedNP!} W',
                       style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
                         color: EngineRowingUI.neonLime,
                       ),
                     ),
@@ -643,16 +667,16 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
                         _avgPowerCtrl.text = _calculatedNP.toString();
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
                           color: EngineRowingUI.neonLime,
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Text(
                           'Use as Avg',
                           style: TextStyle(
                             color: EngineRowingUI.bgNavy,
-                            fontSize: 11,
+                            fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -663,7 +687,7 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
               ),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
           // الحقل الثاني: نبض Decoupling (قراءات متعددة)
           Directionality(
@@ -673,57 +697,67 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
               keyboardType: TextInputType.text,
               textInputAction: TextInputAction.done,
               textAlign: TextAlign.left,
-              style: const TextStyle(color: EngineRowingUI.textWhite, fontSize: 13),
+              style: const TextStyle(
+                color: EngineRowingUI.textWhite,
+                fontFamily: EngineRowingUI.fontFamily,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                fontFeatures: [FontFeature.tabularFigures()],
+              ),
               inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
               decoration: InputDecoration(
                 labelText: s.decouplingHRLabel,
-                labelStyle: const TextStyle(color: EngineRowingUI.labelSlate, fontSize: 13),
+                labelStyle: const TextStyle(
+                  color: EngineRowingUI.labelSlate,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
                 hintText: s.decouplingHRHint,
-                hintStyle: const TextStyle(color: EngineRowingUI.captionGrey, fontSize: 12),
-                prefixIcon: const Icon(Icons.monitor_heart, color: Colors.redAccent, size: 20),
+                hintStyle: const TextStyle(color: EngineRowingUI.captionGrey, fontSize: 13),
+                prefixIcon: const Icon(Icons.monitor_heart, color: Colors.redAccent, size: 22),
                 isDense: true,
                 filled: true,
                 fillColor: EngineRowingUI.equationCardFill,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: EngineRowingUI.neonLime),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: EngineRowingUI.neonLime, width: 2.0),
                 ),
               ),
             ),
           ),
           if (_calculatedDecoupling != null) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: EngineRowingUI.equationCardFill,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: EngineRowingUI.bgGridLine),
               ),
               child: Directionality(
                 textDirection: TextDirection.ltr,
                 child: Row(
                   children: [
-                    const Icon(Icons.analytics_outlined, color: EngineRowingUI.neonLime, size: 18),
+                    const Icon(Icons.analytics_outlined, color: EngineRowingUI.neonLime, size: 20),
                     const SizedBox(width: 8),
                     Text(
                       '${s.calculatedDecoupling}: ',
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: EngineRowingUI.textWhite),
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: EngineRowingUI.textWhite),
                     ),
                     Text(
                       '${_calculatedDecoupling!}% (${_calculatedDecoupling! < 5.0 ? 'Excellent' : 'Decoupled'})',
                       style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
                         color: _calculatedDecoupling! < 5.0 ? EngineRowingUI.neonLime : const Color(0xFFFF9100),
                       ),
                     ),

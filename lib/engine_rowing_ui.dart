@@ -211,8 +211,15 @@ class EngineRowingUI {
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: cardFill,
-          labelStyle: const TextStyle(color: labelSlate, fontWeight: FontWeight.w500),
-          hintStyle: const TextStyle(color: captionGrey),
+          labelStyle: const TextStyle(
+            color: labelSlate,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+          hintStyle: const TextStyle(
+            color: captionGrey,
+            fontSize: 14,
+          ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
@@ -250,8 +257,8 @@ class EngineRowingUI {
 
   static TextStyle cardHeaderLabel(BuildContext context) => TextStyle(
         fontFamily: fontFamily,
-        fontSize: RowingResponsive.sp(context, 16),
-        fontWeight: FontWeight.w500,
+        fontSize: RowingResponsive.sp(context, 17.5),
+        fontWeight: FontWeight.w700,
         color: labelSlate,
         letterSpacing: 0.4,
       );
@@ -285,16 +292,16 @@ class EngineRowingUI {
 
   static TextStyle progressLabel(BuildContext context) => TextStyle(
         fontFamily: fontFamily,
-        fontSize: RowingResponsive.sp(context, 15),
-        fontWeight: FontWeight.w500,
+        fontSize: RowingResponsive.sp(context, 16.5),
+        fontWeight: FontWeight.w600,
         color: labelSlate,
         letterSpacing: 0.5,
       );
 
   static TextStyle progressValue(BuildContext context) => TextStyle(
         fontFamily: fontFamily,
-        fontSize: RowingResponsive.sp(context, 17),
-        fontWeight: FontWeight.w600,
+        fontSize: RowingResponsive.sp(context, 19),
+        fontWeight: FontWeight.w700,
         color: textWhite,
         fontFeatures: const [FontFeature.tabularFigures()],
       );
@@ -479,7 +486,7 @@ class RowingMetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final padH = RowingResponsive.dp(context, 22);
-    final padV = RowingResponsive.dp(context, 20);
+    final padV = RowingResponsive.dp(context, 22);
     final radius = RowingResponsive.dp(context, 14);
     final cleanValue = RowingNumberFormatter.toEnglishDigits(value);
     final cleanUnit = RowingNumberFormatter.toEnglishDigits(unit);
@@ -611,7 +618,7 @@ class RowingNumericInputField extends StatelessWidget {
         Container(
           padding: EdgeInsets.symmetric(
             horizontal: RowingResponsive.dp(context, 22),
-            vertical: RowingResponsive.dp(context, 16),
+            vertical: RowingResponsive.dp(context, 20),
           ),
           decoration: BoxDecoration(
             color: EngineRowingUI.cardFill,
@@ -748,8 +755,8 @@ class RowingEquationBox extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(
-        vertical: RowingResponsive.dp(context, 18),
-        horizontal: RowingResponsive.dp(context, 16),
+        vertical: RowingResponsive.dp(context, 22),
+        horizontal: RowingResponsive.dp(context, 18),
       ),
       decoration: BoxDecoration(
         color: EngineRowingUI.equationCardFill,
@@ -768,20 +775,20 @@ class RowingEquationBox extends StatelessWidget {
                 title.toUpperCase(),
                 style: TextStyle(
                   fontFamily: EngineRowingUI.fontFamily,
-                  fontSize: RowingResponsive.sp(context, 23),
+                  fontSize: RowingResponsive.sp(context, 26),
                   fontWeight: FontWeight.w800,
                   color: activeColor,
                   letterSpacing: 0.6,
                 ),
               ),
             ),
-            SizedBox(height: RowingResponsive.dp(context, 2)),
+            SizedBox(height: RowingResponsive.dp(context, 4)),
             Text(
               RowingNumberFormatter.toEnglishDigits(unit),
               style: TextStyle(
                 fontFamily: EngineRowingUI.fontFamily,
-                fontSize: RowingResponsive.sp(context, 15),
-                fontWeight: FontWeight.w400,
+                fontSize: RowingResponsive.sp(context, 17),
+                fontWeight: FontWeight.w500,
                 color: EngineRowingUI.labelSlate,
               ),
             ),
@@ -1132,7 +1139,7 @@ class RowingAdaptiveZoneBoxes extends StatelessWidget {
     final durationStr = isZero ? '-' : _formatSecs(secs);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 9),
       decoration: neonGlowBoxDecoration(
         fillColor: isZero
             ? EngineRowingUI.equationCardFill.withAlpha(160)
@@ -1163,7 +1170,7 @@ class RowingAdaptiveZoneBoxes extends StatelessWidget {
               softWrap: false,
               style: TextStyle(
                 fontFamily: EngineRowingUI.fontFamily,
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: FontWeight.w800,
                 color: isZero ? EngineRowingUI.captionGrey : color,
                 letterSpacing: 0.5,
@@ -1179,7 +1186,7 @@ class RowingAdaptiveZoneBoxes extends StatelessWidget {
               softWrap: false,
               style: TextStyle(
                 fontFamily: EngineRowingUI.fontFamily,
-                fontSize: 11,
+                fontSize: 12.5,
                 fontWeight: FontWeight.bold,
                 fontFeatures: const [FontFeature.tabularFigures()],
                 color: isZero ? EngineRowingUI.captionGrey : EngineRowingUI.textWhite,
@@ -1195,8 +1202,8 @@ class RowingAdaptiveZoneBoxes extends StatelessWidget {
               softWrap: false,
               style: TextStyle(
                 fontFamily: EngineRowingUI.fontFamily,
-                fontSize: 9.5,
-                fontWeight: FontWeight.w600,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
                 color: isZero ? EngineRowingUI.captionGrey.withValues(alpha: 0.7) : color,
               ),
             ),
