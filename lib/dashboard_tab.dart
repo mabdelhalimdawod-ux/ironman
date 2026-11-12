@@ -373,12 +373,14 @@ class _DashboardTabState extends State<DashboardTab> {
                 size: 22,
               ),
               const SizedBox(width: 8),
-              Text(
-                s.nextSession,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                  color: EngineRowingUI.textWhite,
+              Expanded(
+                child: Text(
+                  s.nextSession,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: EngineRowingUI.textWhite,
+                  ),
                 ),
               ),
             ],
@@ -434,7 +436,7 @@ class _DashboardTabState extends State<DashboardTab> {
                         Directionality(
                           textDirection: TextDirection.ltr,
                           child: Text(
-                            '${s.isArabic ? "Date" : "Date"}: ${RowingNumberFormatter.toEnglishDigits(_nextSessionDate)}',
+                            '${s.isArabic ? "التاريخ" : "Date"}: ${RowingNumberFormatter.toEnglishDigits(_nextSessionDate)}',
                             style: const TextStyle(
                               fontSize: 13,
                               color: EngineRowingUI.labelSlate,
@@ -491,12 +493,14 @@ class _DashboardTabState extends State<DashboardTab> {
               size: 22,
             ),
             const SizedBox(width: 8),
-            Text(
-              s.highlightsTitle,
-              style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
-                color: EngineRowingUI.textWhite,
+            Expanded(
+              child: Text(
+                s.highlightsTitle,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: EngineRowingUI.textWhite,
+                ),
               ),
             ),
           ],

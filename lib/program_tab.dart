@@ -329,110 +329,134 @@ class _ProgramTabState extends State<ProgramTab> {
 
   /// رأس الصفحة التعريفي لتاب Program مع الصورة والزرار (+)
   Widget _buildHeaderBar(AppStrings s) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _cardFill,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _gridLine, width: 1.2),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black38,
-            blurRadius: 14,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // أيقونة / صورة تاب Program
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: EngineRowingUI.equationCardFill,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _gridLine),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.asset(
-                'assets/images/program_tab_icon.png',
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const Icon(
-                  Icons.event_repeat_rounded,
-                  color: _gold,
-                  size: 28,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 14),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 620;
 
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        final infoColumn = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Row(
-                  children: [
-                    Text(
-                      s.trainingCycles,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: EngineRowingUI.textWhite,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: _gold.withAlpha(30),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        'لوحة المدربين',
-                        style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: _gold),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 3),
                 Text(
-                  s.isArabic
-                      ? 'تخطيط الدورات المرحلية والأسبوعية وحسابات الزونات الستة والتستات'
-                      : 'Phase Cycle Planning & Zone Loads',
-                  style: const TextStyle(
-                      fontSize: 12.5, color: EngineRowingUI.labelSlate),
+                  s.trainingCycles,
+                  style: TextStyle(
+                    fontSize: isCompact ? 17 : 20,
+                    fontWeight: FontWeight.bold,
+                    color: EngineRowingUI.textWhite,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: _gold.withAlpha(30),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'لوحة المدربين',
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: _gold),
+                  ),
                 ),
               ],
             ),
-          ),
+            const SizedBox(height: 3),
+            Text(
+              s.isArabic
+                  ? 'تخطيط الدورات المرحلية والأسبوعية وحسابات الزونات الستة والتستات'
+                  : 'Phase Cycle Planning & Zone Loads',
+              style: const TextStyle(
+                  fontSize: 12.0, color: EngineRowingUI.labelSlate),
+            ),
+          ],
+        );
 
-          // ── زرار علامة (+) لإضافة تاب سيكل كامل جديد ──
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _gold,
-              foregroundColor: _navy,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-              elevation: 2,
-            ),
-            icon: const Icon(Icons.add_circle, color: _navy, size: 20),
-            label: Text(
-              s.addCycle,
-              style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
-            ),
-            onPressed: _addNewCycle,
+        final addBtn = ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _gold,
+            foregroundColor: _navy,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
+            elevation: 2,
           ),
-        ],
-      ),
+          icon: const Icon(Icons.add_circle, color: _navy, size: 18),
+          label: Text(
+            s.addCycle,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          ),
+          onPressed: _addNewCycle,
+        );
+
+        final iconBox = Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: EngineRowingUI.equationCardFill,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _gridLine),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.asset(
+              'assets/images/program_tab_icon.png',
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => const Icon(
+                Icons.event_repeat_rounded,
+                color: _gold,
+                size: 26,
+              ),
+            ),
+          ),
+        );
+
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: _cardFill,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: _gridLine, width: 1.2),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black38,
+                blurRadius: 14,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: isCompact
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        iconBox,
+                        const SizedBox(width: 12),
+                        Expanded(child: infoColumn),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    addBtn,
+                  ],
+                )
+              : Row(
+                  children: [
+                    iconBox,
+                    const SizedBox(width: 14),
+                    Expanded(child: infoColumn),
+                    const SizedBox(width: 12),
+                    addBtn,
+                  ],
+                ),
+        );
+      },
     );
   }
 
@@ -549,17 +573,22 @@ class _ProgramTabState extends State<ProgramTab> {
                             const Icon(Icons.date_range_rounded,
                                 size: 18, color: _gold),
                             const SizedBox(width: 8),
-                            Directionality(
-                              textDirection: TextDirection.ltr,
-                              child: Text(
-                                '${RowingNumberFormatter.toEnglishDigits(cycle.startDate)}  ➔  ${RowingNumberFormatter.toEnglishDigits(cycle.endDate)}',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12.5,
-                                    fontFeatures: [
-                                      FontFeature.tabularFigures()
-                                    ],
-                                    color: EngineRowingUI.textWhite),
+                            Flexible(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Directionality(
+                                  textDirection: TextDirection.ltr,
+                                  child: Text(
+                                    '${RowingNumberFormatter.toEnglishDigits(cycle.startDate)}  ➔  ${RowingNumberFormatter.toEnglishDigits(cycle.endDate)}',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12.5,
+                                        fontFeatures: [
+                                          FontFeature.tabularFigures()
+                                        ],
+                                        color: EngineRowingUI.textWhite),
+                                  ),
+                                ),
                               ),
                             ),
                             const SizedBox(width: 6),
@@ -584,15 +613,20 @@ class _ProgramTabState extends State<ProgramTab> {
                           const Icon(Icons.auto_awesome_rounded,
                               size: 16, color: _gold),
                           const SizedBox(width: 6),
-                          Directionality(
-                            textDirection: TextDirection.ltr,
-                            child: Text(
-                              '${s.weeksCountCalculated}: ${RowingNumberFormatter.toEnglishDigits(cycle.totalWeeks.toString())} wks',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                fontFeatures: [FontFeature.tabularFigures()],
-                                color: _gold,
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Directionality(
+                                textDirection: TextDirection.ltr,
+                                child: Text(
+                                  '${s.weeksCountCalculated}: ${RowingNumberFormatter.toEnglishDigits(cycle.totalWeeks.toString())} ${s.isArabic ? "أسابيع" : "wks"}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    fontFeatures: [FontFeature.tabularFigures()],
+                                    color: _gold,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -602,7 +636,7 @@ class _ProgramTabState extends State<ProgramTab> {
 
                     // خانة مكان أو منطقة التدريب (تضاف وتعدل يدوياً من المدرب)
                     Container(
-                      width: 240,
+                      constraints: const BoxConstraints(maxWidth: 240),
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 2),
                       decoration: BoxDecoration(
@@ -649,10 +683,10 @@ class _ProgramTabState extends State<ProgramTab> {
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: _gridLine.withAlpha(60)),
                       ),
-                      child: Directionality(
-                        textDirection: TextDirection.ltr,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
                         child: Text(
-                          'Created: ${RowingNumberFormatter.toEnglishDigits(createdDateStr)} • Updated: ${RowingNumberFormatter.toEnglishDigits(updatedDateStr)}',
+                          '${s.isArabic ? "الإنشاء" : "Created"}: ${RowingNumberFormatter.toEnglishDigits(createdDateStr)} • ${s.isArabic ? "التعديل" : "Updated"}: ${RowingNumberFormatter.toEnglishDigits(updatedDateStr)}',
                           style: const TextStyle(
                               fontSize: 11,
                               fontFeatures: [FontFeature.tabularFigures()],
