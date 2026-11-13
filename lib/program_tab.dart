@@ -306,20 +306,18 @@ class _ProgramTabState extends State<ProgramTab> {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 850),
-            child: PinchZoomArea(
-              child: ListView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                children: [
-                  // ── شريط رأس تاب Program مع زرار (+) لإضافة دورة مرحلية جديدة ──
-                  _buildHeaderBar(s),
-                  const SizedBox(height: 18),
+            child: ListView(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              children: [
+                // ── شريط رأس تاب Program مع زرار (+) لإضافة دورة مرحلية جديدة ──
+                _buildHeaderBar(s),
+                const SizedBox(height: 18),
 
-                  // ── كروت الدورات المرحلية المجسمة ──
-                  ..._cycles.map((c) => _buildCyclePanel(s, c)),
-                  const SizedBox(height: 24),
-                ],
-              ),
+                // ── كروت الدورات المرحلية المجسمة ──
+                ..._cycles.map((c) => _buildCyclePanel(s, c)),
+                const SizedBox(height: 24),
+              ],
             ),
           ),
         ),
@@ -653,14 +651,13 @@ class _ProgramTabState extends State<ProgramTab> {
                             child: TextFormField(
                               initialValue: cycle.location,
                               style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
                                   color: EngineRowingUI.textWhite),
                               decoration: InputDecoration(
                                 labelText: s.trainingLocation,
                                 labelStyle: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11,
                                     color: EngineRowingUI.labelSlate),
                                 border: InputBorder.none,
                                 isDense: true,
@@ -776,7 +773,7 @@ class _ProgramTabState extends State<ProgramTab> {
                                           testType,
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
-                                            fontSize: 15,
+                                            fontSize: 11.5,
                                             color: testItem.isCompleted
                                                 ? _gold
                                                 : EngineRowingUI.textWhite,
@@ -798,8 +795,7 @@ class _ProgramTabState extends State<ProgramTab> {
                                           .englishDigitsInputFormatter,
                                     ],
                                     style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
+                                      fontSize: 11,
                                       color: EngineRowingUI.textWhite,
                                       fontFeatures: [
                                         FontFeature.tabularFigures()
@@ -813,7 +809,7 @@ class _ProgramTabState extends State<ProgramTab> {
                                       ),
                                       isDense: true,
                                       contentPadding: EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 12),
+                                          horizontal: 6, vertical: 4),
                                       border: OutlineInputBorder(
                                         borderSide:
                                             BorderSide(color: _gridLine),

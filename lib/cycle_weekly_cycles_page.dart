@@ -153,94 +153,92 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
           : Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 850),
-                child: PinchZoomArea(
-                  child: ListView(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
-                    children: [
-                      // ── شريط التنبيه والتحقق من مجموع تكرارات الدورتين ──
-                      if (!isRepsValid)
-                        Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF280B14),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                                color: const Color(0xFFFF5252), width: 1.2),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.warning_amber_rounded,
-                                  color: Color(0xFFFF5252), size: 24),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  '${s.repsMismatchWarning}\n(مجموع التكرارات الحالي: ${_cycle.sumConfiguredReps} • المطلوب: $totalWeeks أسابيع بناءً على تواريخ الدورة المرحلية)',
-                                  style: const TextStyle(
-                                    fontSize: 12.5,
-                                    color: EngineRowingUI.textWhite,
-                                    fontWeight: FontWeight.bold,
-                                    height: 1.3,
-                                  ),
+                child: ListView(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  children: [
+                    // ── شريط التنبيه والتحقق من مجموع تكرارات الدورتين ──
+                    if (!isRepsValid)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF280B14),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                              color: const Color(0xFFFF5252), width: 1.2),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.warning_amber_rounded,
+                                color: Color(0xFFFF5252), size: 24),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                '${s.repsMismatchWarning}\n(مجموع التكرارات الحالي: ${_cycle.sumConfiguredReps} • المطلوب: $totalWeeks أسابيع بناءً على تواريخ الدورة المرحلية)',
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  color: EngineRowingUI.textWhite,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1.3,
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
+                      ),
 
-                      // ════════════════════════════════════════════════════════════
-                      // القسم الأول: الدورة التدريبية الأسبوعية الأساسية
-                      // ════════════════════════════════════════════════════════════
-                      _buildCycleSectionHeader(
-                        title: s.basicWeeklyCycleTitle,
+                    // ════════════════════════════════════════════════════════════
+                    // القسم الأول: الدورة التدريبية الأسبوعية الأساسية
+                    // ════════════════════════════════════════════════════════════
+                    _buildCycleSectionHeader(
+                      title: s.basicWeeklyCycleTitle,
+                      cycleType: 'basic',
+                      repsValue: _cycle.basicReps,
+                      onRepsChanged: (val) {
+                        setState(() => _cycle.basicReps = val);
+                        _updateCycleData();
+                      },
+                    ),
+                    const SizedBox(height: 12),
+
+                    // لوحات أيام الأسبوع السبعة للدورة الأساسية
+                    ...List.generate(7, (day) {
+                      return _buildDayPanel(
+                        dayOfWeek: day,
                         cycleType: 'basic',
-                        repsValue: _cycle.basicReps,
-                        onRepsChanged: (val) {
-                          setState(() => _cycle.basicReps = val);
-                          _updateCycleData();
-                        },
-                      ),
-                      const SizedBox(height: 12),
+                        repsMultiplier: _cycle.basicReps,
+                      );
+                    }),
 
-                      // لوحات أيام الأسبوع السبعة للدورة الأساسية
-                      ...List.generate(7, (day) {
-                        return _buildDayPanel(
-                          dayOfWeek: day,
-                          cycleType: 'basic',
-                          repsMultiplier: _cycle.basicReps,
-                        );
-                      }),
+                    const SizedBox(height: 24),
+                    const Divider(thickness: 1.5, color: _gridLine),
+                    const SizedBox(height: 16),
 
-                      const SizedBox(height: 24),
-                      const Divider(thickness: 1.5, color: _gridLine),
-                      const SizedBox(height: 16),
+                    // ════════════════════════════════════════════════════════════
+                    // القسم الثاني: الدورة التدريبية الأسبوعية الفرعية
+                    // ════════════════════════════════════════════════════════════
+                    _buildCycleSectionHeader(
+                      title: s.secondaryWeeklyCycleTitle,
+                      cycleType: 'secondary',
+                      repsValue: _cycle.secondaryReps,
+                      onRepsChanged: (val) {
+                        setState(() => _cycle.secondaryReps = val);
+                        _updateCycleData();
+                      },
+                    ),
+                    const SizedBox(height: 12),
 
-                      // ════════════════════════════════════════════════════════════
-                      // القسم الثاني: الدورة التدريبية الأسبوعية الفرعية
-                      // ════════════════════════════════════════════════════════════
-                      _buildCycleSectionHeader(
-                        title: s.secondaryWeeklyCycleTitle,
+                    // لوحات أيام الأسبوع السبعة للدورة الفرعية
+                    ...List.generate(7, (day) {
+                      return _buildDayPanel(
+                        dayOfWeek: day,
                         cycleType: 'secondary',
-                        repsValue: _cycle.secondaryReps,
-                        onRepsChanged: (val) {
-                          setState(() => _cycle.secondaryReps = val);
-                          _updateCycleData();
-                        },
-                      ),
-                      const SizedBox(height: 12),
-
-                      // لوحات أيام الأسبوع السبعة للدورة الفرعية
-                      ...List.generate(7, (day) {
-                        return _buildDayPanel(
-                          dayOfWeek: day,
-                          cycleType: 'secondary',
-                          repsMultiplier: _cycle.secondaryReps,
-                        );
-                      }),
-                      const SizedBox(height: 30),
-                    ],
-                  ),
+                        repsMultiplier: _cycle.secondaryReps,
+                      );
+                    }),
+                    const SizedBox(height: 30),
+                  ],
                 ),
               ),
             ),

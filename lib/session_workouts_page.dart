@@ -305,44 +305,42 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 850),
-                child: PinchZoomArea(
-                  child: ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      // ── 1. الصف الأول: الإحماء ──
-                      _buildSectionCard(
-                        title: s.warmupSection,
-                        icon: Icons.directions_walk_rounded,
-                        section: 'warmup',
-                        items: _session.warmupItems,
-                        badgeColor: const Color(0xFFFF9100),
-                        onAdd: () => _addWorkoutRow('warmup'),
-                      ),
-                      const SizedBox(height: 18),
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    // ── 1. الصف الأول: الإحماء ──
+                    _buildSectionCard(
+                      title: s.warmupSection,
+                      icon: Icons.directions_walk_rounded,
+                      section: 'warmup',
+                      items: _session.warmupItems,
+                      badgeColor: const Color(0xFFFF9100),
+                      onAdd: () => _addWorkoutRow('warmup'),
+                    ),
+                    const SizedBox(height: 18),
 
-                      // ── 2. الصف الثاني: التمرين الرئيسي ──
-                      _buildSectionCard(
-                        title: s.mainWorkoutSection,
-                        icon: Icons.fitness_center_rounded,
-                        section: 'main',
-                        items: _session.mainItems,
-                        badgeColor: _gold,
-                        onAdd: () => _addWorkoutRow('main'),
-                      ),
-                      const SizedBox(height: 18),
+                    // ── 2. الصف الثاني: التمرين الرئيسي ──
+                    _buildSectionCard(
+                      title: s.mainWorkoutSection,
+                      icon: Icons.fitness_center_rounded,
+                      section: 'main',
+                      items: _session.mainItems,
+                      badgeColor: _gold,
+                      onAdd: () => _addWorkoutRow('main'),
+                    ),
+                    const SizedBox(height: 18),
 
-                      // ── 3. الصف الثالث: التهدئة ──
-                      _buildSectionCard(
-                        title: s.cooldownSection,
-                        icon: Icons.self_improvement_rounded,
-                        section: 'cooldown',
-                        items: _session.cooldownItems,
-                        badgeColor: const Color(0xFF2979FF),
-                        onAdd: () => _addWorkoutRow('cooldown'),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
+                    // ── 3. الصف الثالث: التهدئة ──
+                    _buildSectionCard(
+                      title: s.cooldownSection,
+                      icon: Icons.self_improvement_rounded,
+                      section: 'cooldown',
+                      items: _session.cooldownItems,
+                      badgeColor: const Color(0xFF2979FF),
+                      onAdd: () => _addWorkoutRow('cooldown'),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
                 ),
               ),
             ),

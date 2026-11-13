@@ -516,10 +516,9 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                       // رأس تعريفي باللاعب ونبض الراحة المعتمد بمعادلة كارفونين
                       _buildAthleteHeaderCard(s),
 
-                      // المحتوى القابل للتمرير مع دعم التكبير بالأصابع
+                      // المحتوى القابل للتمرير
                       Expanded(
-                        child: PinchZoomArea(
-                          child: ListView(
+                        child: ListView(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             children: [
                               // قسم المؤشرات اليومية المشتركة (HRV، النوم، الوزن، الإرهاق)
@@ -538,6 +537,8 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                                   Expanded(
                                     child: Text(
                                       'فورمات تمارين اليوم (${_workoutForms.length})',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
@@ -575,7 +576,6 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                               const SizedBox(height: 24),
                             ],
                           ),
-                        ),
                       ),
 
                       // زر الحفظ الرئيسي والعودة لقائمة اللاعبين
@@ -617,21 +617,23 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
               children: [
                 Text(
                   _playerName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: EngineRowingUI.textWhite,
                   ),
                 ),
-                Directionality(
-                  textDirection: TextDirection.ltr,
-                  child: Text(
-                    'Date: ${widget.date} • ${s.maxHRLabel}: $_currentMHR bpm',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: EngineRowingUI.labelSlate,
-                    ),
+                const SizedBox(height: 2),
+                Text(
+                  '${widget.date} • MHR: $_currentMHR bpm',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: EngineRowingUI.labelSlate,
                   ),
                 ),
               ],
@@ -973,8 +975,10 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                     Expanded(
                       child: Text(
                         'Target HR (${form.currentZone}): $rangeText',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 20,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: EngineRowingUI.textWhite,
                         ),
@@ -1147,12 +1151,16 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                     children: [
                       const Icon(Icons.bolt, color: EngineRowingUI.neonLime, size: 20),
                       const SizedBox(width: 8),
-                      Text(
-                        'Efficiency Factor: EF = ${form.calculatedEF} W/bpm',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: EngineRowingUI.neonLime,
+                      Expanded(
+                        child: Text(
+                          'Efficiency Factor: EF = ${form.calculatedEF} W/bpm',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: EngineRowingUI.neonLime,
+                          ),
                         ),
                       ),
                     ],

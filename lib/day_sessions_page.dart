@@ -247,8 +247,7 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
           : Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 850),
-                child: PinchZoomArea(
-                  child: ListView(
+                child: ListView(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 14),
                     children: [
@@ -309,7 +308,6 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
                       const SizedBox(height: 24),
                     ],
                   ),
-                ),
               ),
             ),
     );

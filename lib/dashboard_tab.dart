@@ -126,8 +126,7 @@ class _DashboardTabState extends State<DashboardTab> {
             onRefresh: _loadHomeData,
             color: EngineRowingUI.neonLime,
             backgroundColor: EngineRowingUI.cardFill,
-            child: PinchZoomArea(
-              child: ListView(
+            child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 children: [
                   // ── ترويسة الترحيب ──
@@ -158,7 +157,6 @@ class _DashboardTabState extends State<DashboardTab> {
                 _buildTestingDatesCard(s, user),
                 const SizedBox(height: 24),
               ],
-            ),
             ),
           ),
         ),

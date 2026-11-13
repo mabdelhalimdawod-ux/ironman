@@ -129,8 +129,7 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 850),
-            child: PinchZoomArea(
-              child: ListView(
+            child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 children: [
                   // ══════════════════════════════════════════════════
@@ -156,7 +155,6 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
             ),
           ),
         ),
-      ),
     );
   }
 

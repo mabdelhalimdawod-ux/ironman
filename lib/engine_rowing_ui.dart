@@ -9,7 +9,8 @@ class RowingResponsive {
   static const double _baseWidth = 390.0;
 
   /// مؤشر نسبة التكبير التي يختارها المستخدم يدوياً من القائمة المنسدلة
-  static final ValueNotifier<double> userScaleNotifier = ValueNotifier<double>(1.0);
+  static final ValueNotifier<double> userScaleNotifier =
+      ValueNotifier<double>(1.0);
 
   /// مؤشر مستوى حدة الألوان والإضاءة الفسفورية
   static final ValueNotifier<DisplayIntensity> intensityNotifier =
@@ -220,7 +221,8 @@ class EngineRowingUI {
             color: captionGrey,
             fontSize: 15,
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: const BorderSide(color: bgGridLine, width: 1.5),
@@ -572,7 +574,8 @@ class RowingMetricCard extends StatelessWidget {
     if (trendDirection != null) {
       direction = trendDirection!;
     } else if (previousValue != null) {
-      final currentNum = double.tryParse(value.replaceAll(RegExp(r'[^0-9.]'), ''));
+      final currentNum =
+          double.tryParse(value.replaceAll(RegExp(r'[^0-9.]'), ''));
       if (currentNum != null) {
         if (currentNum > previousValue!) {
           direction = MetricTrendDirection.up;
@@ -622,7 +625,8 @@ class RowingNumericInputField extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             color: EngineRowingUI.cardFill,
-            borderRadius: BorderRadius.circular(RowingResponsive.dp(context, 14)),
+            borderRadius:
+                BorderRadius.circular(RowingResponsive.dp(context, 14)),
             border: Border.all(color: EngineRowingUI.bgGridLine, width: 1.0),
           ),
           child: Column(
@@ -640,7 +644,8 @@ class RowingNumericInputField extends StatelessWidget {
                   controller: controller,
                   textDirection: TextDirection.ltr,
                   textAlign: TextAlign.left,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: [
                     RowingNumberFormatter.englishDigitsInputFormatter,
                   ],
@@ -665,7 +670,8 @@ class RowingNumericInputField extends StatelessWidget {
         if (footnote != null && footnote!.isNotEmpty) ...[
           SizedBox(height: RowingResponsive.dp(context, 8)),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: RowingResponsive.dp(context, 4)),
+            padding: EdgeInsets.symmetric(
+                horizontal: RowingResponsive.dp(context, 4)),
             child: Text(
               RowingNumberFormatter.toEnglishDigits(footnote!),
               style: EngineRowingUI.footnoteCaption(context),
@@ -875,10 +881,12 @@ BoxDecoration neonGlowBoxDecoration({
     border: Border.all(
       color: intensity == DisplayIntensity.ultra
           ? borderColor
-          : (intensity == DisplayIntensity.bright || intensity == DisplayIntensity.high
+          : (intensity == DisplayIntensity.bright ||
+                  intensity == DisplayIntensity.high
               ? borderColor.withValues(alpha: 0.85)
               : borderColor.withValues(alpha: 0.55)),
-      width: intensity == DisplayIntensity.ultra ? borderWidth * 1.4 : borderWidth,
+      width:
+          intensity == DisplayIntensity.ultra ? borderWidth * 1.4 : borderWidth,
     ),
     boxShadow: [
       BoxShadow(
@@ -891,7 +899,7 @@ BoxDecoration neonGlowBoxDecoration({
   );
 }
 
-/// 12. حاوية التكبير والتصغير بأصابع المستخدم (Pinch-to-Zoom Area)
+/// 12. حاوية العرض بدون تكبير/تصغير (تم إيقاف Pinch-to-Zoom بناءً على الطلب)
 class PinchZoomArea extends StatelessWidget {
   final Widget child;
   final double minScale;
@@ -900,20 +908,13 @@ class PinchZoomArea extends StatelessWidget {
   const PinchZoomArea({
     super.key,
     required this.child,
-    this.minScale = 0.8,
-    this.maxScale = 3.0,
+    this.minScale = 1.0,
+    this.maxScale = 1.0,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InteractiveViewer(
-      minScale: minScale,
-      maxScale: maxScale,
-      panEnabled: true,
-      scaleEnabled: true,
-      clipBehavior: Clip.none,
-      child: child,
-    );
+    return child;
   }
 }
 
@@ -965,7 +966,8 @@ class RowingAdaptiveZoneBoxes extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final totalSecs = zones.fold<int>(0, (sum, z) => sum + (zoneSeconds[z] ?? 0));
+    final totalSecs =
+        zones.fold<int>(0, (sum, z) => sum + (zoneSeconds[z] ?? 0));
 
     return ValueListenableBuilder<DisplayIntensity>(
       valueListenable: intensityNotifier,
@@ -975,10 +977,10 @@ class RowingAdaptiveZoneBoxes extends StatelessWidget {
             final w = constraints.maxWidth;
             final isMobile = w < 620;
 
-            final boxes = _buildZoneBoxes(context, totalSecs, isMobile, w, intensity);
-            final curveWidget = showCurveChart
-                ? _buildCurveChart(totalSecs, intensity)
-                : null;
+            final boxes =
+                _buildZoneBoxes(context, totalSecs, isMobile, w, intensity);
+            final curveWidget =
+                showCurveChart ? _buildCurveChart(totalSecs, intensity) : null;
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1035,7 +1037,8 @@ class RowingAdaptiveZoneBoxes extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: const [
-              Icon(Icons.show_chart_rounded, size: 14, color: Color(0xFF1E293B)),
+              Icon(Icons.show_chart_rounded,
+                  size: 14, color: Color(0xFF1E293B)),
               SizedBox(width: 4),
               Text(
                 'منحنى توزيع الزونات',
@@ -1070,7 +1073,8 @@ class RowingAdaptiveZoneBoxes extends StatelessWidget {
                           height: (curveHeight - 34) * fraction,
                           decoration: BoxDecoration(
                             color: secs > 0 ? color : const Color(0xFFE2E8F0),
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                            borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(4)),
                           ),
                         ),
                       ),
@@ -1135,7 +1139,8 @@ class RowingAdaptiveZoneBoxes extends StatelessWidget {
     final secs = zoneSeconds[zone] ?? 0;
     final isZero = secs == 0;
     final color = zoneColorsMap[zone] ?? EngineRowingUI.neonLime;
-    final pct = totalSecs > 0 ? ((secs / totalSecs) * 100).toStringAsFixed(1) : '0';
+    final pct =
+        totalSecs > 0 ? ((secs / totalSecs) * 100).toStringAsFixed(1) : '0';
     final durationStr = isZero ? '-' : _formatSecs(secs);
 
     return Container(
@@ -1189,7 +1194,9 @@ class RowingAdaptiveZoneBoxes extends StatelessWidget {
                 fontSize: 14.5,
                 fontWeight: FontWeight.bold,
                 fontFeatures: const [FontFeature.tabularFigures()],
-                color: isZero ? EngineRowingUI.captionGrey : EngineRowingUI.textWhite,
+                color: isZero
+                    ? EngineRowingUI.captionGrey
+                    : EngineRowingUI.textWhite,
               ),
             ),
           ),
@@ -1204,7 +1211,9 @@ class RowingAdaptiveZoneBoxes extends StatelessWidget {
                 fontFamily: EngineRowingUI.fontFamily,
                 fontSize: 12.5,
                 fontWeight: FontWeight.w700,
-                color: isZero ? EngineRowingUI.captionGrey.withValues(alpha: 0.7) : color,
+                color: isZero
+                    ? EngineRowingUI.captionGrey.withValues(alpha: 0.7)
+                    : color,
               ),
             ),
           ),
@@ -1213,5 +1222,3 @@ class RowingAdaptiveZoneBoxes extends StatelessWidget {
     );
   }
 }
-
-

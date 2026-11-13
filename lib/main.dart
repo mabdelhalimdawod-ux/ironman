@@ -319,11 +319,9 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
               return Transform.scale(
                 scale: scale,
                 alignment: Alignment.topCenter,
-                child: PinchZoomArea(
-                  child: IndexedStack(
-                    index: _currentIndex,
-                    children: _tabs,
-                  ),
+                child: IndexedStack(
+                  index: _currentIndex,
+                  children: _tabs,
                 ),
               );
             },
