@@ -214,13 +214,13 @@ class EngineRowingUI {
           labelStyle: const TextStyle(
             color: labelSlate,
             fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontSize: 20,
           ),
           hintStyle: const TextStyle(
             color: captionGrey,
-            fontSize: 14,
+            fontSize: 15,
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: const BorderSide(color: bgGridLine, width: 1.5),
@@ -267,7 +267,7 @@ class EngineRowingUI {
           {bool isHighlighted = false}) =>
       TextStyle(
         fontFamily: fontFamily,
-        fontSize: RowingResponsive.sp(context, 50),
+        fontSize: RowingResponsive.sp(context, 52),
         fontWeight: FontWeight.w800,
         color: isHighlighted ? neonLime : textWhite,
         letterSpacing: -1.0,
@@ -1139,7 +1139,7 @@ class RowingAdaptiveZoneBoxes extends StatelessWidget {
     final durationStr = isZero ? '-' : _formatSecs(secs);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 11),
       decoration: neonGlowBoxDecoration(
         fillColor: isZero
             ? EngineRowingUI.equationCardFill.withAlpha(160)
@@ -1170,7 +1170,7 @@ class RowingAdaptiveZoneBoxes extends StatelessWidget {
               softWrap: false,
               style: TextStyle(
                 fontFamily: EngineRowingUI.fontFamily,
-                fontSize: 13,
+                fontSize: 15,
                 fontWeight: FontWeight.w800,
                 color: isZero ? EngineRowingUI.captionGrey : color,
                 letterSpacing: 0.5,
@@ -1186,7 +1186,7 @@ class RowingAdaptiveZoneBoxes extends StatelessWidget {
               softWrap: false,
               style: TextStyle(
                 fontFamily: EngineRowingUI.fontFamily,
-                fontSize: 12.5,
+                fontSize: 14.5,
                 fontWeight: FontWeight.bold,
                 fontFeatures: const [FontFeature.tabularFigures()],
                 color: isZero ? EngineRowingUI.captionGrey : EngineRowingUI.textWhite,
@@ -1202,7 +1202,7 @@ class RowingAdaptiveZoneBoxes extends StatelessWidget {
               softWrap: false,
               style: TextStyle(
                 fontFamily: EngineRowingUI.fontFamily,
-                fontSize: 10.5,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w700,
                 color: isZero ? EngineRowingUI.captionGrey.withValues(alpha: 0.7) : color,
               ),

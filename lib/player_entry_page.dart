@@ -370,7 +370,7 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
                   style: FilledButton.styleFrom(
                     backgroundColor: EngineRowingUI.neonLime,
                     foregroundColor: EngineRowingUI.bgNavy,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                   icon: _isSaving
@@ -471,7 +471,7 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
                     '$targetHR bpm',
                     style: const TextStyle(
                       color: EngineRowingUI.neonLime,
-                      fontSize: 16,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -492,7 +492,7 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
         Text(
           title,
           style: TextStyle(
-            fontSize: 18,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
             color: color,
           ),
@@ -518,7 +518,7 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
           style: const TextStyle(
             color: EngineRowingUI.textWhite,
             fontFamily: EngineRowingUI.fontFamily,
-            fontSize: 20,
+            fontSize: 24,
             fontWeight: FontWeight.bold,
             fontFeatures: [FontFeature.tabularFigures()],
           ),
@@ -527,7 +527,7 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
             labelText: label,
             labelStyle: const TextStyle(
               color: EngineRowingUI.labelSlate,
-              fontSize: 15,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
             hintText: hint,
@@ -535,7 +535,7 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
             isDense: true,
             filled: true,
             fillColor: EngineRowingUI.equationCardFill,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 22),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
@@ -618,7 +618,7 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
                 isDense: true,
                 filled: true,
                 fillColor: EngineRowingUI.equationCardFill,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 22),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),
@@ -656,7 +656,7 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
                     Text(
                       '${_calculatedNP!} W',
                       style: const TextStyle(
-                        fontSize: 17,
+                        fontSize: 20,
                         fontWeight: FontWeight.w800,
                         color: EngineRowingUI.neonLime,
                       ),
@@ -718,7 +718,7 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
                 isDense: true,
                 filled: true,
                 fillColor: EngineRowingUI.equationCardFill,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 22),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(color: EngineRowingUI.bgGridLine),

@@ -382,13 +382,13 @@ class _CycleWeeklyCyclesPageState extends State<CycleWeeklyCyclesPage> {
                             child: TextFormField(
                               initialValue: _cycle.location,
                               style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
                                   color: EngineRowingUI.textWhite),
                               decoration: InputDecoration(
                                 hintText: s.trainingLocationHint,
                                 hintStyle: const TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 14,
                                     color: EngineRowingUI.captionGrey),
                                 border: InputBorder.none,
                                 isDense: true,

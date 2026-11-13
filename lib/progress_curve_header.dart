@@ -67,10 +67,10 @@ class ProgressCurveHeader extends StatelessWidget {
               headerText,
               style: const TextStyle(
                 color: EngineRowingUI.textWhite,
-                fontSize: 12.5,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
-              maxLines: 2,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ),

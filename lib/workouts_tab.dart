@@ -172,35 +172,44 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // شريط اختيار التاريخ وعنوان تمارين اليوم
+          // العنوان الرئيسي في سطر كامل بعرض اللوحة بدون انقسام
           Row(
             children: [
-              const Icon(Icons.fitness_center, color: _gold, size: 26),
+              const Icon(Icons.fitness_center, color: _gold, size: 28),
               const SizedBox(width: 10),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      s.todaysWorkoutsHeader,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: EngineRowingUI.textWhite,
-                      ),
-                    ),
-                    Text(
-                      s.todaysWorkoutsSubtitle,
-                      style: const TextStyle(fontSize: 12, color: EngineRowingUI.labelSlate),
-                    ),
-                  ],
+                child: Text(
+                  s.todaysWorkoutsHeader,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: EngineRowingUI.textWhite,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            s.todaysWorkoutsSubtitle,
+            style: const TextStyle(fontSize: 14, color: EngineRowingUI.labelSlate),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 12),
+          // سطر خيارات التحكم بالكامل أسفل العنوان لمنع أي تضارب أو Overflow
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
               InkWell(
                 onTap: _pickDate,
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: EngineRowingUI.equationCardFill,
                     borderRadius: BorderRadius.circular(8),
@@ -209,8 +218,8 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.calendar_today, color: _gold, size: 16),
-                      const SizedBox(width: 6),
+                      const Icon(Icons.calendar_today, color: _gold, size: 18),
+                      const SizedBox(width: 8),
                       Directionality(
                         textDirection: TextDirection.ltr,
                         child: Text(
@@ -219,7 +228,7 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                             color: EngineRowingUI.textWhite,
                             fontWeight: FontWeight.bold,
                             fontFeatures: [FontFeature.tabularFigures()],
-                            fontSize: 13,
+                            fontSize: 14,
                           ),
                         ),
                       ),
@@ -227,7 +236,6 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
               InkWell(
                 onTap: () {
                   Navigator.push(
@@ -237,7 +245,7 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                 },
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: _gold.withAlpha(35),
                     borderRadius: BorderRadius.circular(8),
@@ -246,14 +254,14 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.auto_graph_rounded, color: _gold, size: 16),
-                      const SizedBox(width: 6),
+                      const Icon(Icons.auto_graph_rounded, color: _gold, size: 18),
+                      const SizedBox(width: 8),
                       Text(
                         s.curveZone,
                         style: const TextStyle(
                           color: _gold,
                           fontWeight: FontWeight.bold,
-                          fontSize: 12,
+                          fontSize: 14,
                         ),
                       ),
                     ],
@@ -372,50 +380,55 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
 
     final isAllDone = fullyCompletedCount == _players.length && _players.isNotEmpty;
 
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(Icons.people_alt, color: _gold, size: 22),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
+        Row(
+          children: [
+            const Icon(Icons.people_alt, color: _gold, size: 26),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
                 s.athletesListTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: EngineRowingUI.textWhite,
                 ),
               ),
-              Text(
-                s.tapAthleteToLogMulti,
-                style: const TextStyle(fontSize: 12, color: EngineRowingUI.labelSlate),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: EngineRowingUI.equationCardFill,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isAllDone ? _gold : _gridLine,
+                ),
               ),
-            ],
-          ),
+              child: Directionality(
+                textDirection: TextDirection.ltr,
+                child: Text(
+                  '${RowingNumberFormatter.toEnglishDigits(fullyCompletedCount.toString())} / ${RowingNumberFormatter.toEnglishDigits(_players.length.toString())} Done',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                    color: isAllDone ? _gold : EngineRowingUI.labelSlate,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: EngineRowingUI.equationCardFill,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isAllDone ? _gold : _gridLine,
-            ),
-          ),
-          child: Directionality(
-            textDirection: TextDirection.ltr,
-            child: Text(
-              '${RowingNumberFormatter.toEnglishDigits(fullyCompletedCount.toString())} / ${RowingNumberFormatter.toEnglishDigits(_players.length.toString())} Done',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                fontFeatures: const [FontFeature.tabularFigures()],
-                color: isAllDone ? _gold : EngineRowingUI.labelSlate,
-              ),
-            ),
-          ),
+        const SizedBox(height: 4),
+        Text(
+          s.tapAthleteToLogMulti,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 14, color: EngineRowingUI.labelSlate),
         ),
       ],
     );
@@ -484,7 +497,7 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                     Text(
                       name,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: nameColor, // تغيير لون اسم اللاعب!
                       ),

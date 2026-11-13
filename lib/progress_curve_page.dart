@@ -1338,7 +1338,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                 athleteName,
                 style: TextStyle(
                   color: athleteColor,
-                  fontSize: 11.5,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -1587,7 +1587,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
             athleteName,
             style: TextStyle(
               color: athleteColor,
-              fontSize: 11.5,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -1632,7 +1632,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                             s.zoneColHeader,
                             style: const TextStyle(
                               color: EngineRowingUI.neonLime,
-                              fontSize: 10.5,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -1643,7 +1643,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                             s.zoneDescColHeader,
                             style: const TextStyle(
                               color: EngineRowingUI.neonLime,
-                              fontSize: 10.5,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -1655,7 +1655,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: EngineRowingUI.neonLime,
-                              fontSize: 10.5,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -1667,7 +1667,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                             textAlign: TextAlign.end,
                             style: const TextStyle(
                               color: EngineRowingUI.neonLime,
-                              fontSize: 10.5,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -1835,7 +1835,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                 athleteName,
                 style: TextStyle(
                   color: athleteColor,
-                  fontSize: 11.5,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -2144,17 +2144,18 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: EngineRowingUI.captionGrey,
-              fontSize: 9.5,
+              fontSize: 12.5,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 4),
           Directionality(
             textDirection: TextDirection.ltr,
             child: Text(
               RowingNumberFormatter.toEnglishDigits(value),
               style: TextStyle(
                 color: color,
-                fontSize: 15,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -2197,7 +2198,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                 athleteName,
                 style: TextStyle(
                   color: athleteColor,
-                  fontSize: 11.5,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),

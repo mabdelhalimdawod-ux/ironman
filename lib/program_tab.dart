@@ -653,13 +653,14 @@ class _ProgramTabState extends State<ProgramTab> {
                             child: TextFormField(
                               initialValue: cycle.location,
                               style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
                                   color: EngineRowingUI.textWhite),
                               decoration: InputDecoration(
                                 labelText: s.trainingLocation,
                                 labelStyle: const TextStyle(
-                                    fontSize: 11,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
                                     color: EngineRowingUI.labelSlate),
                                 border: InputBorder.none,
                                 isDense: true,
@@ -775,7 +776,7 @@ class _ProgramTabState extends State<ProgramTab> {
                                           testType,
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
-                                            fontSize: 11.5,
+                                            fontSize: 15,
                                             color: testItem.isCompleted
                                                 ? _gold
                                                 : EngineRowingUI.textWhite,
@@ -797,7 +798,8 @@ class _ProgramTabState extends State<ProgramTab> {
                                           .englishDigitsInputFormatter,
                                     ],
                                     style: const TextStyle(
-                                      fontSize: 11,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
                                       color: EngineRowingUI.textWhite,
                                       fontFeatures: [
                                         FontFeature.tabularFigures()
@@ -811,7 +813,7 @@ class _ProgramTabState extends State<ProgramTab> {
                                       ),
                                       isDense: true,
                                       contentPadding: EdgeInsets.symmetric(
-                                          horizontal: 6, vertical: 4),
+                                          horizontal: 8, vertical: 12),
                                       border: OutlineInputBorder(
                                         borderSide:
                                             BorderSide(color: _gridLine),

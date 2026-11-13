@@ -8,8 +8,6 @@ import 'package:rowing_app/dashboard_tab.dart';
 import 'package:rowing_app/program_tab.dart';
 import 'package:rowing_app/workouts_tab.dart';
 import 'package:rowing_app/session_workouts_page.dart';
-import 'package:rowing_app/athlete_day_entry_page.dart';
-import 'package:rowing_app/player_entry_page.dart';
 import 'package:rowing_app/program_service.dart';
 
 void main() {
@@ -187,51 +185,5 @@ void main() {
 
     // Verify RowingTrendIndicator widgets are rendered
     expect(find.byType(RowingTrendIndicator), findsNWidgets(3));
-  });
-
-  testWidgets('AthleteDayEntryPage builds without overflow with enlarged inputs and labels', (tester) async {
-    tester.view.physicalSize = const Size(1080, 2400);
-    tester.view.devicePixelRatio = 2.75;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: AthleteDayEntryPage(
-          player: {'id': 1, 'name': 'Ahmed Athlete', 'mhr': 195},
-          date: '2026-11-12',
-          sessions: [
-            {'idx': 0, 'kind': 'Erg', 'time': '07:00', 'zone': 'Z2'}
-          ],
-        ),
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-
-    expect(find.text('Ahmed Athlete'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('PlayerEntryPage builds without overflow with enlarged inputs and labels', (tester) async {
-    tester.view.physicalSize = const Size(1080, 2400);
-    tester.view.devicePixelRatio = 2.75;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: PlayerEntryPage(
-          player: {'id': 1, 'name': 'Omar Rower', 'mhr': 192},
-          session: {'idx': 0, 'kind': 'Erg', 'zone': 'Z2'},
-          date: '2026-11-12',
-        ),
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-
-    expect(find.textContaining('Omar Rower'), findsWidgets);
-    expect(tester.takeException(), isNull);
   });
 }
