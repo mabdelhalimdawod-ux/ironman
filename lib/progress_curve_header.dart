@@ -47,7 +47,8 @@ class ProgressCurveHeader extends StatelessWidget {
         color: EngineRowingUI.equationCardFill,
         border: Border(
           top: BorderSide(color: accent.withValues(alpha: 0.45), width: 1.0),
-          bottom: const BorderSide(color: EngineRowingUI.bgGridLine, width: 1.0),
+          bottom:
+              const BorderSide(color: EngineRowingUI.bgGridLine, width: 1.0),
         ),
       ),
       child: Row(
@@ -66,10 +67,10 @@ class ProgressCurveHeader extends StatelessWidget {
               headerText,
               style: const TextStyle(
                 color: EngineRowingUI.textWhite,
-                fontSize: 12.5,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
-              maxLines: 2,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ),

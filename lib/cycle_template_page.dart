@@ -282,8 +282,7 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
             : Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 850),
-                  child: PinchZoomArea(
-                    child: Column(
+                  child: Column(
                       children: [
                         // رأس تعريفي بالدورة المرحلية
                         _buildCycleSummaryHeader(s),
@@ -310,7 +309,6 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                         _buildBottomActionBar(s, currentDaySlots.length),
                       ],
                     ),
-                  ),
                 ),
               ),
       ),

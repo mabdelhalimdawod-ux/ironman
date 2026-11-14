@@ -306,20 +306,18 @@ class _ProgramTabState extends State<ProgramTab> {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 850),
-            child: PinchZoomArea(
-              child: ListView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                children: [
-                  // ── شريط رأس تاب Program مع زرار (+) لإضافة دورة مرحلية جديدة ──
-                  _buildHeaderBar(s),
-                  const SizedBox(height: 18),
+            child: ListView(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              children: [
+                // ── شريط رأس تاب Program مع زرار (+) لإضافة دورة مرحلية جديدة ──
+                _buildHeaderBar(s),
+                const SizedBox(height: 18),
 
-                  // ── كروت الدورات المرحلية المجسمة ──
-                  ..._cycles.map((c) => _buildCyclePanel(s, c)),
-                  const SizedBox(height: 24),
-                ],
-              ),
+                // ── كروت الدورات المرحلية المجسمة ──
+                ..._cycles.map((c) => _buildCyclePanel(s, c)),
+                const SizedBox(height: 24),
+              ],
             ),
           ),
         ),
