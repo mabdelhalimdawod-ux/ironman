@@ -578,6 +578,28 @@ class AppStrings {
 
   String get periodFilterWeek => isArabic ? 'أسبوع' : 'Week';
   String get periodFilterCycle => isArabic ? 'سايكل' : 'Cycle';
+
+  // ==================== Workouts Tab & Athlete Entry ====================
+  String get athleteWorkoutTitle => isArabic ? 'تماريني اليومية' : 'My Daily Workouts';
+  String get eupneaSectionTitle => isArabic ? 'معدل التنفس بعد التمرين (Eupnea)' : 'Post-Workout Eupnea (s)';
+  String get eupneaField1 => isArabic ? 'القياس 1 (ث)' : 'Reading 1 (s)';
+  String get eupneaField2 => isArabic ? 'القياس 2 (ث)' : 'Reading 2 (s)';
+  String get eupneaField3 => isArabic ? 'القياس 3 (ث)' : 'Reading 3 (s)';
+  String get sessionLockedNotice => isArabic
+      ? 'الحصة مقفولة (للقراءة فقط)'
+      : 'Session locked (Read-only)';
+  String get sessionNotStartedNotice => isArabic
+      ? 'الحصة لم تبدأ بعد'
+      : 'Session has not started yet';
+  String get sessionOpenNotice => isArabic
+      ? 'مفتوحة لتسجيل أرقامك'
+      : 'Open for logging';
+  String get coachEditableNotice => isArabic
+      ? 'وضع المدرب (صلاحية كاملة للتعديل)'
+      : 'Coach mode (Full edit permission)';
+  String get noScheduledSessionsForDate => isArabic
+      ? 'لا توجد حصص مجدولة لهذا اليوم'
+      : 'No scheduled sessions for this date';
   String get periodFilterCustom => isArabic ? 'مدة مخصصة' : 'Custom range';
   String get noCyclesRecorded =>
       isArabic ? 'لسه مفيش سايكلات متسجلة' : 'No cycles recorded yet';

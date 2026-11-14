@@ -310,7 +310,7 @@ class DB {
 
   static Future<Database> _open() async {
     final path = join(await getDatabasesPath(), 'rowing.db');
-    return openDatabase(path, version: 4, onCreate: (d, v) async {
+    return openDatabase(path, version: 5, onCreate: (d, v) async {
       await d.execute(
           'CREATE TABLE players(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mhr INTEGER, active INTEGER DEFAULT 1)');
       await d.execute(
@@ -341,6 +341,11 @@ class DB {
               distance INTEGER,
               split_500 REAL,
               ef REAL,
+              decoupling REAL,
+              eupnea_1 REAL,
+              eupnea_2 REAL,
+              eupnea_3 REAL,
+              entered_by TEXT,
               PRIMARY KEY(player_id, date, idx)
             )
           ''');
@@ -415,6 +420,25 @@ class DB {
       if (oldVersion < 4) {
         await d.execute('ALTER TABLE logs ADD COLUMN split_500 REAL');
         await d.execute('ALTER TABLE logs ADD COLUMN ef REAL');
+      }
+      if (oldVersion < 5) {
+        final cols = await d.rawQuery('PRAGMA table_info(logs)');
+        final colNames = cols.map((c) => c['name'] as String).toSet();
+        if (!colNames.contains('decoupling')) {
+          await d.execute('ALTER TABLE logs ADD COLUMN decoupling REAL');
+        }
+        if (!colNames.contains('eupnea_1')) {
+          await d.execute('ALTER TABLE logs ADD COLUMN eupnea_1 REAL');
+        }
+        if (!colNames.contains('eupnea_2')) {
+          await d.execute('ALTER TABLE logs ADD COLUMN eupnea_2 REAL');
+        }
+        if (!colNames.contains('eupnea_3')) {
+          await d.execute('ALTER TABLE logs ADD COLUMN eupnea_3 REAL');
+        }
+        if (!colNames.contains('entered_by')) {
+          await d.execute('ALTER TABLE logs ADD COLUMN entered_by TEXT');
+        }
       }
     });
   }

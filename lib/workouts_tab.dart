@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'db.dart';
 import 'app_strings.dart';
+import 'auth_service.dart';
 import 'engine_rowing_ui.dart';
 import 'program_service.dart';
 import 'athlete_day_entry_page.dart';
 import 'metrics_curve_page.dart';
+import 'session_lock_service.dart';
 
 const Color _navy = EngineRowingUI.bgNavy;
 const Color _cardFill = EngineRowingUI.cardFill;
@@ -12,12 +14,12 @@ const Color _gold = EngineRowingUI.neonLime;
 const Color _gridLine = EngineRowingUI.bgGridLine;
 
 /// تاب "التمارين" (Workouts Tab):
-/// - هيدر علوي يعرض كل تمارين اليوم الجاية من تاب البرنامج بمواعيدها ونوعها
-/// - تحت الهيدر قائمة أسماء اللاعبين
-/// - بالضغط على اسم لاعب تدخل لصفحته الفرعية لتسجيل فورمات تمارين اليوم
-/// - بعد الحفظ يتم الرجوع تلقائياً واسم اللاعب الذي أتم تسجيل كل تمارين يومه يتغير لونه
+/// - للمدرب: هيدر علوي يعرض كل تمارين اليوم وقائمة بكل اللاعبين لتسجيل ومتابعة حصصهم بصلاحية كاملة.
+/// - للاعب: شاشة مخصصة لتمارين اللاعب نفسه فقط مفلترة على رقم حسابه بدون قائمة لاعبين ومع تطبيق قواعد قفل التعديل.
 class WorkoutsTab extends StatefulWidget {
-  const WorkoutsTab({super.key});
+  final AppUser? user;
+
+  const WorkoutsTab({super.key, this.user});
 
   @override
   State<WorkoutsTab> createState() => _WorkoutsTabState();
@@ -27,7 +29,9 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
   DateTime _selectedDate = DateTime.now();
   List<Map<String, Object?>> _todayWorkouts = [];
   List<Map<String, Object?>> _players = [];
-  
+  List<ScheduledSessionInfo> _allScheduledSessions = [];
+  List<Map<String, Object?>> _athleteTodayLogs = [];
+
   // خريطة لتتبع عدد التمارين المسجلة لكل لاعب اليوم: playerId -> count of logged sessions
   final Map<int, int> _playerCompletedCounts = {};
   bool _loading = true;
@@ -45,20 +49,55 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
     // 1. جلب تمارين اليوم الجاية من تاب البرنامج وقالب السيكل النشط بمواعيدها
     _todayWorkouts = await ProgramService.getTodayWorkouts(_selectedDate);
 
-    // 2. جلب اللاعبين النشطين
-    _players = await DB.q('SELECT * FROM players WHERE active=1 ORDER BY name');
+    // 2. جلب جميع حصص البرنامج لحساب حالة القفل
+    final sessionRows = await DB.q('SELECT date, idx, kind, zone, time FROM sessions ORDER BY date ASC, idx ASC');
+    _allScheduledSessions = sessionRows.map((r) => ScheduledSessionInfo(
+      date: r['date'] as String? ?? dateStr,
+      idx: (r['idx'] as num?)?.toInt() ?? 0,
+      time: (r['time'] as String?) ?? '07:00',
+      kind: (r['kind'] as String?) ?? 'Erg',
+      zone: (r['zone'] as String?) ?? 'Z2',
+    )).toList();
 
-    // 3. فحص سجلات كل لاعب لليوم لمعرفة من أتم كل التمارين
-    _playerCompletedCounts.clear();
-    final todayLogs = await DB.q(
-      'SELECT player_id, COUNT(DISTINCT idx) as cnt FROM logs WHERE date = ? GROUP BY player_id',
-      [dateStr],
-    );
+    final isAthlete = widget.user?.isAthlete == true;
 
-    for (final row in todayLogs) {
-      final pid = row['player_id'] as int;
-      final cnt = (row['cnt'] as num?)?.toInt() ?? 0;
-      _playerCompletedCounts[pid] = cnt;
+    if (isAthlete) {
+      // ── وضع اللاعب: جلب بيانات اللاعب نفسه فقط وتصفية الاستعلام لمنع أي تسريب لبيانات لاعب آخر ──
+      _players = [];
+      final pid = widget.user?.playerId;
+      if (pid != null) {
+        _players = await DB.q('SELECT * FROM players WHERE id = ?', [pid]);
+      }
+      if (_players.isEmpty && widget.user != null) {
+        _players = await DB.q('SELECT * FROM players WHERE name = ? LIMIT 1', [widget.user!.name]);
+      }
+
+      final activePlayerId = _players.isNotEmpty ? (_players.first['id'] as int) : -1;
+      _athleteTodayLogs = await DB.q(
+        'SELECT * FROM logs WHERE player_id = ?',
+        [activePlayerId],
+      );
+
+      _playerCompletedCounts.clear();
+      final todayCount = _athleteTodayLogs.where((l) => l['date'] == dateStr).length;
+      if (activePlayerId > 0) {
+        _playerCompletedCounts[activePlayerId] = todayCount;
+      }
+    } else {
+      // ── وضع المدرب: جلب كل اللاعبين النشطين ──
+      _players = await DB.q('SELECT * FROM players WHERE active=1 ORDER BY name');
+
+      _playerCompletedCounts.clear();
+      final todayLogs = await DB.q(
+        'SELECT player_id, COUNT(DISTINCT idx) as cnt FROM logs WHERE date = ? GROUP BY player_id',
+        [dateStr],
+      );
+
+      for (final row in todayLogs) {
+        final pid = row['player_id'] as int;
+        final cnt = (row['cnt'] as num?)?.toInt() ?? 0;
+        _playerCompletedCounts[pid] = cnt;
+      }
     }
 
     if (mounted) setState(() => _loading = false);
@@ -93,12 +132,15 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
 
   void _openAthleteEntry(Map<String, Object?> player) async {
     final dateStr = dstr(_selectedDate);
+    final isAthlete = widget.user?.isAthlete == true;
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) => AthleteDayEntryPage(
           player: player,
           date: dateStr,
           sessions: _todayWorkouts,
+          userRole: isAthlete ? 'athlete' : 'coach',
+          allScheduledSessions: _allScheduledSessions,
         ),
       ),
     );
@@ -118,6 +160,7 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
       return const Center(child: CircularProgressIndicator(color: _gold));
     }
 
+    final isAthlete = widget.user?.isAthlete == true;
     final totalSessionsCount = _todayWorkouts.length;
 
     return Container(
@@ -130,33 +173,326 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 850),
             child: PinchZoomArea(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                children: [
-                  // ══════════════════════════════════════════════════
-                  // الهيدر العلوي: يعرض كل تمارين اليوم الجاية من تاب البرنامج بمواعيدها
-                  // ══════════════════════════════════════════════════
-                  _buildTodayWorkoutsHeader(s, dateStr),
-                  const SizedBox(height: 16),
-
-                  // ══════════════════════════════════════════════════
-                  // قائمة أسماء اللاعبين
-                  // ══════════════════════════════════════════════════
-                  _buildPlayersSectionHeader(s, totalSessionsCount),
-                  const SizedBox(height: 10),
-
-                  if (_players.isEmpty)
-                    _buildNoPlayersCard(s)
-                  else
-                    ..._players.map((p) => _buildPlayerItem(s, p, totalSessionsCount)),
-
-                  const SizedBox(height: 24),
-                ],
-              ),
+              child: isAthlete
+                  ? _buildAthleteView(s, dateStr)
+                  : _buildCoachView(s, dateStr, totalSessionsCount),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  /// واجهة المدرب: قائمة بكل اللاعبين وإحصائيات الحصص
+  Widget _buildCoachView(AppStrings s, String dateStr, int totalSessionsCount) {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      children: [
+        _buildTodayWorkoutsHeader(s, dateStr),
+        const SizedBox(height: 16),
+        _buildPlayersSectionHeader(s, totalSessionsCount),
+        const SizedBox(height: 10),
+        if (_players.isEmpty)
+          _buildNoPlayersCard(s)
+        else
+          ..._players.map((p) => _buildPlayerItem(s, p, totalSessionsCount)),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  /// واجهة اللاعب: خاصة بتمارينه هو فقط، بدون قائمة أي لاعبين آخرين
+  Widget _buildAthleteView(AppStrings s, String dateStr) {
+    if (_players.isEmpty) {
+      return ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        children: [
+          _buildTodayWorkoutsHeader(s, dateStr),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: _cardFill,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _gridLine),
+            ),
+            child: Column(
+              children: [
+                const Icon(Icons.person_off_rounded, color: EngineRowingUI.labelSlate, size: 40),
+                const SizedBox(height: 12),
+                Text(
+                  s.isArabic
+                      ? 'لم يتم ربط حسابك بملف لاعب بعد. يرجى مراجعة المدرب.'
+                      : 'No athlete profile linked to your account. Please consult your coach.',
+                  style: const TextStyle(color: EngineRowingUI.labelSlate, fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    final athlete = _players.first;
+
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      children: [
+        _buildTodayWorkoutsHeader(s, dateStr),
+        const SizedBox(height: 16),
+
+        // بطاقة ملخص تمرين اليوم للاعب وزر فتح التسجيل
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _cardFill,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _gold.withAlpha(140)),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 10,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isCompact = constraints.maxWidth < 340;
+                  final infoRow = Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: _gold.withAlpha(35),
+                        radius: 22,
+                        child: const Icon(Icons.person_rounded, color: _gold, size: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              athlete['name'] as String? ?? (s.isArabic ? 'بطل التجديف' : 'Rowing Athlete'),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: EngineRowingUI.textWhite,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              s.athleteWorkoutTitle,
+                              style: const TextStyle(fontSize: 12, color: EngineRowingUI.labelSlate),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+
+                  final logBtn = ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _gold,
+                      foregroundColor: _navy,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      elevation: 2,
+                    ),
+                    icon: const Icon(Icons.edit_note_rounded, size: 18),
+                    label: Text(
+                      s.isArabic ? 'تسجيل الأرقام' : 'Log Workout',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                    onPressed: () => _openAthleteEntry(athlete),
+                  );
+
+                  if (isCompact) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        infoRow,
+                        const SizedBox(height: 12),
+                        logBtn,
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      Expanded(child: infoRow),
+                      const SizedBox(width: 8),
+                      logBtn,
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+
+        // عنوان قائمة الحصص
+        Row(
+          children: [
+            const Icon(Icons.event_note_rounded, color: _gold, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                s.isArabic ? 'حصص اليوم التدريبية وحالة القفل:' : "Today's Sessions & Lock Status:",
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: EngineRowingUI.textWhite,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+
+        if (_todayWorkouts.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: _cardFill,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: _gridLine),
+            ),
+            child: Text(
+              s.noScheduledSessionsForDate,
+              style: const TextStyle(color: EngineRowingUI.labelSlate, fontSize: 13),
+            ),
+          )
+        else
+          ..._todayWorkouts.map((w) {
+            final idx = (w['idx'] as num?)?.toInt() ?? 0;
+            final time = w['time'] as String? ?? '07:00';
+            final kind = w['kind'] as String? ?? 'Erg';
+            final zone = w['zone'] as String? ?? 'Z2';
+
+            final sessionInfo = ScheduledSessionInfo(
+              date: dateStr,
+              idx: idx,
+              time: time,
+              kind: kind,
+              zone: zone,
+            );
+
+            final lockReason = SessionLockService.checkLockReason(
+              session: sessionInfo,
+              allSessions: _allScheduledSessions,
+              athleteLogs: _athleteTodayLogs,
+              userRole: 'athlete',
+            );
+
+            final isLocked = (lockReason != SessionLockReason.none);
+
+            String statusLabel;
+            Color statusColor;
+            IconData statusIcon;
+
+            if (lockReason == SessionLockReason.notStartedYet) {
+              statusLabel = s.sessionNotStartedNotice;
+              statusColor = Colors.amber;
+              statusIcon = Icons.schedule_rounded;
+            } else if (isLocked) {
+              statusLabel = s.sessionLockedNotice;
+              statusColor = Colors.redAccent;
+              statusIcon = Icons.lock_rounded;
+            } else {
+              statusLabel = s.sessionOpenNotice;
+              statusColor = Colors.greenAccent;
+              statusIcon = Icons.check_circle_outline;
+            }
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: _cardFill,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isLocked ? _gridLine : _gold.withAlpha(140),
+                  width: isLocked ? 1.0 : 1.3,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: EngineRowingUI.equationCardFill,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: _gridLine),
+                    ),
+                    child: Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Text(
+                        time,
+                        style: const TextStyle(
+                          color: _gold,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          fontFeatures: [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '$kind ($zone)',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: EngineRowingUI.textWhite,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            Icon(statusIcon, color: statusColor, size: 14),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                statusLabel,
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: statusColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      isLocked ? Icons.visibility_rounded : Icons.edit_note_rounded,
+                      color: isLocked ? EngineRowingUI.labelSlate : _gold,
+                      size: 22,
+                    ),
+                    tooltip: isLocked
+                        ? (s.isArabic ? 'عرض الأرقام (قراءة فقط)' : 'View numbers (Read-only)')
+                        : (s.isArabic ? 'تسجيل أرقام الحصة' : 'Log session'),
+                    onPressed: () => _openAthleteEntry(athlete),
+                  ),
+                ],
+              ),
+            );
+          }),
+
+        const SizedBox(height: 24),
+      ],
     );
   }
 
@@ -173,94 +509,131 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // شريط اختيار التاريخ وعنوان تمارين اليوم
-          Row(
-            children: [
-              const Icon(Icons.fitness_center, color: _gold, size: 26),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      s.todaysWorkoutsHeader,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: EngineRowingUI.textWhite,
-                      ),
-                    ),
-                    Text(
-                      s.todaysWorkoutsSubtitle,
-                      style: const TextStyle(fontSize: 12, color: EngineRowingUI.labelSlate),
-                    ),
-                  ],
-                ),
-              ),
-              InkWell(
-                onTap: _pickDate,
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: EngineRowingUI.equationCardFill,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: _gridLine),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.calendar_today, color: _gold, size: 16),
-                      const SizedBox(width: 6),
-                      Directionality(
-                        textDirection: TextDirection.ltr,
-                        child: Text(
-                          RowingNumberFormatter.toEnglishDigits(dateStr),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 420;
+              final headerInfo = Row(
+                children: [
+                  const Icon(Icons.fitness_center, color: _gold, size: 26),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          s.todaysWorkoutsHeader,
                           style: const TextStyle(
-                            color: EngineRowingUI.textWhite,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            fontFeatures: [FontFeature.tabularFigures()],
-                            fontSize: 13,
+                            color: EngineRowingUI.textWhite,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const MetricsCurvePage()),
-                  );
-                },
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: _gold.withAlpha(35),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: _gold),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.auto_graph_rounded, color: _gold, size: 16),
-                      const SizedBox(width: 6),
-                      Text(
-                        s.curveZone,
-                        style: const TextStyle(
-                          color: _gold,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
+                        Text(
+                          s.todaysWorkoutsSubtitle,
+                          style: const TextStyle(fontSize: 12, color: EngineRowingUI.labelSlate),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ),
-            ],
+                ],
+              );
+
+              final actionButtons = Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  InkWell(
+                    onTap: _pickDate,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: EngineRowingUI.equationCardFill,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: _gridLine),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.calendar_today, color: _gold, size: 16),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Directionality(
+                              textDirection: TextDirection.ltr,
+                              child: Text(
+                                RowingNumberFormatter.toEnglishDigits(dateStr),
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: EngineRowingUI.textWhite,
+                                  fontWeight: FontWeight.bold,
+                                  fontFeatures: [FontFeature.tabularFigures()],
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const MetricsCurvePage()),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: _gold.withAlpha(35),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: _gold),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.auto_graph_rounded, color: _gold, size: 16),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              s.curveZone,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: _gold,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+
+              if (isNarrow) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    headerInfo,
+                    const SizedBox(height: 12),
+                    actionButtons,
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(child: headerInfo),
+                  const SizedBox(width: 8),
+                  actionButtons,
+                ],
+              );
+            },
           ),
           const Divider(color: _gridLine, height: 20),
 
@@ -323,30 +696,35 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Directionality(
-                            textDirection: TextDirection.ltr,
-                            child: Text(
-                              '$kind • ${RowingNumberFormatter.toEnglishDigits(time)}',
-                              style: const TextStyle(
-                                color: EngineRowingUI.textWhite,
-                                fontWeight: FontWeight.bold,
-                                fontFeatures: [FontFeature.tabularFigures()],
-                                fontSize: 13,
+                      Flexible(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Directionality(
+                              textDirection: TextDirection.ltr,
+                              child: Text(
+                                '$kind • ${RowingNumberFormatter.toEnglishDigits(time)}',
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: EngineRowingUI.textWhite,
+                                  fontWeight: FontWeight.bold,
+                                  fontFeatures: [FontFeature.tabularFigures()],
+                                  fontSize: 13,
+                                ),
                               ),
                             ),
-                          ),
-                          Text(
-                            'Zone: $zone',
-                            style: const TextStyle(
-                              color: _gold,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 11,
+                            Text(
+                              'Zone: $zone',
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: _gold,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 11,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),

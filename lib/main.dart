@@ -147,7 +147,7 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
   List<Widget> get _tabs => [
         DashboardTab(user: widget.user),
         const ProgramTab(),
-        const WorkoutsTab(),
+        WorkoutsTab(user: widget.user),
         ProgressTab(user: widget.user),
       ];
 

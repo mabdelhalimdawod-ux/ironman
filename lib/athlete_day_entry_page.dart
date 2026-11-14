@@ -4,6 +4,7 @@ import 'db.dart';
 import 'engine_rowing_ui.dart';
 import 'heart_rate_zones.dart';
 import 'power_calculations.dart';
+import 'session_lock_service.dart';
 
 /// نموذج إدارة حالة فورم تمرين واحد من تمارين اليوم
 class _SingleWorkoutFormState {
@@ -21,12 +22,18 @@ class _SingleWorkoutFormState {
   final recovery1minCtrl = TextEditingController();
   final npWattsCtrl = TextEditingController();
   final decouplingHRCtrl = TextEditingController();
+  final decouplingCtrl = TextEditingController();
+  final eupnea1Ctrl = TextEditingController();
+  final eupnea2Ctrl = TextEditingController();
+  final eupnea3Ctrl = TextEditingController();
 
   String currentZone;
   HeartRateZoneRange? targetRange;
   double? calculatedNP;
   double? calculatedDecoupling;
   double? calculatedEF;
+  bool isLocked = false;
+  SessionLockReason lockReason = SessionLockReason.none;
 
   _SingleWorkoutFormState({
     required this.sessionIdx,
@@ -44,6 +51,10 @@ class _SingleWorkoutFormState {
     recovery1minCtrl.dispose();
     npWattsCtrl.dispose();
     decouplingHRCtrl.dispose();
+    decouplingCtrl.dispose();
+    eupnea1Ctrl.dispose();
+    eupnea2Ctrl.dispose();
+    eupnea3Ctrl.dispose();
   }
 }
 
@@ -52,12 +63,16 @@ class AthleteDayEntryPage extends StatefulWidget {
   final Map<String, Object?> player;
   final String date;
   final List<Map<String, Object?>> sessions;
+  final String userRole; // 'coach' | 'athlete'
+  final List<ScheduledSessionInfo>? allScheduledSessions;
 
   const AthleteDayEntryPage({
     super.key,
     required this.player,
     required this.date,
     required this.sessions,
+    this.userRole = 'coach',
+    this.allScheduledSessions,
   });
 
   @override
@@ -272,12 +287,39 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
       if (log['ef'] != null) {
         form.calculatedEF = (log['ef'] as num).toDouble();
       }
+      if (log['decoupling'] != null) {
+        form.decouplingCtrl.text = (log['decoupling'] as num).toString();
+        form.calculatedDecoupling = (log['decoupling'] as num).toDouble();
+      }
+      if (log['eupnea_1'] != null) {
+        form.eupnea1Ctrl.text = (log['eupnea_1'] as num).toString();
+      }
+      if (log['eupnea_2'] != null) {
+        form.eupnea2Ctrl.text = (log['eupnea_2'] as num).toString();
+      }
+      if (log['eupnea_3'] != null) {
+        form.eupnea3Ctrl.text = (log['eupnea_3'] as num).toString();
+      }
 
       // حساب الـ EF الأولي
       _updateEF(form);
     }
 
-    // إعادة حساب الزونات التلقائية بناءً على البيانات المحملة
+    // جلب جميع حصص البرنامج لحساب حالة القفل بدقة وفق قواعد الكوتش
+    List<ScheduledSessionInfo> allSched = widget.allScheduledSessions ?? [];
+    if (allSched.isEmpty) {
+      final rows = await DB.q('SELECT date, idx, kind, zone, time FROM sessions ORDER BY date ASC, idx ASC');
+      allSched = rows.map((r) => ScheduledSessionInfo(
+        date: r['date'] as String? ?? widget.date,
+        idx: (r['idx'] as num?)?.toInt() ?? 0,
+        time: (r['time'] as String?) ?? '07:00',
+        kind: (r['kind'] as String?) ?? 'Erg',
+        zone: (r['zone'] as String?) ?? 'Z2',
+      )).toList();
+    }
+    final allPlayerLogs = await DB.q('SELECT * FROM logs WHERE player_id = ?', [_playerId]);
+
+    // إعادة حساب الزونات التلقائية وحالة القفل لكل حصة
     final currentMhr = _currentMHR;
     final currentRhr = _currentRHR;
     for (final form in _workoutForms) {
@@ -291,6 +333,22 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
         rhr: currentRhr,
         zone: form.currentZone,
       );
+
+      final sessionInfo = ScheduledSessionInfo(
+        date: widget.date,
+        idx: form.sessionIdx,
+        time: form.time,
+        kind: form.kind,
+        zone: form.currentZone,
+      );
+      form.lockReason = SessionLockService.checkLockReason(
+        session: sessionInfo,
+        allSessions: allSched,
+        athleteLogs: allPlayerLogs,
+        userRole: widget.userRole,
+      );
+      form.isLocked = (form.lockReason != SessionLockReason.none);
+
       _updateEF(form);
     }
 
@@ -330,6 +388,9 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
     setState(() {
       form.calculatedNP = PowerCalculations.calculateNormalizedPower(watts);
       form.calculatedDecoupling = PowerCalculations.calculateDecoupling(watts, hrs);
+      if (form.calculatedDecoupling != null) {
+        form.decouplingCtrl.text = form.calculatedDecoupling.toString();
+      }
     });
   }
 
@@ -344,14 +405,23 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
       final fatigueVal = int.tryParse(_fatigueCtrl.text);
       final mhrVal = int.tryParse(_mhrCtrl.text) ?? _mhr;
       final rhrVal = int.tryParse(_rhrCtrl.text) ?? _effectiveRHR;
+      final enteredBy = (widget.userRole == 'athlete') ? 'athlete' : 'coach';
 
       for (final form in _workoutForms) {
+        if (form.isLocked && widget.userRole == 'athlete') {
+          continue; // الحصة مقفولة على اللاعب
+        }
+
         final avgWatts = double.tryParse(form.avgPowerCtrl.text);
         final splitVal = double.tryParse(form.splitCtrl.text);
         final distVal = int.tryParse(form.distanceCtrl.text);
         final hrVal = int.tryParse(form.hrCtrl.text);
         final postHRVal = int.tryParse(form.postHRCtrl.text);
         final rec1minVal = int.tryParse(form.recovery1minCtrl.text);
+        final decouplingVal = double.tryParse(form.decouplingCtrl.text) ?? form.calculatedDecoupling;
+        final eupnea1Val = double.tryParse(form.eupnea1Ctrl.text);
+        final eupnea2Val = double.tryParse(form.eupnea2Ctrl.text);
+        final eupnea3Val = double.tryParse(form.eupnea3Ctrl.text);
 
         // حساب الزون التلقائي قبل الحفظ
         final autoZone = HeartRateZones.determineZone(hr: hrVal, mhr: mhrVal, rhr: rhrVal);
@@ -383,6 +453,11 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
           'distance': distVal,
           'split_500': splitVal,
           'ef': efVal,
+          'decoupling': decouplingVal,
+          'eupnea_1': eupnea1Val,
+          'eupnea_2': eupnea2Val,
+          'eupnea_3': eupnea3Val,
+          'entered_by': enteredBy,
         });
 
         // تحديث جدول sessions بالزون
@@ -685,12 +760,14 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                   size: 20,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  s.commonDailyMetrics,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                    color: EngineRowingUI.textWhite,
+                Expanded(
+                  child: Text(
+                    s.commonDailyMetrics,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: EngineRowingUI.textWhite,
+                    ),
                   ),
                 ),
               ],
@@ -930,7 +1007,7 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                       );
                     },
                   ),
-                if (_workoutForms.length > 1) ...[
+                if (_workoutForms.length > 1 && !form.isLocked && widget.userRole != 'athlete') ...[
                   const SizedBox(width: 6),
                   IconButton(
                     icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
@@ -940,6 +1017,91 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                 ],
               ],
             ),
+            if (form.isLocked) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade900.withAlpha(50),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.amber.shade600),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      form.lockReason == SessionLockReason.notStartedYet
+                          ? Icons.schedule_rounded
+                          : Icons.lock_clock_rounded,
+                      color: Colors.amber.shade300,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        form.lockReason == SessionLockReason.notStartedYet
+                            ? s.sessionNotStartedNotice
+                            : s.sessionLockedNotice,
+                        style: TextStyle(
+                          color: Colors.amber.shade200,
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ] else if (widget.userRole == 'coach' || widget.userRole == 'admin') ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: EngineRowingUI.neonLime.withAlpha(25),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: EngineRowingUI.neonLime.withAlpha(80)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.shield_rounded, color: EngineRowingUI.neonLime, size: 14),
+                    const SizedBox(width: 6),
+                    Text(
+                      s.coachEditableNotice,
+                      style: const TextStyle(
+                        color: EngineRowingUI.neonLime,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ] else ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade900.withAlpha(40),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.green.shade600.withAlpha(90)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.edit_note_rounded, color: Colors.green.shade300, size: 16),
+                    const SizedBox(width: 6),
+                    Text(
+                      s.sessionOpenNotice,
+                      style: TextStyle(
+                        color: Colors.green.shade200,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
 
             // عرض نطاق النبض المستهدف بمعادلة كارفونين حسب زون التمرين
@@ -988,6 +1150,7 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                     textDirection: TextDirection.ltr,
                     child: TextFormField(
                       controller: form.avgPowerCtrl,
+                      enabled: !form.isLocked,
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.left,
                       style: _monoInputStyle(),
@@ -1011,6 +1174,7 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                     textDirection: TextDirection.ltr,
                     child: TextFormField(
                       controller: form.splitCtrl,
+                      enabled: !form.isLocked,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       textAlign: TextAlign.left,
                       style: _monoInputStyle(),
@@ -1035,6 +1199,7 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                     textDirection: TextDirection.ltr,
                     child: TextFormField(
                       controller: form.distanceCtrl,
+                      enabled: !form.isLocked,
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.left,
                       style: _monoInputStyle(),
@@ -1055,6 +1220,7 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                     textDirection: TextDirection.ltr,
                     child: TextFormField(
                       controller: form.hrCtrl,
+                      enabled: !form.isLocked,
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.left,
                       style: _monoInputStyle(),
@@ -1081,6 +1247,7 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                     textDirection: TextDirection.ltr,
                     child: TextFormField(
                       controller: form.postHRCtrl,
+                      enabled: !form.isLocked,
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.left,
                       style: _monoInputStyle(),
@@ -1101,6 +1268,7 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                     textDirection: TextDirection.ltr,
                     child: TextFormField(
                       controller: form.recovery1minCtrl,
+                      enabled: !form.isLocked,
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.left,
                       style: _monoInputStyle(),
@@ -1173,6 +1341,7 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                     textDirection: TextDirection.ltr,
                     child: TextFormField(
                       controller: form.npWattsCtrl,
+                      enabled: !form.isLocked,
                       textAlign: TextAlign.left,
                       style: _monoInputStyle(),
                       inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
@@ -1205,6 +1374,7 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                     textDirection: TextDirection.ltr,
                     child: TextFormField(
                       controller: form.decouplingHRCtrl,
+                      enabled: !form.isLocked,
                       textAlign: TextAlign.left,
                       style: _monoInputStyle(),
                       inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
@@ -1232,6 +1402,101 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                       ),
                     ),
                   ],
+                  const SizedBox(height: 10),
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: TextFormField(
+                      controller: form.decouplingCtrl,
+                      enabled: !form.isLocked,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      textAlign: TextAlign.left,
+                      style: _monoInputStyle(),
+                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      decoration: _fieldDeco(
+                        label: '${s.calculatedDecoupling} (%)',
+                        hint: '3.5',
+                        suffix: '%',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      const Icon(Icons.air_rounded, color: EngineRowingUI.neonLime, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          s.eupneaSectionTitle,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: EngineRowingUI.textWhite,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: TextFormField(
+                            controller: form.eupnea1Ctrl,
+                            enabled: !form.isLocked,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            textAlign: TextAlign.left,
+                            style: _monoInputStyle(),
+                            inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                            decoration: _fieldDeco(
+                              label: s.eupneaField1,
+                              hint: '45.0',
+                              suffix: 's',
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: TextFormField(
+                            controller: form.eupnea2Ctrl,
+                            enabled: !form.isLocked,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            textAlign: TextAlign.left,
+                            style: _monoInputStyle(),
+                            inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                            decoration: _fieldDeco(
+                              label: s.eupneaField2,
+                              hint: '40.0',
+                              suffix: 's',
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: TextFormField(
+                            controller: form.eupnea3Ctrl,
+                            enabled: !form.isLocked,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            textAlign: TextAlign.left,
+                            style: _monoInputStyle(),
+                            inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                            decoration: _fieldDeco(
+                              label: s.eupneaField3,
+                              hint: '35.0',
+                              suffix: 's',
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 8),
                 ],
               ),
@@ -1243,6 +1508,10 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
   }
 
   Widget _buildSaveBottomButton(AppStrings s) {
+    final allLocked = widget.userRole == 'athlete' &&
+        _workoutForms.isNotEmpty &&
+        _workoutForms.every((f) => f.isLocked);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
@@ -1255,8 +1524,8 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
           height: 50,
           child: ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: EngineRowingUI.neonLime,
-              foregroundColor: EngineRowingUI.bgNavy,
+              backgroundColor: allLocked ? Colors.grey.shade800 : EngineRowingUI.neonLime,
+              foregroundColor: allLocked ? Colors.white60 : EngineRowingUI.bgNavy,
               elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -1269,16 +1538,19 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                       color: EngineRowingUI.bgNavy,
                     ),
                   )
-                : const Icon(Icons.check_circle_outline, color: EngineRowingUI.bgNavy),
+                : Icon(
+                    allLocked ? Icons.lock_outline_rounded : Icons.check_circle_outline,
+                    color: allLocked ? Colors.white60 : EngineRowingUI.bgNavy,
+                  ),
             label: Text(
-              s.saveAllWorkouts,
-              style: const TextStyle(
+              allLocked ? s.sessionLockedNotice : s.saveAllWorkouts,
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: EngineRowingUI.bgNavy,
+                color: allLocked ? Colors.white70 : EngineRowingUI.bgNavy,
               ),
             ),
-            onPressed: _isSaving ? null : _saveAllWorkouts,
+            onPressed: (_isSaving || allLocked) ? null : _saveAllWorkouts,
           ),
         ),
       ),
