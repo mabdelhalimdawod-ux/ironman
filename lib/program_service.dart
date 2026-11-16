@@ -1438,6 +1438,194 @@ class ProgramService {
       await syncSessionsForDate(DateTime.now());
     }
   }
+
+  // ============================================================================
+  // دوال المرحلة (ج): تخصيص تمارين الحصص للاعبين (Athlete Custom Sessions)
+  // ============================================================================
+
+  /// جلب الحصص التفصيلية لتاريخ معين من قالب البرنامج النشط
+  static Future<List<ProgramDaySession>> getTemplateSessionsForDate(DateTime date) async {
+    await ensureTables();
+    final dateStr = dstr(date);
+    final cycles = await getAllProgramCycles();
+    ProgramCycle? activeCycle;
+    for (final c in cycles) {
+      if (c.startDate.compareTo(dateStr) <= 0 && c.endDate.compareTo(dateStr) >= 0) {
+        activeCycle = c;
+        break;
+      }
+    }
+    if (activeCycle != null) {
+      final dayIndex = getWeekdayIndex(date);
+      final sessions = await getDaySessionsDetailed(activeCycle.id, 'basic', dayIndex);
+      if (sessions.isNotEmpty) return sessions;
+    }
+
+    // fallback: قراءة جدول sessions إن وُجد
+    final fallbackSessions = await DB.sessions(dateStr);
+    if (fallbackSessions.isEmpty) return [];
+
+    final result = <ProgramDaySession>[];
+    for (int i = 0; i < fallbackSessions.length; i++) {
+      final row = fallbackSessions[i];
+      final kind = row['kind'] as String? ?? 'Erg';
+      final zone = row['zone'] as String? ?? 'Z2';
+      final time = row['time'] as String? ?? '07:00';
+      final session = ProgramDaySession(
+        cycleId: activeCycle?.id ?? 0,
+        cycleType: 'basic',
+        dayOfWeek: getWeekdayIndex(date),
+        sessionIdx: i,
+        name: 'الحصة ${i + 1}',
+        time: time,
+      );
+      session.workouts.add(ProgramWorkoutItem(
+        sessionId: 0,
+        section: 'main',
+        itemIdx: 0,
+        time: time,
+        durationMinutes: 45,
+        durationSeconds: 0,
+        hrPercent: 75,
+        hrRange: '70%:80%',
+        distanceMeters: 6000,
+        reps: 1,
+        kind: kind,
+        zone: zone,
+        details: '$kind ($zone)',
+      ));
+      result.add(session);
+    }
+    return result;
+  }
+
+  /// جلب الحصص المخصصة للاعب في تاريخ محدد من جدول athlete_custom_sessions
+  static Future<List<ProgramDaySession>> getAthleteCustomSessions({
+    required int playerId,
+    required String date,
+  }) async {
+    await ensureTables();
+    final database = await DB.db;
+    final sessionRows = await database.rawQuery(
+      'SELECT * FROM athlete_custom_sessions WHERE player_id = ? AND date = ? ORDER BY session_idx ASC',
+      [playerId, date],
+    );
+
+    if (sessionRows.isEmpty) return [];
+
+    final list = <ProgramDaySession>[];
+    for (final sRow in sessionRows) {
+      final customSessionId = (sRow['id'] as num?)?.toInt() ?? 0;
+      final workoutRows = await database.rawQuery(
+        'SELECT * FROM athlete_custom_workout_items WHERE custom_session_id = ? ORDER BY section, item_idx ASC',
+        [customSessionId],
+      );
+
+      final workouts = workoutRows.map((w) => ProgramWorkoutItem.fromMap(w)).toList();
+      final session = ProgramDaySession(
+        id: customSessionId,
+        cycleId: 0,
+        cycleType: 'custom',
+        dayOfWeek: 0,
+        sessionIdx: (sRow['session_idx'] as num?)?.toInt() ?? 0,
+        name: (sRow['name'] as String?) ?? 'الحصة ${((sRow['session_idx'] as num?)?.toInt() ?? 0) + 1}',
+        time: (sRow['time'] as String?) ?? '07:00',
+        notesPhysio: (sRow['notes_physio'] as String?) ?? '',
+        notesTech: (sRow['notes_tech'] as String?) ?? '',
+        comment: (sRow['comment'] as String?) ?? '',
+        workouts: workouts,
+      );
+      list.add(session);
+    }
+    return list;
+  }
+
+  /// جلب حصص اللاعب لتاريخ معين: المخصصة إن وجدت، وإلا قالب البرنامج
+  static Future<List<ProgramDaySession>> getSessionsForAthleteAndDate({
+    required int playerId,
+    required DateTime date,
+  }) async {
+    final dateStr = dstr(date);
+    final customSessions = await getAthleteCustomSessions(
+      playerId: playerId,
+      date: dateStr,
+    );
+    if (customSessions.isNotEmpty) {
+      return customSessions;
+    }
+    return getTemplateSessionsForDate(date);
+  }
+
+  /// حفظ تخصيص حصة للاعب محدد فقط في athlete_custom_sessions
+  static Future<void> saveAthleteCustomSession({
+    required int playerId,
+    required String date,
+    required ProgramDaySession session,
+  }) async {
+    await ensureTables();
+    final database = await DB.db;
+
+    // إدراج أو تحديث في athlete_custom_sessions
+    final existing = await database.rawQuery(
+      'SELECT id FROM athlete_custom_sessions WHERE player_id = ? AND date = ? AND session_idx = ?',
+      [playerId, date, session.sessionIdx],
+    );
+
+    final int customSessionId;
+    final nowIso = DateTime.now().toIso8601String();
+    if (existing.isNotEmpty) {
+      customSessionId = (existing.first['id'] as num).toInt();
+      await database.update(
+        'athlete_custom_sessions',
+        {
+          'name': session.name,
+          'time': session.time,
+          'notes_physio': session.notesPhysio,
+          'notes_tech': session.notesTech,
+          'comment': session.comment,
+        },
+        where: 'id = ?',
+        whereArgs: [customSessionId],
+      );
+      await database.delete(
+        'athlete_custom_workout_items',
+        where: 'custom_session_id = ?',
+        whereArgs: [customSessionId],
+      );
+    } else {
+      customSessionId = await database.insert('athlete_custom_sessions', {
+        'player_id': playerId,
+        'date': date,
+        'session_idx': session.sessionIdx,
+        'name': session.name,
+        'time': session.time,
+        'notes_physio': session.notesPhysio,
+        'notes_tech': session.notesTech,
+        'comment': session.comment,
+        'created_at': nowIso,
+      });
+    }
+
+    // إدراج التمارين التفصيلية
+    for (int i = 0; i < session.workouts.length; i++) {
+      final w = session.workouts[i];
+      await database.insert('athlete_custom_workout_items', {
+        'custom_session_id': customSessionId,
+        'section': w.section,
+        'item_idx': i,
+        'time': w.time,
+        'duration_minutes': w.durationMinutes,
+        'duration_seconds': w.durationSeconds,
+        'hr_percent': w.hrPercent,
+        'hr_range': w.hrRange,
+        'distance_meters': w.distanceMeters,
+        'reps': w.reps,
+        'kind': w.kind,
+        'zone': w.zone,
+        'details': w.details,
+      });
+    }
+  }
 }
 
 /// نموذج بيانات خانة التمرين للتوافق العكسي

@@ -291,6 +291,9 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
         form.decouplingCtrl.text = (log['decoupling'] as num).toString();
         form.calculatedDecoupling = (log['decoupling'] as num).toDouble();
       }
+      if (log['zone'] != null && (log['zone'] as String).isNotEmpty) {
+        form.currentZone = log['zone'] as String;
+      }
       if (log['eupnea_1'] != null) {
         form.eupnea1Ctrl.text = (log['eupnea_1'] as num).toString();
       }
@@ -458,15 +461,7 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
           'eupnea_2': eupnea2Val,
           'eupnea_3': eupnea3Val,
           'entered_by': enteredBy,
-        });
-
-        // تحديث جدول sessions بالزون
-        await DB.put('sessions', {
-          'date': widget.date,
-          'idx': form.sessionIdx,
-          'kind': form.kind,
           'zone': form.currentZone,
-          'time': form.time,
         });
       }
 

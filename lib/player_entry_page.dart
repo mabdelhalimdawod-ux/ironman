@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'app_strings.dart';
 import 'db.dart';
 import 'engine_rowing_ui.dart';
+import 'heart_rate_zones.dart';
 import 'power_calculations.dart';
 
 class PlayerEntryPage extends StatefulWidget {
@@ -218,6 +219,11 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
     };
     final playerNotesJson = jsonEncode(extraData);
 
+    final mhrVal = int.tryParse(_hrMaxCtrl.text) ?? (widget.player['mhr'] as int? ?? 190);
+    final rhrVal = int.tryParse(_rhrCtrl.text) ?? 60;
+    final calculatedZone = HeartRateZones.determineZone(hr: hr, mhr: mhrVal, rhr: rhrVal) ??
+        widget.session['zone']?.toString();
+
     await DB.put('logs', {
       'player_id': widget.player['id'],
       'date': widget.date,
@@ -237,6 +243,7 @@ class _PlayerEntryPageState extends State<PlayerEntryPage> {
       'split_500': double.tryParse(_splitCtrl.text),
       'ef': ef,
       'player_notes': playerNotesJson,
+      'zone': calculatedZone,
     });
 
     if (mounted) {

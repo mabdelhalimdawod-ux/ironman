@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'app_strings.dart';
 import 'auth_service.dart';
-import 'db.dart';
 import 'engine_rowing_ui.dart';
 import 'home_service.dart';
 import 'metrics_curve_page.dart';
+import 'today_workout_page.dart';
 
 /// التاب الأول: الشاشة الرئيسية (Home Tab)
 class DashboardTab extends StatefulWidget {
@@ -21,10 +21,6 @@ class DashboardTab extends StatefulWidget {
 
 class _DashboardTabState extends State<DashboardTab> {
   bool _loading = true;
-
-  // الحصة القادمة
-  Map<String, Object?>? _nextSession;
-  String _nextSessionDate = '';
 
   // رسالة المدرب غير المقروءة
   CoachMessageItem? _unreadMessage;
@@ -54,28 +50,8 @@ class _DashboardTabState extends State<DashboardTab> {
 
     try {
       final user = widget.user ?? AuthService.currentUser;
-      final now = DateTime.now();
-      final nowStr = dstr(now);
 
-      // 1. الحصة القادمة
-      final todaySessions = await DB.sessions(nowStr);
-      if (todaySessions.isNotEmpty) {
-        _nextSession = todaySessions.first;
-        _nextSessionDate = nowStr;
-      } else {
-        final futureSessions = await DB.q(
-          'SELECT * FROM sessions WHERE date >= ? ORDER BY date ASC, idx ASC LIMIT 1',
-          [nowStr],
-        );
-        if (futureSessions.isNotEmpty) {
-          _nextSession = futureSessions.first;
-          _nextSessionDate = _nextSession!['date'] as String? ?? nowStr;
-        } else {
-          _nextSession = null;
-        }
-      }
-
-      // 2. رسالة المدرب (للاعب)
+      // 1. رسالة المدرب (للاعب)
       if (user != null && user.isAthlete) {
         _unreadMessage = await HomeService.getUnreadCoachMessage(user.id);
       } else {
@@ -127,20 +103,20 @@ class _DashboardTabState extends State<DashboardTab> {
             color: EngineRowingUI.neonLime,
             backgroundColor: EngineRowingUI.cardFill,
             child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                children: [
-                  // ── ترويسة الترحيب ──
-                  _buildGreetingHeader(s, user),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              children: [
+                // ── ترويسة الترحيب ──
+                _buildGreetingHeader(s, user),
+                const SizedBox(height: 16),
+
+                // ── رسالة المدرب إن وجدت (فقط للاعبين) ──
+                if (_unreadMessage != null) ...[
+                  _buildCoachMessageCard(s, _unreadMessage!),
                   const SizedBox(height: 16),
+                ],
 
-                  // ── رسالة المدرب إن وجدت (فقط للاعبين) ──
-                  if (_unreadMessage != null) ...[
-                    _buildCoachMessageCard(s, _unreadMessage!),
-                    const SizedBox(height: 16),
-                  ],
-
-                  // ── كارت الحصة التدريبية القادمة ──
-                _buildNextSessionCard(s),
+                // ── أيقونتا تمرين اليوم والأرشيف ──
+                _buildQuickActionCards(s, user),
                 const SizedBox(height: 16),
 
                 // ── كارت منحنيات مؤشرات التدريب (خمسة منحنيات) ──
@@ -349,132 +325,167 @@ class _DashboardTabState extends State<DashboardTab> {
     );
   }
 
-  // ── كارت الحصة التدريبية القادمة ──
-  Widget _buildNextSessionCard(AppStrings s) {
-    final session = _nextSession;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: EngineRowingUI.cardFill,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: EngineRowingUI.bgGridLine),
-      ),
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.event_available_rounded,
-                color: EngineRowingUI.neonLime,
-                size: 22,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  s.nextSession,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: EngineRowingUI.textWhite,
-                  ),
+  // ── أيقونتا تمرين اليوم والأرشيف ──
+  Widget _buildQuickActionCards(AppStrings s, AppUser? user) {
+    return Row(
+      children: [
+        // 1. تمرين اليوم (Today's Workout)
+        Expanded(
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => TodayWorkoutPage(user: user),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          if (session == null)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(
-                s.noUpcomingSessions,
-                style: const TextStyle(
-                    color: EngineRowingUI.labelSlate, fontSize: 14),
-              ),
-            )
-          else ...[
-            Container(
-              padding: const EdgeInsets.all(12),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
               decoration: BoxDecoration(
-                color: EngineRowingUI.equationCardFill,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: EngineRowingUI.bgGridLine),
+                color: EngineRowingUI.cardFill,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: EngineRowingUI.neonLime.withValues(alpha: 0.6),
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    backgroundColor: EngineRowingUI.cardFill,
-                    radius: 20,
-                    child: Directionality(
-                      textDirection: TextDirection.ltr,
-                      child: Text(
-                        '${(session['idx'] as int? ?? 0) + 1}',
-                        style: const TextStyle(
-                          color: EngineRowingUI.neonLime,
-                          fontWeight: FontWeight.bold,
-                          fontFeatures: [FontFeature.tabularFigures()],
-                        ),
-                      ),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: EngineRowingUI.neonLime.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.fitness_center_rounded,
+                      color: EngineRowingUI.neonLime,
+                      size: 20,
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${session['kind']} (${session['zone']})',
+                          s.todayWorkout,
                           style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
                             color: EngineRowingUI.textWhite,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
                           ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        Directionality(
-                          textDirection: TextDirection.ltr,
-                          child: Text(
-                            '${s.isArabic ? "التاريخ" : "Date"}: ${RowingNumberFormatter.toEnglishDigits(_nextSessionDate)}',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: EngineRowingUI.labelSlate,
-                            ),
+                        const SizedBox(height: 2),
+                        Text(
+                          s.readOnlyNotice,
+                          style: const TextStyle(
+                            color: EngineRowingUI.labelSlate,
+                            fontSize: 10.5,
                           ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
                   ),
-                  Builder(
-                    builder: (ctx) {
-                      final zoneStr = session['zone'] as String? ?? 'Z2';
-                      final zoneColor = EngineRowingUI.zoneColors[zoneStr] ??
-                          EngineRowingUI.neonLime;
-                      final isLime = zoneStr == 'Z1' || zoneStr == 'zone1';
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: zoneColor,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          zoneStr,
-                          style: TextStyle(
-                            color:
-                                isLime ? EngineRowingUI.bgNavy : Colors.white,
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+
+        // 2. الأرشيف (Archive)
+        Expanded(
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Row(
+                    children: [
+                      const Icon(Icons.archive_outlined,
+                          color: Color(0xFF00E5FF)),
+                      const SizedBox(width: 8),
+                      Text(s.archiveComingSoon),
+                    ],
+                  ),
+                  backgroundColor: EngineRowingUI.cardFill,
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              decoration: BoxDecoration(
+                color: EngineRowingUI.cardFill,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: const Color(0xFF00E5FF).withValues(alpha: 0.6),
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00E5FF).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.archive_outlined,
+                      color: Color(0xFF00E5FF),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          s.archive,
+                          style: const TextStyle(
+                            color: EngineRowingUI.textWhite,
+                            fontSize: 13.5,
                             fontWeight: FontWeight.bold,
-                            fontSize: 13,
                           ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      );
-                    },
+                        const SizedBox(height: 2),
+                        Text(
+                          s.termsComingSoon.split('.').first,
+                          style: const TextStyle(
+                            color: EngineRowingUI.labelSlate,
+                            fontSize: 10.5,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-          ]
-        ],
-      ),
+          ),
+        ),
+      ],
     );
   }
 

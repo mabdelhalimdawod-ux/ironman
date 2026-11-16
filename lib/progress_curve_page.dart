@@ -185,7 +185,20 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
         }
       }
 
-      if (_selectedPlayerIds.isEmpty && _players.isNotEmpty) {
+      final isAthlete = widget.user?.isAthlete == true;
+      final athletePlayerId = widget.user?.playerId ?? widget.user?.id;
+      if (isAthlete && athletePlayerId != null) {
+        _players = _players
+            .where((p) => (p['id'] as num?)?.toInt() == athletePlayerId)
+            .toList();
+        if (_players.isEmpty) {
+          _players = [
+            {'id': athletePlayerId, 'name': widget.user!.name, 'mhr': 190}
+          ];
+        }
+        _selectedPlayerIds.clear();
+        _selectedPlayerIds.add(athletePlayerId);
+      } else if (_selectedPlayerIds.isEmpty && _players.isNotEmpty) {
         final userId = widget.user?.id;
         final matchesUser = userId != null &&
             _players.any((p) => (p['id'] as num?)?.toInt() == userId);
@@ -210,6 +223,9 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
   /// تبديل اختيار لاعب: عملية محلية على قائمة الـ IDs فقط عبر setState،
   /// ولا تستعلم من القاعدة عن باقي اللاعبين أبداً، وتعيد استخدام الكاش إن وُجد لنفس المدة.
   void _togglePlayer(int playerId) {
+    if (widget.user?.isAthlete == true) {
+      return;
+    }
     if (_selectedPlayerIds.contains(playerId)) {
       setState(() {
         _selectedPlayerIds.remove(playerId);
@@ -317,9 +333,10 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
       final endStr = dstr(_period.end);
 
       final logRows = await DB.q('''
-        SELECT l.*, p.mhr as player_mhr
+        SELECT l.*, p.mhr as player_mhr, s.zone as session_zone
         FROM logs l
         JOIN players p ON l.player_id = p.id
+        LEFT JOIN sessions s ON l.date = s.date AND l.idx = s.idx
         WHERE l.player_id = ? AND l.date >= ? AND l.date <= ?
         ORDER BY l.date ASC, l.idx ASC
       ''', [playerId, startStr, endStr]);
@@ -386,19 +403,25 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
 
         final rowRhr =
             (rhrVal != null && rhrVal > 0) ? rhrVal.round() : effectiveRhr;
-        if (hrVal != null && hrVal > 0) {
-          final zone = HeartRateZones.determineZone(
-            hr: hrVal,
-            mhr: mhr,
-            rhr: rowRhr,
-          );
-          if (zone != null &&
-              wattsVal != null &&
-              wattsVal > 0 &&
-              zoneWattsByDate.containsKey(zone)) {
-            zoneWattsByDate[zone]!.putIfAbsent(dateStr, () => []).add(wattsVal);
-          }
+        final explicitZone = (row['zone'] as String?)?.trim();
+        final zone = (explicitZone != null && explicitZone.isNotEmpty)
+            ? explicitZone
+            : (hrVal != null && hrVal > 0)
+                ? HeartRateZones.determineZone(
+                    hr: hrVal,
+                    mhr: mhr,
+                    rhr: rowRhr,
+                  )
+                : (row['session_zone'] as String?)?.trim();
 
+        if (zone != null &&
+            wattsVal != null &&
+            wattsVal > 0 &&
+            zoneWattsByDate.containsKey(zone)) {
+          zoneWattsByDate[zone]!.putIfAbsent(dateStr, () => []).add(wattsVal);
+        }
+
+        if (hrVal != null && hrVal > 0) {
           if (wattsVal != null && wattsVal > 0 && mhr > rowRhr) {
             final hrrPct = ((hrVal - rowRhr) / (mhr - rowRhr)) * 100.0;
             matrixPoints.add((
@@ -614,6 +637,9 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
   }
 
   Widget _buildTeamRosterBar(AppStrings s) {
+    if (widget.user?.isAthlete == true) {
+      return const SizedBox.shrink();
+    }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: const BoxDecoration(

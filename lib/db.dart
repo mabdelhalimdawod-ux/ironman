@@ -310,9 +310,9 @@ class DB {
 
   static Future<Database> _open() async {
     final path = join(await getDatabasesPath(), 'rowing.db');
-    return openDatabase(path, version: 5, onCreate: (d, v) async {
+    return openDatabase(path, version: 6, onCreate: (d, v) async {
       await d.execute(
-          'CREATE TABLE players(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mhr INTEGER, active INTEGER DEFAULT 1)');
+          'CREATE TABLE players(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mhr INTEGER, active INTEGER DEFAULT 1, curves_shared INTEGER, curves_shared_by TEXT)');
       await d.execute(
           'CREATE TABLE cycles(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, start TEXT, end TEXT)');
       await d.execute(
@@ -346,6 +346,7 @@ class DB {
               eupnea_2 REAL,
               eupnea_3 REAL,
               entered_by TEXT,
+              zone TEXT,
               PRIMARY KEY(player_id, date, idx)
             )
           ''');
@@ -373,6 +374,50 @@ class DB {
               w_prime REAL,
               method TEXT,
               PRIMARY KEY(player_id, date)
+            )
+          ''');
+      await d.execute('''
+            CREATE TABLE IF NOT EXISTS athlete_custom_sessions(
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              player_id INTEGER NOT NULL,
+              date TEXT NOT NULL,
+              session_idx INTEGER NOT NULL,
+              name TEXT,
+              time TEXT,
+              notes_physio TEXT,
+              notes_tech TEXT,
+              comment TEXT,
+              edited_by TEXT,
+              created_at TEXT,
+              updated_at TEXT,
+              UNIQUE(player_id, date, session_idx)
+            )
+          ''');
+      await d.execute('''
+            CREATE TABLE IF NOT EXISTS athlete_custom_workout_items(
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              custom_session_id INTEGER NOT NULL,
+              section TEXT NOT NULL,
+              item_idx INTEGER NOT NULL,
+              time TEXT,
+              duration_minutes INTEGER,
+              duration_seconds INTEGER,
+              hr_percent REAL,
+              hr_range TEXT,
+              distance_meters INTEGER,
+              reps INTEGER,
+              kind TEXT,
+              zone TEXT,
+              details TEXT,
+              UNIQUE(custom_session_id, section, item_idx)
+            )
+          ''');
+      await d.execute(
+          'CREATE INDEX IF NOT EXISTS idx_custom_workout_session ON athlete_custom_workout_items(custom_session_id)');
+      await d.execute('''
+            CREATE TABLE IF NOT EXISTS progress_baseline_config(
+              key TEXT PRIMARY KEY,
+              value REAL
             )
           ''');
     }, onUpgrade: (d, oldVersion, newVersion) async {
@@ -439,6 +484,70 @@ class DB {
         if (!colNames.contains('entered_by')) {
           await d.execute('ALTER TABLE logs ADD COLUMN entered_by TEXT');
         }
+      }
+      if (oldVersion < 6) {
+        final logCols = await d.rawQuery('PRAGMA table_info(logs)');
+        final logColNames = logCols.map((c) => c['name'] as String).toSet();
+        if (!logColNames.contains('zone')) {
+          await d.execute('ALTER TABLE logs ADD COLUMN zone TEXT');
+        }
+
+        final playerCols = await d.rawQuery('PRAGMA table_info(players)');
+        final playerColNames = playerCols.map((c) => c['name'] as String).toSet();
+        if (!playerColNames.contains('curves_shared')) {
+          await d.execute('ALTER TABLE players ADD COLUMN curves_shared INTEGER');
+        }
+        if (!playerColNames.contains('curves_shared_by')) {
+          await d.execute('ALTER TABLE players ADD COLUMN curves_shared_by TEXT');
+        }
+
+        await d.execute('''
+              CREATE TABLE IF NOT EXISTS athlete_custom_sessions(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                player_id INTEGER NOT NULL,
+                date TEXT NOT NULL,
+                session_idx INTEGER NOT NULL,
+                name TEXT,
+                time TEXT,
+                notes_physio TEXT,
+                notes_tech TEXT,
+                comment TEXT,
+                edited_by TEXT,
+                created_at TEXT,
+                updated_at TEXT,
+                UNIQUE(player_id, date, session_idx)
+              )
+            ''');
+
+        await d.execute('''
+              CREATE TABLE IF NOT EXISTS athlete_custom_workout_items(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                custom_session_id INTEGER NOT NULL,
+                section TEXT NOT NULL,
+                item_idx INTEGER NOT NULL,
+                time TEXT,
+                duration_minutes INTEGER,
+                duration_seconds INTEGER,
+                hr_percent REAL,
+                hr_range TEXT,
+                distance_meters INTEGER,
+                reps INTEGER,
+                kind TEXT,
+                zone TEXT,
+                details TEXT,
+                UNIQUE(custom_session_id, section, item_idx)
+              )
+            ''');
+
+        await d.execute(
+            'CREATE INDEX IF NOT EXISTS idx_custom_workout_session ON athlete_custom_workout_items(custom_session_id)');
+
+        await d.execute('''
+              CREATE TABLE IF NOT EXISTS progress_baseline_config(
+                key TEXT PRIMARY KEY,
+                value REAL
+              )
+            ''');
       }
     });
   }

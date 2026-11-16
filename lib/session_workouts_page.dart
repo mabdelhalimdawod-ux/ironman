@@ -15,12 +15,14 @@ const Color _gridLine = EngineRowingUI.bgGridLine;
 /// 3. التهدئة (Cool-down)
 class SessionWorkoutsPage extends StatefulWidget {
   final ProgramDaySession session;
-  final VoidCallback onSaved;
+  final VoidCallback? onSaved;
+  final bool isReadOnly;
 
   const SessionWorkoutsPage({
     super.key,
     required this.session,
-    required this.onSaved,
+    this.onSaved,
+    this.isReadOnly = false,
   });
 
   @override
@@ -35,15 +37,17 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
   void initState() {
     super.initState();
     _session = widget.session;
-    // التأكد من وجود عنصر واحد على الأقل في كل قسم كبداية
-    if (_session.warmupItems.isEmpty) {
-      _addWorkoutRow('warmup');
-    }
-    if (_session.mainItems.isEmpty) {
-      _addWorkoutRow('main');
-    }
-    if (_session.cooldownItems.isEmpty) {
-      _addWorkoutRow('cooldown');
+    // التأكد من وجود عنصر واحد على الأقل في كل قسم كبداية في وضع التعديل فقط
+    if (!widget.isReadOnly) {
+      if (_session.warmupItems.isEmpty) {
+        _addWorkoutRow('warmup');
+      }
+      if (_session.mainItems.isEmpty) {
+        _addWorkoutRow('main');
+      }
+      if (_session.cooldownItems.isEmpty) {
+        _addWorkoutRow('cooldown');
+      }
     }
   }
 
@@ -178,7 +182,7 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
 
     try {
       await ProgramService.saveDaySessionDetailed(_session);
-      widget.onSaved();
+      widget.onSaved?.call();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -211,19 +215,41 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
         foregroundColor: EngineRowingUI.textWhite,
         title: Text('${_session.name} - ${s.workoutsPageTitle}'),
         actions: [
-          // زر إضافة تعليق
-          IconButton(
-            tooltip: s.comment,
-            icon: Icon(
-              _session.comment.isNotEmpty
-                  ? Icons.comment_rounded
-                  : Icons.mode_comment_outlined,
-              color: _session.comment.isNotEmpty
-                  ? _gold
-                  : EngineRowingUI.labelSlate,
+          if (widget.isReadOnly)
+            Center(
+              child: Container(
+                margin: const EdgeInsetsDirectional.only(end: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _gold.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: _gold.withValues(alpha: 0.5)),
+                ),
+                child: Text(
+                  s.readOnlyNotice,
+                  style: const TextStyle(
+                    color: _gold,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            )
+          else
+            // زر إضافة تعليق
+            IconButton(
+              tooltip: s.comment,
+              icon: Icon(
+                _session.comment.isNotEmpty
+                    ? Icons.comment_rounded
+                    : Icons.mode_comment_outlined,
+                color: _session.comment.isNotEmpty
+                    ? _gold
+                    : EngineRowingUI.labelSlate,
+              ),
+              onPressed: _showCommentDialog,
             ),
-            onPressed: _showCommentDialog,
-          ),
         ],
       ),
       body: Column(
@@ -300,6 +326,105 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
             ),
           ),
 
+          // شريط الملاحظات الفنية والفسيولوجية إن وجدت
+          if (_session.notesTech.trim().isNotEmpty ||
+              _session.notesPhysio.trim().isNotEmpty ||
+              _session.comment.trim().isNotEmpty)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: _cardFill,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _gridLine),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_session.notesTech.trim().isNotEmpty) ...[
+                    Row(
+                      children: [
+                        const Icon(Icons.build_circle_outlined,
+                            size: 16, color: _gold),
+                        const SizedBox(width: 6),
+                        Text(
+                          s.technicalNotes,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: _gold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _session.notesTech,
+                      style: const TextStyle(
+                        color: EngineRowingUI.textWhite,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ],
+                  if (_session.notesPhysio.trim().isNotEmpty) ...[
+                    if (_session.notesTech.trim().isNotEmpty)
+                      const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.monitor_heart_outlined,
+                            size: 16, color: Color(0xFF69F0AE)),
+                        const SizedBox(width: 6),
+                        Text(
+                          s.physiologicalNotes,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF69F0AE),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _session.notesPhysio,
+                      style: const TextStyle(
+                        color: EngineRowingUI.textWhite,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ],
+                  if (_session.comment.trim().isNotEmpty) ...[
+                    if (_session.notesTech.trim().isNotEmpty ||
+                        _session.notesPhysio.trim().isNotEmpty)
+                      const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.comment_outlined,
+                            size: 16, color: Color(0xFF00E5FF)),
+                        const SizedBox(width: 6),
+                        Text(
+                          s.coachInstructions,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF00E5FF),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _session.comment,
+                      style: const TextStyle(
+                        color: EngineRowingUI.textWhite,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
           // قائمة الصفوف الثلاثة: 1. الإحماء 2. الرئيسي 3. التهدئة مع التكبير بالأصابع
           Expanded(
             child: Center(
@@ -346,64 +471,65 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
             ),
           ),
 
-          // شريط الحفظ السفلي
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: const BoxDecoration(
-              color: _cardFill,
-              border: Border(top: BorderSide(color: _gridLine)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black45,
-                  blurRadius: 10,
-                  offset: Offset(0, -3),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: EngineRowingUI.labelSlate,
-                    side: const BorderSide(color: _gridLine),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+          // شريط الحفظ السفلي (يظهر فقط في وضع التعديل)
+          if (!widget.isReadOnly)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: const BoxDecoration(
+                color: _cardFill,
+                border: Border(top: BorderSide(color: _gridLine)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black45,
+                    blurRadius: 10,
+                    offset: Offset(0, -3),
                   ),
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(s.cancel),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _gold,
-                      foregroundColor: _navy,
-                      padding: const EdgeInsets.symmetric(vertical: 13),
+                ],
+              ),
+              child: Row(
+                children: [
+                  OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: EngineRowingUI.labelSlate,
+                      side: const BorderSide(color: _gridLine),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
-                      elevation: 1,
                     ),
-                    icon: _isSaving
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: _navy),
-                          )
-                        : const Icon(Icons.check_circle_rounded, size: 20),
-                    label: Text(
-                      _isSaving ? s.loading : s.save,
-                      style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.bold),
-                    ),
-                    onPressed: _isSaving ? null : _saveAndExit,
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(s.cancel),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _gold,
+                        foregroundColor: _navy,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        elevation: 1,
+                      ),
+                      icon: _isSaving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: _navy),
+                            )
+                          : const Icon(Icons.check_circle_rounded, size: 20),
+                      label: Text(
+                        _isSaving ? s.loading : s.save,
+                        style: const TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
+                      onPressed: _isSaving ? null : _saveAndExit,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -418,6 +544,7 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
     required Color badgeColor,
     required VoidCallback onAdd,
   }) {
+    final s = AppStrings.of(context);
     return Container(
       decoration: EngineRowingUI.neonGlowBoxDecoration(
         backgroundColor: _cardFill,
@@ -459,24 +586,25 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
                 ),
                 const SizedBox(width: 8),
 
-                // زرار (+) لإضافة خانة جديدة في رأس الصف
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _gold,
-                    foregroundColor: _navy,
-                    elevation: 0,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                // زرار (+) لإضافة خانة جديدة في رأس الصف (في وضع التعديل فقط)
+                if (!widget.isReadOnly)
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _gold,
+                      foregroundColor: _navy,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    label: Text(
+                        'إضافة ${section == 'warmup' ? 'إحماء' : (section == 'main' ? 'تمرين' : 'تهدئة')} (+)',
+                        style: const TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.bold)),
+                    onPressed: onAdd,
                   ),
-                  icon: const Icon(Icons.add_rounded, size: 18),
-                  label: Text(
-                      'إضافة ${section == 'warmup' ? 'إحماء' : (section == 'main' ? 'تمرين' : 'تهدئة')} (+)',
-                      style: const TextStyle(
-                          fontSize: 12, fontWeight: FontWeight.bold)),
-                  onPressed: onAdd,
-                ),
               ],
             ),
           ),
@@ -484,22 +612,36 @@ class _SessionWorkoutsPageState extends State<SessionWorkoutsPage> {
           // قائمة الخانات المدخلة في هذا الصف
           Padding(
             padding: const EdgeInsets.all(12),
-            child: Column(
-              children: items.asMap().entries.map((entry) {
-                final idx = entry.key;
-                final item = entry.value;
-                return _WorkoutRowWidget(
-                  key: ValueKey(item.hashCode),
-                  item: item,
-                  index: idx,
-                  canDelete: items.length > 1,
-                  onTimePick: () => _pickTime(item),
-                  onAddNext: () => _addWorkoutRow(section, item),
-                  onDelete: () => _removeWorkoutRow(item),
-                  onDataChanged: () => setState(() {}),
-                );
-              }).toList(),
-            ),
+            child: items.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Center(
+                      child: Text(
+                        s.isArabic
+                            ? 'لا توجد تمارين في هذا القسم'
+                            : 'No exercises in this section',
+                        style: const TextStyle(
+                            color: EngineRowingUI.labelSlate, fontSize: 13),
+                      ),
+                    ),
+                  )
+                : Column(
+                    children: items.asMap().entries.map((entry) {
+                      final idx = entry.key;
+                      final item = entry.value;
+                      return _WorkoutRowWidget(
+                        key: ValueKey(item.hashCode),
+                        item: item,
+                        index: idx,
+                        isReadOnly: widget.isReadOnly,
+                        canDelete: items.length > 1,
+                        onTimePick: () => _pickTime(item),
+                        onAddNext: () => _addWorkoutRow(section, item),
+                        onDelete: () => _removeWorkoutRow(item),
+                        onDataChanged: () => setState(() {}),
+                      );
+                    }).toList(),
+                  ),
           ),
         ],
       ),
@@ -513,6 +655,7 @@ class _WorkoutRowWidget extends StatefulWidget {
   final ProgramWorkoutItem item;
   final int index;
   final bool canDelete;
+  final bool isReadOnly;
   final VoidCallback onTimePick;
   final VoidCallback onAddNext;
   final VoidCallback onDelete;
@@ -522,6 +665,7 @@ class _WorkoutRowWidget extends StatefulWidget {
     super.key,
     required this.item,
     required this.index,
+    this.isReadOnly = false,
     required this.canDelete,
     required this.onTimePick,
     required this.onAddNext,
@@ -654,7 +798,7 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
 
               // 1. خانة وقت التمرين السريع
               InkWell(
-                onTap: widget.onTimePick,
+                onTap: widget.isReadOnly ? null : widget.onTimePick,
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
                   padding:
@@ -687,30 +831,31 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                 ),
               ),
 
-              // زر (+) بجوار الخانات لإضافة تمرين جديد بنفس المواصفات مع زيادة الرقم
-              OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: _gold,
-                  side: const BorderSide(color: _gold, width: 1.2),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
+              // زر (+) بجوار الخانات لإضافة تمرين جديد بنفس المواصفات مع زيادة الرقم (في وضع التعديل فقط)
+              if (!widget.isReadOnly)
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _gold,
+                    side: const BorderSide(color: _gold, width: 1.2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                  icon: const Icon(Icons.add_circle_outline_rounded,
+                      size: 16, color: _gold),
+                  label: Text(
+                    'إضافة $defaultPrefix (+)',
+                    style: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.bold,
+                        color: _gold),
+                  ),
+                  onPressed: widget.onAddNext,
                 ),
-                icon: const Icon(Icons.add_circle_outline_rounded,
-                    size: 16, color: _gold),
-                label: Text(
-                  'إضافة $defaultPrefix (+)',
-                  style: const TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.bold,
-                      color: _gold),
-                ),
-                onPressed: widget.onAddNext,
-              ),
 
-              // زر الحذف
-              if (widget.canDelete)
+              // زر الحذف (في وضع التعديل فقط)
+              if (!widget.isReadOnly && widget.canDelete)
                 IconButton(
                   icon: const Icon(Icons.delete_outline_rounded,
                       size: 20, color: Colors.redAccent),
@@ -739,7 +884,7 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
                   ),
-                  onPressed: widget.onTimePick,
+                  onPressed: widget.isReadOnly ? null : widget.onTimePick,
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -774,6 +919,7 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                   textDirection: TextDirection.ltr,
                   child: TextFormField(
                     controller: _durationCtrl,
+                    readOnly: widget.isReadOnly,
                     textAlign: TextAlign.left,
                     keyboardType: TextInputType.number,
                     inputFormatters: [
@@ -818,6 +964,7 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                   textDirection: TextDirection.ltr,
                   child: TextFormField(
                     controller: _distanceCtrl,
+                    readOnly: widget.isReadOnly,
                     textAlign: TextAlign.left,
                     keyboardType: TextInputType.number,
                     inputFormatters: [
@@ -862,6 +1009,7 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                   textDirection: TextDirection.ltr,
                   child: TextFormField(
                     controller: _repsCtrl,
+                    readOnly: widget.isReadOnly,
                     textAlign: TextAlign.left,
                     keyboardType: TextInputType.number,
                     inputFormatters: [
@@ -937,12 +1085,14 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                               color: EngineRowingUI.textWhite)),
                     );
                   }).toList(),
-                  onChanged: (val) {
-                    if (val != null) {
-                      setState(() => widget.item.kind = val);
-                      widget.onDataChanged();
-                    }
-                  },
+                  onChanged: widget.isReadOnly
+                      ? null
+                      : (val) {
+                          if (val != null) {
+                            setState(() => widget.item.kind = val);
+                            widget.onDataChanged();
+                          }
+                        },
                 ),
               ),
 
@@ -953,6 +1103,7 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                   textDirection: TextDirection.ltr,
                   child: TextFormField(
                     controller: _hrCtrl,
+                    readOnly: widget.isReadOnly,
                     textAlign: TextAlign.left,
                     inputFormatters: [
                       RowingNumberFormatter.englishDigitsInputFormatter,
@@ -1050,43 +1201,48 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                       ),
                     );
                   }).toList(),
-                  onChanged: (val) {
-                    if (val != null) {
-                      setState(() {
-                        widget.item.zone = val;
-                        // إسقاط نسبة النبض المحددة فوراً في خانة نسبة النبض
-                        final autoHr = kZoneToHrPercentMap[val] ?? '';
-                        widget.item.hrRange = autoHr;
-                        _hrCtrl.text = autoHr;
+                  onChanged: widget.isReadOnly
+                      ? null
+                      : (val) {
+                          if (val != null) {
+                            setState(() {
+                              widget.item.zone = val;
+                              // إسقاط نسبة النبض المحددة فوراً في خانة نسبة النبض
+                              final autoHr = kZoneToHrPercentMap[val] ?? '';
+                              widget.item.hrRange = autoHr;
+                              _hrCtrl.text = autoHr;
 
-                        final norm = normalizeZoneKey(val);
-                        widget.item.hrPercent = norm == 'Z1'
-                            ? 60
-                            : (norm == 'Z2'
-                                ? 70
-                                : (norm == 'Z3'
-                                    ? 80
-                                    : (norm == 'Z4'
-                                        ? 88
-                                        : (norm == 'Threshold' ? 92 : 98))));
-                      });
-                      widget.onDataChanged();
-                    }
-                  },
+                              final norm = normalizeZoneKey(val);
+                              widget.item.hrPercent = norm == 'Z1'
+                                  ? 60
+                                  : (norm == 'Z2'
+                                      ? 70
+                                      : (norm == 'Z3'
+                                          ? 80
+                                          : (norm == 'Z4'
+                                              ? 88
+                                              : (norm == 'Threshold'
+                                                  ? 92
+                                                  : 98))));
+                            });
+                            widget.onDataChanged();
+                          }
+                        },
                 ),
               ),
 
               // 8. زر (+) مباشر بجوار الخانات
-              IconButton(
-                style: IconButton.styleFrom(
-                  backgroundColor: _gold,
-                  foregroundColor: _navy,
-                  padding: const EdgeInsets.all(8),
+              if (!widget.isReadOnly)
+                IconButton(
+                  style: IconButton.styleFrom(
+                    backgroundColor: _gold,
+                    foregroundColor: _navy,
+                    padding: const EdgeInsets.all(8),
+                  ),
+                  icon: const Icon(Icons.add, size: 20),
+                  tooltip: 'إضافة تمرين بنفس المواصفات',
+                  onPressed: widget.onAddNext,
                 ),
-                icon: const Icon(Icons.add, size: 20),
-                tooltip: 'إضافة تمرين بنفس المواصفات',
-                onPressed: widget.onAddNext,
-              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -1094,6 +1250,7 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
           // 9. ملاحظات أو تفاصيل إضافية (تمتد بكامل العرض لاستغلال المساحة المتاحة دون هدر)
           TextFormField(
             controller: _detailsCtrl,
+            readOnly: widget.isReadOnly,
             style: const TextStyle(
                 fontSize: 12.5, color: EngineRowingUI.textWhite),
             decoration: InputDecoration(

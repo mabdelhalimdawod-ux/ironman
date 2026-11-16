@@ -649,5 +649,30 @@ class AppStrings {
   String get atlLineLabel => isArabic ? 'ATL (تعب)' : 'ATL (Fatigue)';
   String get tsbBarLabel => isArabic ? 'TSB (الجاهزية)' : 'TSB (Form)';
   String get todayLabel => isArabic ? 'النهارده' : 'Today';
+
+  // المرحلة (ج) - تمرين اليوم وتخصيص المدرب والأرشيف
+  String get workout => isArabic ? 'تمرين' : 'Workout';
+  String get todayWorkout => isArabic ? 'تمرين اليوم' : "Today's Workout";
+  String get archive => isArabic ? 'الأرشيف' : 'Archive';
+  String get archiveComingSoon =>
+      isArabic ? 'الأرشيف سيتوفر قريباً' : 'Archive coming soon';
+  String get fromDate => isArabic ? 'من تاريخ' : 'From Date';
+  String get toDate => isArabic ? 'إلى تاريخ' : 'To Date';
+  String get maxSevenDaysNotice => isArabic
+      ? 'الحد الأقصى لعرض التمارين القادمة هو 7 أيام شاملة'
+      : 'Maximum date range to view upcoming sessions is 7 days inclusive';
+  String get editWorkoutForAthlete =>
+      isArabic ? 'تعديل التمرين للاعب' : 'Edit Workout for Athlete';
+  String get selectAthlete => isArabic ? 'اختر اللاعب' : 'Select Athlete';
+  String get readOnlyNotice => isArabic ? 'عرض للقراءة فقط' : 'Read-only view';
+  String get technicalNotes =>
+      isArabic ? 'الملاحظات الفنية' : 'Technical Notes';
+  String get physiologicalNotes =>
+      isArabic ? 'الملاحظات الفسيولوجية' : 'Physiological Notes';
+  String get coachInstructions =>
+      isArabic ? 'تعليمات وملاحظات المدرب' : 'Coach Instructions';
+  String get noCustomWorkout => isArabic
+      ? 'لا يوجد تمرين مخصص لهذا اليوم'
+      : 'No custom workout for this day';
 }
 

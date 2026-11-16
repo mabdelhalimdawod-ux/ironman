@@ -422,8 +422,14 @@ class ProgressCalcs {
       final rowRhr = (row['rhr'] as num?)?.toInt() ?? 0;
       final effRhr = rowRhr > 0 ? rowRhr : (defaultRhr ?? 60);
 
-      final zone = effMhr > 0
-          ? HeartRateZones.determineZone(hr: hr, mhr: effMhr, rhr: effRhr)
+      String? zone;
+      if (row['zone'] != null && row['zone'].toString().trim().isNotEmpty) {
+        zone = HeartRateZones.normalizeZoneKey(row['zone'].toString());
+      } else if (effMhr > 0 && hr > 0) {
+        zone = HeartRateZones.determineZone(hr: hr, mhr: effMhr, rhr: effRhr);
+      }
+      zone ??= row['session_zone'] != null
+          ? HeartRateZones.normalizeZoneKey(row['session_zone'].toString())
           : null;
 
       if (zone == null) {
