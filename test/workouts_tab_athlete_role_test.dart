@@ -142,24 +142,16 @@ void main() {
   });
 
   group('AthleteDayEntryPage Lock & Field Storage Tests', () {
-    testWidgets('Locked session shows lock banner and disables inputs for athlete', (tester) async {
-      final today = dstr(DateTime.now());
+    testWidgets('Two sessions on same day both remain open until midnight, yesterday session is locked for athlete', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-      final sched = [
-        ScheduledSessionInfo(date: today, idx: 0, time: '07:00', kind: 'Erg', zone: 'Z2'),
-        ScheduledSessionInfo(date: today, idx: 1, time: '16:00', kind: 'Erg', zone: 'Z3'),
+      final yesterday = dstr(DateTime.now().subtract(const Duration(days: 1)));
+      final schedYesterday = [
+        ScheduledSessionInfo(date: yesterday, idx: 0, time: '07:00', kind: 'Erg', zone: 'Z2'),
       ];
-
-      // زراعة تسجيل في الحصة 1 للاعب تجعل الحصة 0 مقفولة داخل runAsync
-      await tester.runAsync(() async {
-        await DB.put('logs', {
-          'player_id': 101,
-          'date': today,
-          'idx': 1,
-          'avg_power': 225,
-          'entered_by': 'athlete',
-        });
-      });
 
       await tester.pumpWidget(
         MaterialApp(
@@ -167,12 +159,12 @@ void main() {
           home: Scaffold(
             body: AthleteDayEntryPage(
               player: const {'id': 101, 'name': 'اللاعب أحمد البطل', 'mhr': 195},
-              date: today,
+              date: yesterday,
               sessions: const [
                 {'idx': 0, 'time': '07:00', 'kind': 'Erg', 'zone': 'Z2'},
               ],
               userRole: 'athlete',
-              allScheduledSessions: sched,
+              allScheduledSessions: schedYesterday,
             ),
           ),
         ),
@@ -180,7 +172,7 @@ void main() {
 
       await pumpUntilLoaded(tester);
 
-      // فحص ظهور شارة القفل
+      // فحص ظهور شارة القفل لحصة أمس المنتهية بعد منتصف الليل
       expect(find.text('الحصة مقفولة (للقراءة فقط)'), findsWidgets);
 
       final exc = tester.takeException();
@@ -188,11 +180,14 @@ void main() {
     });
 
     testWidgets('Coach opening same locked session has full edit permissions', (tester) async {
-      final today = dstr(DateTime.now());
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-      final sched = [
-        ScheduledSessionInfo(date: today, idx: 0, time: '07:00', kind: 'Erg', zone: 'Z2'),
-        ScheduledSessionInfo(date: today, idx: 1, time: '16:00', kind: 'Erg', zone: 'Z3'),
+      final yesterday = dstr(DateTime.now().subtract(const Duration(days: 1)));
+      final schedYesterday = [
+        ScheduledSessionInfo(date: yesterday, idx: 0, time: '07:00', kind: 'Erg', zone: 'Z2'),
       ];
 
       await tester.pumpWidget(
@@ -201,12 +196,12 @@ void main() {
           home: Scaffold(
             body: AthleteDayEntryPage(
               player: const {'id': 101, 'name': 'اللاعب أحمد البطل', 'mhr': 195},
-              date: today,
+              date: yesterday,
               sessions: const [
                 {'idx': 0, 'time': '07:00', 'kind': 'Erg', 'zone': 'Z2'},
               ],
               userRole: 'coach',
-              allScheduledSessions: sched,
+              allScheduledSessions: schedYesterday,
             ),
           ),
         ),

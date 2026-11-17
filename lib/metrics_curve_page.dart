@@ -20,30 +20,32 @@ const Color _emerald = Color(0xFFB8F229);
 const Color _purple = Color(0xFFE65100);
 const Color _coral = Color(0xFFFF5252);
 
-/// الألوان المعتمدة للزونات الخمسة
-const Map<String, Color> _zoneColors = {
-  'Z1': Color(0xFFB8F229), // فسفوري خفيف
-  'Z2': Color(0xFF2979FF), // أزرق متوسط
-  'Z3': Color(0xFFFF9100), // برتقالي متوسط
-  'Z4': Color(0xFFE65100), // برتقالي غامق
-  'Z5': Color(0xFFFF5252), // أحمر خفيف
+/// الألوان المعتمدة للزونات السبعة من الـ Theme
+Map<String, Color> get _zoneColors => {
+  for (final z in HeartRateZones.orderedZones)
+    z: HeartRateZones.zoneColor(z),
 };
 
-/// المسميات المعتمدة للزونات
+/// المسميات المعتمدة للزونات السبعة بالإنجليزية
 const Map<String, String> _zoneLabelsEn = {
-  'Z1': 'Z1 Recovery',
-  'Z2': 'Z2 UT2',
-  'Z3': 'Z3 UT1',
-  'Z4': 'Z4 AT',
-  'Z5': 'Z5 TR / Max',
+  'Z1': 'Zone 1 - UT3',
+  'Z2': 'Zone 2 - UT2',
+  'Z3': 'Zone 3 - UT1',
+  'Z4': 'Zone 4 - AT',
+  'Threshold': 'Threshold - AT',
+  'Z5': 'Zone 5 - TR',
+  'VO2 max': 'VO2 max - AN',
 };
 
+/// المسميات المعتمدة للزونات السبعة بالعربية
 const Map<String, String> _zoneLabelsAr = {
-  'Z1': 'Z1 استشفاء (Recovery)',
-  'Z2': 'Z2 هوائي أساسي (UT2)',
-  'Z3': 'Z3 هوائي مكثف (UT1)',
-  'Z4': 'Z4 عتبة لاهوائية (AT)',
-  'Z5': 'Z5 أقصى جهد (TR / Max)',
+  'Z1': '(zone1 - UT3) = 55%:65%',
+  'Z2': '(zone2 - UT2) = 65%:75%',
+  'Z3': '(zone3 - UT1) = 75%:85%',
+  'Z4': '(zone4 - AT) = 85%:90%',
+  'Threshold': '(Threshold - AT) = 90%:95%',
+  'Z5': '(zone5 - TR) = 95%:98%',
+  'VO2 max': '(VO2 max - AN) = 98%:105%',
 };
 
 /// الفترات الزمنية المتاحة
@@ -90,18 +92,14 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
   // سجلات التمارين المحملة والمفلترة
   List<Map<String, dynamic>> _rawLogs = [];
 
-  // بيانات منحنى الزون Z1 - Z5
+  // بيانات منحنى الزونات السبعة
   // Map<zoneKey, Map<dateString, averageWatts>>
   final Map<String, Map<String, double>> _zoneDailyWatts = {
-    'Z1': {},
-    'Z2': {},
-    'Z3': {},
-    'Z4': {},
-    'Z5': {},
+    for (final z in HeartRateZones.orderedZones) z: {},
   };
 
-  // حالة مربعات اختيار الزونات (افتراضياً كلها معلّمة كما طلب المستخدم)
-  final Set<String> _selectedZones = {'Z1', 'Z2', 'Z3', 'Z4', 'Z5'};
+  // حالة مربعات اختيار الزونات السبعة (افتراضياً كلها معلّمة كما طلب المستخدم)
+  final Set<String> _selectedZones = HeartRateZones.orderedZones.toSet();
 
   // نبض الراحة الفعّال للاعب
   int _effectiveRHR = 60;
@@ -213,18 +211,14 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
     final rows = await DB.q(query, args);
 
     // تصفير بيانات الزونات
-    for (final z in ['Z1', 'Z2', 'Z3', 'Z4', 'Z5']) {
+    for (final z in HeartRateZones.orderedZones) {
       _zoneDailyWatts[z] = {};
     }
 
     // خريطة مساعدة لتجميع الواط اليومي لكل زون لحساب المتوسط:
     // zone -> date -> List<watts>
     final Map<String, Map<String, List<double>>> zoneAccumulator = {
-      'Z1': {},
-      'Z2': {},
-      'Z3': {},
-      'Z4': {},
-      'Z5': {},
+      for (final z in HeartRateZones.orderedZones) z: {},
     };
 
     final parsedLogs = <Map<String, dynamic>>[];
@@ -292,7 +286,7 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
     }
 
     // حساب متوسط الواط لليوم الواحد لكل زون
-    for (final zone in ['Z1', 'Z2', 'Z3', 'Z4', 'Z5']) {
+    for (final zone in HeartRateZones.orderedZones) {
       final daysMap = zoneAccumulator[zone]!;
       for (final entry in daysMap.entries) {
         final date = entry.key;
@@ -379,7 +373,7 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
 
     int totalRows = 0;
     for (final date in sortedDates) {
-      for (final zone in ['Z1', 'Z2', 'Z3', 'Z4', 'Z5']) {
+      for (final zone in HeartRateZones.orderedZones) {
         if (_selectedZones.contains(zone)) {
           final watts = _zoneDailyWatts[zone]?[date];
           if (watts != null) {
@@ -793,7 +787,7 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
   Widget _buildZoneCurveTab(AppStrings s) {
     // جمع كل التواريخ المتاحة عبر كافة الزونات وترتيبها زمنياً
     final allDatesSet = <String>{};
-    for (final zone in ['Z1', 'Z2', 'Z3', 'Z4', 'Z5']) {
+    for (final zone in HeartRateZones.orderedZones) {
       allDatesSet.addAll(_zoneDailyWatts[zone]!.keys);
     }
     final sortedDates = allDatesSet.toList()..sort();
@@ -803,7 +797,7 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
     double minWatts = 500;
     double maxWatts = 0;
 
-    for (final zone in ['Z1', 'Z2', 'Z3', 'Z4', 'Z5']) {
+    for (final zone in HeartRateZones.orderedZones) {
       // يظهر الخط فقط إذا كان الزون معلّم
       if (_selectedZones.contains(zone)) {
         final data = _zoneDailyWatts[zone]!;
@@ -932,7 +926,7 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: ['Z1', 'Z2', 'Z3', 'Z4', 'Z5'].map((zoneKey) {
+                children: HeartRateZones.orderedZones.map((zoneKey) {
                   final hasData = _zoneDailyWatts[zoneKey] != null &&
                       _zoneDailyWatts[zoneKey]!.isNotEmpty;
                   final isChecked = _selectedZones.contains(zoneKey);

@@ -74,6 +74,27 @@ void main() {
         PRIMARY KEY(player_id, date)
       )
     ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS sessions(
+        date TEXT,
+        idx INTEGER,
+        kind TEXT,
+        zone TEXT,
+        time TEXT,
+        PRIMARY KEY(date, idx)
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS daily_load(
+        player_id INTEGER NOT NULL,
+        date TEXT NOT NULL,
+        tss REAL,
+        ctl REAL NOT NULL,
+        atl REAL NOT NULL,
+        tsb REAL NOT NULL,
+        PRIMARY KEY(player_id, date)
+      )
+    ''');
     DB.testDatabase = db;
   });
 

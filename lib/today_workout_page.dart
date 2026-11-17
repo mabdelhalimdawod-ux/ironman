@@ -5,6 +5,7 @@ import 'db.dart';
 import 'engine_rowing_ui.dart';
 import 'program_service.dart';
 import 'session_workouts_page.dart';
+import 'user_avatar_widget.dart';
 
 /// شاشة «تمرين اليوم» / "Today's Workout"
 /// - للاعب: واجهة قراءة فقط تعرض تمارينه المخصصة أو الأصلية مع محدد نطاق تواريخ حتى 7 أيام شاملة كحد أقصى.
@@ -48,8 +49,18 @@ class _TodayWorkoutPageState extends State<TodayWorkoutPage> {
     final user = widget.user ?? AuthService.currentUser;
 
     if (user != null && user.isCoach) {
-      final players = await DB.players();
-      _athletes = players;
+      try {
+        final playersWithPhotos = await DB.q('''
+          SELECT p.*, u.photo_path 
+          FROM players p 
+          LEFT JOIN users u ON u.player_id = p.id 
+          WHERE p.active = 1 
+          ORDER BY p.name ASC
+        ''');
+        _athletes = playersWithPhotos;
+      } catch (_) {
+        _athletes = await DB.players();
+      }
     } else {
       await _loadAthleteSessions();
     }
@@ -461,10 +472,9 @@ class _TodayWorkoutPageState extends State<TodayWorkoutPage> {
           child: ListTile(
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-            leading: const CircleAvatar(
-              backgroundColor: EngineRowingUI.equationCardFill,
-              child: Icon(Icons.person_rounded,
-                  color: EngineRowingUI.neonLime, size: 22),
+            leading: UserAvatarWidget(
+              photoPath: athlete['photo_path'] as String?,
+              radius: 20,
             ),
             title: Text(
               name,

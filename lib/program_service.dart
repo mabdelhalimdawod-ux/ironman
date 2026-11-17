@@ -1,80 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'db.dart';
+import 'heart_rate_zones.dart';
 
 // ============================================================================
-// ثوابت ومناطق النبض والأنواع المعتمدة في تاب Program
+// ثوابت ومناطق النبض والأنواع المعتمدة في تاب Program (المصدر الموحد للزونات الـ 7)
 // ============================================================================
-const List<String> kProgramZones = [
-  'Z1',
-  'Z2',
-  'Z3',
-  'Z4',
-  'Threshold',
-  'Z5',
-];
+const List<String> kProgramZones = HeartRateZones.orderedZones;
 
-/// القائمة المنسدلة للزونات الـ 6 مع نسب النبض المحددة بالوصف
+/// القائمة المنسدلة للزونات الـ 7 مع نسب النبض المحددة بالوصف
 const List<String> kProgramZonesDetailed = [
-  'zone1 = 55%:65%',
-  'zone2 = 65%:75%',
-  'zone3 = 75%:85%',
-  'zone4 = 85%:90%',
-  'Threshold = 90%:95%',
-  'zone5 = 95%:100%',
+  '(zone1 - UT3) = 55%:65%',
+  '(zone2 - UT2) = 65%:75%',
+  '(zone3 - UT1) = 75%:85%',
+  '(zone4 - AT) = 85%:90%',
+  '(Threshold - AT) = 90%:95%',
+  '(zone5 - TR) = 95%:98%',
+  '(VO2 max - AN) = 98%:105%',
 ];
 
 /// خريطة مطابقة الزون إلى نسبة النبض
 const Map<String, String> kZoneToHrPercentMap = {
-  'zone1 = 55%:65%': '55%:65%',
-  'zone2 = 65%:75%': '65%:75%',
-  'zone3 = 75%:85%': '75%:85%',
-  'zone4 = 85%:90%': '85%:90%',
-  'Threshold = 90%:95%': '90%:95%',
-  'zone5 = 95%:100%': '95%:100%',
-  'zone1': '55%:65%',
-  'zone2': '65%:75%',
-  'zone3': '75%:85%',
-  'zone4': '85%:90%',
-  'Threshold': '90%:95%',
-  'zone5': '95%:100%',
   'Z1': '55%:65%',
   'Z2': '65%:75%',
   'Z3': '75%:85%',
   'Z4': '85%:90%',
-  'Z5': '95%:100%',
+  'Threshold': '90%:95%',
+  'Z5': '95%:98%',
+  'VO2 max': '98%:105%',
+  '(zone1 - UT3) = 55%:65%': '55%:65%',
+  '(zone2 - UT2) = 65%:75%': '65%:75%',
+  '(zone3 - UT1) = 75%:85%': '75%:85%',
+  '(zone4 - AT) = 85%:90%': '85%:90%',
+  '(Threshold - AT) = 90%:95%': '90%:95%',
+  '(zone5 - TR) = 95%:98%': '95%:98%',
+  '(VO2 max - AN) = 98%:105%': '98%:105%',
 };
 
-/// تحويل أي صيغة للزون إلى المفتاح الأساسي (Z1, Z2, Z3, Z4, Threshold, Z5)
-String normalizeZoneKey(String rawZone) {
-  if (rawZone.contains('zone1') || rawZone == 'Z1') return 'Z1';
-  if (rawZone.contains('zone2') || rawZone == 'Z2') return 'Z2';
-  if (rawZone.contains('zone3') || rawZone == 'Z3') return 'Z3';
-  if (rawZone.contains('zone4') || rawZone == 'Z4') return 'Z4';
-  if (rawZone.contains('Threshold')) return 'Threshold';
-  if (rawZone.contains('zone5') || rawZone == 'Z5') return 'Z5';
-  return 'Z2';
-}
+/// تحويل أي صيغة للزون إلى المفتاح الأساسي عبر مصدر الزونات الموحد
+String normalizeZoneKey(String rawZone) => HeartRateZones.normalizeZoneKey(rawZone);
 
 /// تحويل مفتاح الزون إلى النص الكامل المنسدل
 String formatZoneToDetailed(String rawZone) {
   final norm = normalizeZoneKey(rawZone);
-  switch (norm) {
-    case 'Z1':
-      return 'zone1 = 55%:65%';
-    case 'Z2':
-      return 'zone2 = 65%:75%';
-    case 'Z3':
-      return 'zone3 = 75%:85%';
-    case 'Z4':
-      return 'zone4 = 85%:90%';
-    case 'Threshold':
-      return 'Threshold = 90%:95%';
-    case 'Z5':
-      return 'zone5 = 95%:100%';
-    default:
-      return 'zone2 = 65%:75%';
-  }
+  return HeartRateZones.zoneDisplayName(norm);
 }
 
 const List<String> kProgramWorkoutKinds = [
@@ -94,13 +63,9 @@ const List<String> kProgramTestTypes = [
   '3000 m test',
 ];
 
-const Map<String, Color> kZoneColors = {
-  'Z1': Color(0xFFB8F229), // فسفوري خفيف
-  'Z2': Color(0xFF2979FF), // أزرق متوسط
-  'Z3': Color(0xFFFF9100), // برتقالي متوسط
-  'Z4': Color(0xFFF4511E), // برتقالي غامق
-  'Threshold': Color(0xFFE65100), // برتقالي غامق / عتبة
-  'Z5': Color(0xFFFF5252), // أحمر خفيف
+Map<String, Color> get kZoneColors => {
+  for (final z in HeartRateZones.orderedZones)
+    z: HeartRateZones.zoneColor(z),
 };
 
 // ============================================================================

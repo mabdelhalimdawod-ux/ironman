@@ -74,43 +74,84 @@ class HeartRateZones {
     'VO2 max': 1.03,
   };
 
-  /// استخراج الزون الأساسي النظيف (Z1 إلى VO2 max)
+  /// خريطة المطابقة الكاملة الدقيقة للأسماء القديمة والمخزنة بدون استخدام contains
+  static const Map<String, String> legacyExactMap = {
+    'Z1': 'Z1',
+    'ZONE 1': 'Z1',
+    'ZONE1': 'Z1',
+    'UT3': 'Z1',
+    'ZONE 1 - UT3': 'Z1',
+    '(ZONE1 - UT3)': 'Z1',
+    '(ZONE 1 - UT3)': 'Z1',
+    'ZONE 1 - UT3 = 55%:65%': 'Z1',
+    '(ZONE1 - UT3) = 55%:65%': 'Z1',
+    'ZONE1 = 55%:65%': 'Z1',
+    'Z2': 'Z2',
+    'ZONE 2': 'Z2',
+    'ZONE2': 'Z2',
+    'UT2': 'Z2',
+    'ZONE 2 - UT2': 'Z2',
+    '(ZONE2 - UT2)': 'Z2',
+    '(ZONE 2 - UT2)': 'Z2',
+    'ZONE 2 - UT2 = 65%:75%': 'Z2',
+    '(ZONE2 - UT2) = 65%:75%': 'Z2',
+    'ZONE2 = 65%:75%': 'Z2',
+    'Z3': 'Z3',
+    'ZONE 3': 'Z3',
+    'ZONE3': 'Z3',
+    'UT1': 'Z3',
+    'ZONE 3 - UT1': 'Z3',
+    '(ZONE3 - UT1)': 'Z3',
+    '(ZONE 3 - UT1)': 'Z3',
+    'ZONE 3 - UT1 = 75%:85%': 'Z3',
+    '(ZONE3 - UT1) = 75%:85%': 'Z3',
+    'ZONE3 = 75%:85%': 'Z3',
+    'Z4': 'Z4',
+    'ZONE 4': 'Z4',
+    'ZONE4': 'Z4',
+    'AT': 'Z4',
+    'ZONE 4 - AT': 'Z4',
+    '(ZONE4 - AT)': 'Z4',
+    '(ZONE 4 - AT)': 'Z4',
+    'ZONE 4 - AT = 85%:90%': 'Z4',
+    '(ZONE4 - AT) = 85%:90%': 'Z4',
+    'ZONE4 = 85%:90%': 'Z4',
+    'THRESHOLD': 'Threshold',
+    'THRESHOLD - AT': 'Threshold',
+    '(THRESHOLD - AT)': 'Threshold',
+    'THRESHOLD = 90%:95%': 'Threshold',
+    '(THRESHOLD - AT) = 90%:95%': 'Threshold',
+    'Z4 THRESHOLD': 'Threshold',
+    'Z5': 'Z5',
+    'ZONE 5': 'Z5',
+    'ZONE5': 'Z5',
+    'TR': 'Z5',
+    'ZONE 5 - TR': 'Z5',
+    '(ZONE5 - TR)': 'Z5',
+    '(ZONE 5 - TR)': 'Z5',
+    'ZONE 5 - TR = 95%:98%': 'Z5',
+    '(ZONE5 - TR) = 95%:98%': 'Z5',
+    'ZONE5 = 95%:100%': 'Z5',
+    'Z5 TR/MAX': 'Z5',
+    'Z5 TR / MAX': 'Z5',
+    'Z5 TR': 'Z5',
+    'VO2 MAX': 'VO2 max',
+    'VO2MAX': 'VO2 max',
+    'VO2 MAX - AN': 'VO2 max',
+    '(VO2 MAX - AN)': 'VO2 max',
+    '(VO2 MAX - AN) = 98%:105%': 'VO2 max',
+    'Z5 VO2 MAX': 'VO2 max',
+    'Z5 VO2MAX': 'VO2 max',
+    'AN': 'VO2 max',
+    'Z6': 'VO2 max',
+    'ZONE 6': 'VO2 max',
+    'ZONE6': 'VO2 max',
+  };
+
+  /// استخراج الزون الأساسي النظيف (Z1 إلى VO2 max) عبر المطابقة التامة الدقيقة
   static String normalizeZoneKey(String zone) {
     final trimmed = zone.trim().toUpperCase();
-    if (trimmed.contains('VO2') ||
-        trimmed.contains('MAX') ||
-        trimmed.contains('AN')) {
-      return 'VO2 max';
-    }
-    if (trimmed.contains('THRESHOLD') || trimmed.contains('THR')) {
-      return 'Threshold';
-    }
-    if (trimmed.startsWith('Z1') ||
-        trimmed.contains('ZONE1') ||
-        trimmed.contains('UT3')) {
-      return 'Z1';
-    }
-    if (trimmed.startsWith('Z2') ||
-        trimmed.contains('ZONE2') ||
-        trimmed.contains('UT2')) {
-      return 'Z2';
-    }
-    if (trimmed.startsWith('Z3') ||
-        trimmed.contains('ZONE3') ||
-        trimmed.contains('UT1')) {
-      return 'Z3';
-    }
-    if (trimmed.startsWith('Z4') ||
-        trimmed.contains('ZONE4') ||
-        (trimmed.contains('AT') && !trimmed.contains('THRESHOLD'))) {
-      return 'Z4';
-    }
-    if (trimmed.startsWith('Z5') ||
-        trimmed.contains('ZONE5') ||
-        trimmed.contains('TR')) {
-      return 'Z5';
-    }
-    return 'Z2'; // القيمة الافتراضية
+    return legacyExactMap[trimmed] ?? (orderedZones.contains(zone) ? zone : 'Z2');
   }
 
   /// تحديد الزون تلقائياً بمعادلة كارفونين من نبض التمرين:
