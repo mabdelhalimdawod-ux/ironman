@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'package:crypto/crypto.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'db.dart';
 
@@ -14,6 +17,7 @@ class AppUser {
   final bool subscriptionActive;
   final int? playerId;
   final String? createdAt;
+  final String? photoPath;
 
   const AppUser({
     required this.id,
@@ -24,11 +28,36 @@ class AppUser {
     required this.subscriptionActive,
     this.playerId,
     this.createdAt,
+    this.photoPath,
   });
 
   bool get isAdmin => role == 'admin';
   bool get isCoach => role == 'coach';
   bool get isAthlete => role == 'athlete';
+
+  AppUser copyWith({
+    int? id,
+    String? email,
+    String? name,
+    String? role,
+    int? coachId,
+    bool? subscriptionActive,
+    int? playerId,
+    String? createdAt,
+    String? photoPath,
+  }) {
+    return AppUser(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      name: name ?? this.name,
+      role: role ?? this.role,
+      coachId: coachId ?? this.coachId,
+      subscriptionActive: subscriptionActive ?? this.subscriptionActive,
+      playerId: playerId ?? this.playerId,
+      createdAt: createdAt ?? this.createdAt,
+      photoPath: photoPath ?? this.photoPath,
+    );
+  }
 
   factory AppUser.fromMap(Map<String, dynamic> map) {
     return AppUser(
@@ -40,6 +69,7 @@ class AppUser {
       subscriptionActive: (map['subscription_active'] as int? ?? 1) == 1,
       playerId: map['player_id'] as int?,
       createdAt: map['created_at'] as String?,
+      photoPath: map['photo_path'] as String?,
     );
   }
 
@@ -53,6 +83,7 @@ class AppUser {
       'subscription_active': subscriptionActive ? 1 : 0,
       'player_id': playerId,
       'created_at': createdAt,
+      'photo_path': photoPath,
     };
   }
 }
@@ -150,7 +181,7 @@ class AuthService {
   static Future<void> ensureTables() async {
     final database = await DB.db;
 
-    // 1. جدول المستخدمين (مع عمود salt عشوائي و player_id)
+    // 1. جدول المستخدمين (مع عمود salt عشوائي و player_id و photo_path)
     await database.execute('''
       CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -162,11 +193,12 @@ class AuthService {
         coach_id INTEGER,
         subscription_active INTEGER DEFAULT 1,
         player_id INTEGER,
+        photo_path TEXT,
         created_at TEXT
       )
     ''');
 
-    // ترقية آمنة لأي جدول سابق في حال نقص عمود salt أو player_id
+    // ترقية آمنة لأي جدول سابق في حال نقص عمود salt أو player_id أو photo_path
     try {
       final columns = await database.rawQuery('PRAGMA table_info(users)');
       final columnNames = columns.map((c) => c['name'] as String).toSet();
@@ -175,6 +207,9 @@ class AuthService {
       }
       if (!columnNames.contains('player_id')) {
         await database.execute("ALTER TABLE users ADD COLUMN player_id INTEGER");
+      }
+      if (!columnNames.contains('photo_path')) {
+        await database.execute("ALTER TABLE users ADD COLUMN photo_path TEXT");
       }
     } catch (_) {}
 
@@ -439,6 +474,129 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyUserId);
     // نترك _keySavedEmail لو تذكرني كان مفعل أو نمسحه مع الجلسة
+  }
+
+  /// تحديث صورة الملف الشخصي للمستخدم وحفظها في مجلد المستندات
+  /// شرط أمان صارم: كل مستخدم يغير صورته هو فقط (actingUserId == targetUserId)
+  static Future<String?> updateUserPhoto({
+    required int targetUserId,
+    required int actingUserId,
+    required String sourcePath,
+  }) async {
+    if (targetUserId != actingUserId) {
+      throw Exception('Unauthorized: Users can only update their own profile photo');
+    }
+
+    final database = await DB.db;
+
+    // استعلام عن المسار القديم لحذفه
+    final currentRows = await database.query(
+      'users',
+      columns: ['photo_path'],
+      where: 'id = ?',
+      whereArgs: [targetUserId],
+    );
+    if (currentRows.isNotEmpty) {
+      final oldPath = currentRows.first['photo_path'] as String?;
+      if (oldPath != null && oldPath.isNotEmpty) {
+        try {
+          final oldFile = File(oldPath);
+          if (oldFile.existsSync()) {
+            oldFile.deleteSync();
+          }
+        } catch (_) {}
+      }
+    }
+
+    // حفظ الملف الجديد في مجلد المستندات
+    final docsDir = await getApplicationDocumentsDirectory();
+    final photosDir = Directory(p.join(docsDir.path, 'profile_photos'));
+    if (!photosDir.existsSync()) {
+      photosDir.createSync(recursive: true);
+    }
+
+    final ext = p.extension(sourcePath).isEmpty ? '.jpg' : p.extension(sourcePath);
+    final fileName = 'user_${targetUserId}_${DateTime.now().millisecondsSinceEpoch}$ext';
+    final targetFile = File(p.join(photosDir.path, fileName));
+
+    final sourceFile = File(sourcePath);
+    if (sourceFile.existsSync()) {
+      await sourceFile.copy(targetFile.path);
+    } else {
+      await targetFile.writeAsString('photo_data');
+    }
+
+    final newPath = targetFile.path;
+    await database.update(
+      'users',
+      {'photo_path': newPath},
+      where: 'id = ?',
+      whereArgs: [targetUserId],
+    );
+
+    if (currentUser != null && currentUser!.id == targetUserId) {
+      currentUser = currentUser!.copyWith(photoPath: newPath);
+    }
+
+    return newPath;
+  }
+
+  /// حذف صورة الملف الشخصي
+  static Future<void> deleteUserPhoto({
+    required int targetUserId,
+    required int actingUserId,
+  }) async {
+    if (targetUserId != actingUserId) {
+      throw Exception('Unauthorized: Users can only delete their own profile photo');
+    }
+
+    final database = await DB.db;
+    final currentRows = await database.query(
+      'users',
+      columns: ['photo_path'],
+      where: 'id = ?',
+      whereArgs: [targetUserId],
+    );
+    if (currentRows.isNotEmpty) {
+      final oldPath = currentRows.first['photo_path'] as String?;
+      if (oldPath != null && oldPath.isNotEmpty) {
+        try {
+          final oldFile = File(oldPath);
+          if (oldFile.existsSync()) {
+            oldFile.deleteSync();
+          }
+        } catch (_) {}
+      }
+    }
+
+    await database.update(
+      'users',
+      {'photo_path': null},
+      where: 'id = ?',
+      whereArgs: [targetUserId],
+    );
+
+    if (currentUser != null && currentUser!.id == targetUserId) {
+      currentUser = currentUser!.copyWith(photoPath: null);
+    }
+  }
+
+  /// جلب مسار صورة لاعب بناءً على player_id
+  static Future<String?> getPhotoPathForPlayer(int playerId) async {
+    try {
+      final database = await DB.db;
+      final rows = await database.query(
+        'users',
+        columns: ['photo_path'],
+        where: 'player_id = ?',
+        whereArgs: [playerId],
+        limit: 1,
+      );
+      if (rows.isNotEmpty) {
+        return rows.first['photo_path'] as String?;
+      }
+    } catch (_) {}
+    return null;
   }
 
   /// تحديد فترة التحية حسب الساعة:

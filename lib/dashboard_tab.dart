@@ -4,7 +4,9 @@ import 'auth_service.dart';
 import 'engine_rowing_ui.dart';
 import 'home_service.dart';
 import 'metrics_curve_page.dart';
+import 'progress_tab.dart';
 import 'today_workout_page.dart';
+import 'user_avatar_widget.dart';
 
 /// التاب الأول: الشاشة الرئيسية (Home Tab)
 class DashboardTab extends StatefulWidget {
@@ -164,14 +166,15 @@ class _DashboardTabState extends State<DashboardTab> {
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 26,
-            backgroundColor: EngineRowingUI.equationCardFill,
-            child: const Icon(
-              Icons.person_rounded,
-              size: 32,
-              color: EngineRowingUI.neonLime,
-            ),
+          UserAvatarWidget(
+            photoPath: user?.photoPath,
+            radius: 28,
+            isEditable: true,
+            targetUserId: user?.id,
+            currentUserId: user?.id,
+            onPhotoChanged: (newPath) {
+              setState(() {});
+            },
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -325,167 +328,157 @@ class _DashboardTabState extends State<DashboardTab> {
     );
   }
 
-  // ── أيقونتا تمرين اليوم والأرشيف ──
+  // ── صف الأيقونات الثلاث: تمرين اليوم، الأرشيف، والمنحنيات ──
   Widget _buildQuickActionCards(AppStrings s, AppUser? user) {
-    return Row(
-      children: [
-        // 1. تمرين اليوم (Today's Workout)
-        Expanded(
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => TodayWorkoutPage(user: user),
-                ),
-              );
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-              decoration: BoxDecoration(
-                color: EngineRowingUI.cardFill,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: EngineRowingUI.neonLime.withValues(alpha: 0.6),
-                  width: 1.2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: EngineRowingUI.neonLime.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.fitness_center_rounded,
-                      color: EngineRowingUI.neonLime,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          s.todayWorkout,
-                          style: const TextStyle(
-                            color: EngineRowingUI.textWhite,
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          s.readOnlyNotice,
-                          style: const TextStyle(
-                            color: EngineRowingUI.labelSlate,
-                            fontSize: 10.5,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 420;
 
-        // 2. الأرشيف (Archive)
-        Expanded(
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Row(
-                    children: [
-                      const Icon(Icons.archive_outlined,
-                          color: Color(0xFF00E5FF)),
-                      const SizedBox(width: 8),
-                      Text(s.archiveComingSoon),
-                    ],
-                  ),
-                  backgroundColor: EngineRowingUI.cardFill,
+        Widget buildActionTile({
+          required IconData icon,
+          required Color color,
+          required String title,
+          required VoidCallback onTap,
+        }) {
+          return Expanded(
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: onTap,
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isNarrow ? 6 : 10,
+                  vertical: isNarrow ? 10 : 12,
                 ),
-              );
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-              decoration: BoxDecoration(
-                color: EngineRowingUI.cardFill,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: const Color(0xFF00E5FF).withValues(alpha: 0.6),
-                  width: 1.2,
+                decoration: BoxDecoration(
+                  color: EngineRowingUI.cardFill,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: color.withValues(alpha: 0.5),
+                    width: 1.1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.18),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF00E5FF).withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.archive_outlined,
-                      color: Color(0xFF00E5FF),
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          s.archive,
-                          style: const TextStyle(
-                            color: EngineRowingUI.textWhite,
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.bold,
+                child: isNarrow
+                    ? Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(icon, color: color, size: 20),
                           ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          s.termsComingSoon.split('.').first,
-                          style: const TextStyle(
-                            color: EngineRowingUI.labelSlate,
-                            fontSize: 10.5,
+                          const SizedBox(height: 6),
+                          Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: EngineRowingUI.textWhite,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                        ],
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(icon, color: color, size: 20),
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: EngineRowingUI.textWhite,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
               ),
             ),
-          ),
-        ),
-      ],
+          );
+        }
+
+        return Row(
+          children: [
+            buildActionTile(
+              icon: Icons.fitness_center_rounded,
+              color: EngineRowingUI.neonLime,
+              title: s.todayWorkout,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => TodayWorkoutPage(user: user),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(width: 8),
+            buildActionTile(
+              icon: Icons.archive_outlined,
+              color: const Color(0xFF00E5FF),
+              title: s.archive,
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(Icons.archive_outlined,
+                            color: Color(0xFF00E5FF)),
+                        const SizedBox(width: 8),
+                        Text(s.archiveComingSoon),
+                      ],
+                    ),
+                    backgroundColor: EngineRowingUI.cardFill,
+                  ),
+                );
+              },
+            ),
+            const SizedBox(width: 8),
+            buildActionTile(
+              icon: Icons.auto_graph_rounded,
+              color: const Color(0xFFFF9100),
+              title: s.progressCurves,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => Scaffold(
+                      appBar: AppBar(
+                        title: Text(s.progressCurves),
+                        backgroundColor: EngineRowingUI.bgNavy,
+                        elevation: 0,
+                      ),
+                      body: ProgressTab(user: user),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 

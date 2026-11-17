@@ -1,24 +1,31 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dart:math';
+import 'heart_rate_zones.dart';
 
 const kinds = ['Erg', 'Water', 'Fitness', 'Running'];
+
+/// خريطة التوافق لمناطق النبض السبعة (تعتمد نسب كارفونين الموحدة)
 const zones = {
-  'Z1': [50, 60],
-  'Z2': [60, 70],
-  'Z3': [70, 80],
-  'Z4 Threshold': [80, 90],
-  'Z5 VO2 Max': [90, 100],
+  'Z1': [55, 65],
+  'Z2': [65, 75],
+  'Z3': [75, 85],
+  'Z4': [85, 90],
+  'Threshold': [90, 95],
+  'Z5': [95, 98],
+  'VO2 max': [98, 105],
+  'Z4 Threshold': [90, 95],
+  'Z5 VO2 Max': [98, 105],
 };
 
-/// مناطق القدرة بناءً على الـ Critical Power
+/// مناطق القدرة بناءً على الـ Critical Power (بدون أحرف Z لتجنب اللبس مع زونات النبض وفق توجيهات الكوتش)
 const cpPowerZones = {
-  'Z1 استشفاء': [0, 55],
-  'Z2 تحمل هوائي': [56, 75],
-  'Z3 إيقاع': [76, 90],
-  'Z4 عتبة (CP)': [91, 105],
-  'Z5 VO2max': [106, 120],
-  'Z6 لا هوائي': [121, 200],
+  'استشفاء': [0, 55],
+  'تحمل هوائي': [56, 75],
+  'إيقاع': [76, 90],
+  'عتبة (CP)': [91, 105],
+  'VO2max': [106, 120],
+  'لا هوائي': [121, 200],
 };
 
 /// أنواع اختبارات CP
@@ -47,10 +54,10 @@ const readinessLabels = {
 String dstr(DateTime d) =>
     '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
-/// نطاق النبض المستهدف للاعب حسب الـ MHR والـ Zone
+/// نطاق النبض المستهدف للاعب حسب الـ MHR والـ Zone عبر المحرك الموحد
 String hrRange(int mhr, String zone) {
-  final z = zones[zone] ?? [60, 70];
-  return '${(mhr * z[0] / 100).round()} - ${(mhr * z[1] / 100).round()}';
+  final target = HeartRateZones.calculate(mhr: mhr, rhr: 60, zone: zone);
+  return '${target.minHR} - ${target.maxHR}';
 }
 
 /// نطاق القدرة المستهدف للاعب بناءً على CP ومنطقة القدرة
@@ -310,7 +317,7 @@ class DB {
 
   static Future<Database> _open() async {
     final path = join(await getDatabasesPath(), 'rowing.db');
-    return openDatabase(path, version: 6, onCreate: (d, v) async {
+    return openDatabase(path, version: 7, onCreate: (d, v) async {
       await d.execute(
           'CREATE TABLE players(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mhr INTEGER, active INTEGER DEFAULT 1, curves_shared INTEGER, curves_shared_by TEXT)');
       await d.execute(
@@ -548,6 +555,17 @@ class DB {
                 value REAL
               )
             ''');
+      }
+      if (oldVersion < 7) {
+        final userTableCheck = await d.rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='users'");
+        if (userTableCheck.isNotEmpty) {
+          final userCols = await d.rawQuery('PRAGMA table_info(users)');
+          final userColNames = userCols.map((c) => c['name'] as String).toSet();
+          if (!userColNames.contains('photo_path')) {
+            await d.execute('ALTER TABLE users ADD COLUMN photo_path TEXT');
+          }
+        }
       }
     });
   }

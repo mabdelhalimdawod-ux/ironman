@@ -429,6 +429,7 @@ class AppStrings {
   // ==================== Metrics Curves Strings (المنحنيات الخمسة) ====================
   String get metricsCurvesTitle => isArabic ? 'منحنيات مؤشرات التدريب' : 'Training Metrics Curves';
   String get metricsCurvesSubtitle => isArabic ? 'تحليل بياني ذكي وتطور الأداء الفسيولوجي' : 'Smart analytics & physiological performance curves';
+  String get progressCurves => isArabic ? 'منحنيات الأداء' : 'Progress Curves';
   String get curveEF => isArabic ? 'معامل الكفاءة (EF)' : 'Efficiency Factor (EF)';
   String get curveWatts => isArabic ? 'القدرة (الواط)' : 'Power (Watts)';
   String get curveDecoupling => isArabic ? 'التفكك القلبي (Decoupling)' : 'Cardiac Decoupling';

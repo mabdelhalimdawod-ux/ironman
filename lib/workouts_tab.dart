@@ -7,6 +7,7 @@ import 'program_service.dart';
 import 'athlete_day_entry_page.dart';
 import 'metrics_curve_page.dart';
 import 'session_lock_service.dart';
+import 'user_avatar_widget.dart';
 
 const Color _navy = EngineRowingUI.bgNavy;
 const Color _cardFill = EngineRowingUI.cardFill;
@@ -66,10 +67,28 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
       _players = [];
       final pid = widget.user?.playerId;
       if (pid != null) {
-        _players = await DB.q('SELECT * FROM players WHERE id = ?', [pid]);
+        try {
+          _players = await DB.q('''
+            SELECT p.*, u.photo_path 
+            FROM players p 
+            LEFT JOIN users u ON u.player_id = p.id 
+            WHERE p.id = ?
+          ''', [pid]);
+        } catch (_) {
+          _players = await DB.q('SELECT * FROM players WHERE id = ?', [pid]);
+        }
       }
       if (_players.isEmpty && widget.user != null) {
-        _players = await DB.q('SELECT * FROM players WHERE name = ? LIMIT 1', [widget.user!.name]);
+        try {
+          _players = await DB.q('''
+            SELECT p.*, u.photo_path 
+            FROM players p 
+            LEFT JOIN users u ON u.player_id = p.id 
+            WHERE p.name = ? LIMIT 1
+          ''', [widget.user!.name]);
+        } catch (_) {
+          _players = await DB.q('SELECT * FROM players WHERE name = ? LIMIT 1', [widget.user!.name]);
+        }
       }
 
       final activePlayerId = _players.isNotEmpty ? (_players.first['id'] as int) : -1;
@@ -85,7 +104,17 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
       }
     } else {
       // ── وضع المدرب: جلب كل اللاعبين النشطين ──
-      _players = await DB.q('SELECT * FROM players WHERE active=1 ORDER BY name');
+      try {
+        _players = await DB.q('''
+          SELECT p.*, u.photo_path 
+          FROM players p 
+          LEFT JOIN users u ON u.player_id = p.id 
+          WHERE p.active = 1 
+          ORDER BY p.name ASC
+        ''');
+      } catch (_) {
+        _players = await DB.q('SELECT * FROM players WHERE active=1 ORDER BY name');
+      }
 
       _playerCompletedCounts.clear();
       final todayLogs = await DB.q(
@@ -263,10 +292,9 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                   final isCompact = constraints.maxWidth < 340;
                   final infoRow = Row(
                     children: [
-                      CircleAvatar(
-                        backgroundColor: _gold.withAlpha(35),
+                      UserAvatarWidget(
+                        photoPath: (athlete['photo_path'] as String?) ?? widget.user?.photoPath,
                         radius: 22,
-                        child: const Icon(Icons.person_rounded, color: _gold, size: 24),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -829,18 +857,10 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(
             children: [
-              // أفاتار اللاعب بلون مميز
-              CircleAvatar(
+              // أفاتار اللاعب
+              UserAvatarWidget(
+                photoPath: player['photo_path'] as String?,
                 radius: 20,
-                backgroundColor: isFullyCompleted ? _gold : EngineRowingUI.equationCardFill,
-                child: Text(
-                  name.isNotEmpty ? name[0] : 'P',
-                  style: TextStyle(
-                    color: isFullyCompleted ? _navy : _gold,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
               ),
               const SizedBox(width: 12),
 

@@ -218,7 +218,7 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => _HamburgerHubSheet(
+      builder: (ctx) => HamburgerHubSheet(
         user: widget.user,
         onOpenMetricsCurves: () {
           Navigator.pop(ctx);
@@ -785,11 +785,12 @@ class _SideNavItemState extends State<_SideNavItem> {
 // ════════════════════════════════════════════════════════════════
 // نافذة لوحة التحكم والعمليات (قائمة الهمبرجر ☰)
 // ════════════════════════════════════════════════════════════════
-class _HamburgerHubSheet extends StatelessWidget {
+class HamburgerHubSheet extends StatelessWidget {
   final AppUser? user;
   final VoidCallback onOpenMetricsCurves;
 
-  const _HamburgerHubSheet({
+  const HamburgerHubSheet({
+    super.key,
     required this.user,
     required this.onOpenMetricsCurves,
   });
@@ -894,138 +895,7 @@ class _HamburgerHubSheet extends StatelessWidget {
                     _buildVisualControlsCard(context, s),
                     const SizedBox(height: 16),
 
-                    // 1. الانتقال بين شاشات التحليل المعقدة (Multi-Dashboard Navigation)
-                    _buildHubCard(
-                      context: context,
-                      title: s.multiDashboardNav,
-                      icon: Icons.dashboard_customize_rounded,
-                      iconColor: EngineRowingUI.neonLime,
-                      children: [
-                        _buildActionTile(
-                          icon: Icons.speed_rounded,
-                          title: s.physicalPerformance,
-                          subtitle:
-                              'معدل ضربات القلب: 148 bpm • السرعة: 1:45.2 • المسافة: 8,450m',
-                          trailingText: 'عرض مباشر',
-                          onTap: () {
-                            _showSimpleNotice(context, s.physicalPerformance,
-                                'يتم عرض مؤشرات النبض والسرعة والمسافة الآن لحظياً من المستشعرات.');
-                          },
-                        ),
-                        const Divider(
-                            height: 1, color: EngineRowingUI.bgGridLine),
-                        _buildActionTile(
-                          icon: Icons.analytics_outlined,
-                          title: s.analyticsDashboard,
-                          subtitle:
-                              'توزيع الزونات، مؤشرات الحمل التراكمي، وكفاءة القوة',
-                          trailingText: 'دخول',
-                          onTap: () {
-                            _showSimpleNotice(context, s.analyticsDashboard,
-                                'لوحة التحليلات المتقدمة جاهزة لمتابعة إحصائيات الفريق.');
-                          },
-                        ),
-                        const Divider(
-                            height: 1, color: EngineRowingUI.bgGridLine),
-                        _buildActionTile(
-                          icon: Icons.healing_rounded,
-                          title: s.medicalReport,
-                          subtitle:
-                              'جاهزية: 88% • إجهاد: منخفض • لا توجد إصابات نشطة',
-                          trailingText: 'التقرير',
-                          onTap: () {
-                            _showSimpleNotice(context, s.medicalReport,
-                                'تقرير الاستشفاء الطبي: جميع مؤشرات اللاعبين ضمن النطاق الآمن.');
-                          },
-                        ),
-                        const Divider(
-                            height: 1, color: EngineRowingUI.bgGridLine),
-                        _buildActionTile(
-                          icon: Icons.compare_arrows_rounded,
-                          title: s.peerDataComparison,
-                          subtitle:
-                              'مقارنة ومزامنة الأرقام الفسيولوجية بموافقة اللاعبين',
-                          trailingText: 'مقارنة',
-                          onTap: () {
-                            _showSimpleNotice(context, s.peerDataComparison,
-                                'تم تفعيل الاتصال ومقارنة الأداء بين لاعبي الفريق.');
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // 2. إدارة وتبديل الحسابات (Profiles & Team Roster Management)
-                    _buildHubCard(
-                      context: context,
-                      title: s.rosterManagement,
-                      icon: Icons.manage_accounts_rounded,
-                      iconColor: const Color(0xFF2979FF),
-                      children: [
-                        _buildActionTile(
-                          icon: Icons.switch_account_rounded,
-                          title: s.switchAthlete,
-                          subtitle:
-                              'الانتقال بلمسة واحدة من ملف اللاعب (أ) إلى ملف اللاعب (ب)',
-                          trailingText: 'تبديل',
-                          onTap: () {
-                            _showSimpleNotice(context, s.switchAthlete,
-                                'تم التبديل بنجاح إلى ملف اللاعب التالي.');
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // 3. التحكم في أدوات التتبع وأجهزة الاستشعار (Hardware & Sensor Integration)
-                    _buildHubCard(
-                      context: context,
-                      title: s.hardwareIntegration,
-                      icon: Icons.sensors_rounded,
-                      iconColor: EngineRowingUI.neonLime,
-                      children: [
-                        _buildActionTile(
-                          icon: Icons.wifi_tethering_rounded,
-                          title: s.coachConnection,
-                          subtitle:
-                              'الاتصال بين المدرب واللاعب: متصل ومباشر (42ms)',
-                          trailingText: 'فحص',
-                          onTap: () {
-                            _showSimpleNotice(context, s.coachConnection,
-                                'الاتصال سليم ومستقر بين أجهزة اللاعبين والمدرب.');
-                          },
-                        ),
-                        const Divider(
-                            height: 1, color: EngineRowingUI.bgGridLine),
-                        _buildActionTile(
-                          icon: Icons.bluetooth_connected_rounded,
-                          title: s.sensorCalibration,
-                          subtitle:
-                              'الأجهزة: ارجوميتر Concept2 PM5 • ساعة استروك كوتش • حزام نبض',
-                          trailingText: 'معايرة',
-                          onTap: () {
-                            _showSimpleNotice(context, s.sensorCalibration,
-                                'تمت معايرة جميع المستشعرات وبلوتوث التجديف بدقة 100%.');
-                          },
-                        ),
-                        const Divider(
-                            height: 1, color: EngineRowingUI.bgGridLine),
-                        _buildActionTile(
-                          icon: Icons.cloud_sync_rounded,
-                          title: s.cloudSync,
-                          subtitle:
-                              'مزامنة البيانات ونقل قراءات الأدوات إلى التخزين السحابي',
-                          trailingText: 'مزامنة',
-                          onTap: () {
-                            _showSimpleNotice(context, s.cloudSync,
-                                'تمت مزامنة بيانات التجديف مع الخادم السحابي بنجاح.');
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // 4. لوحة المنحنيات (Metrics Curves Shortcut)
+                    // 1. لوحة المنحنيات (Metrics Curves Shortcut)
                     _buildHubCard(
                       context: context,
                       title: s.metricsCurvesShortcut,
@@ -1066,50 +936,62 @@ class _HamburgerHubSheet extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
 
-                    // 5. تصدير التقارير المتقدمة (Advanced Data Export)
+                    // 2. تصدير إكسل (معطّل - قريباً في المرحلة د)
                     _buildHubCard(
                       context: context,
-                      title: s.advancedDataExport,
-                      icon: Icons.file_download_outlined,
+                      title: s.exportToExcel,
+                      icon: Icons.table_chart_rounded,
                       iconColor: const Color(0xFF2979FF),
                       children: [
-                        _buildActionTile(
-                          icon: Icons.table_chart_rounded,
-                          title: s.exportToExcel,
-                          subtitle: s.isArabic
-                              ? 'تحويل جميع بيانات الدورة المرحلية والورك أوت إلى ملف Excel'
-                              : 'Export all phase cycle and workout data to Excel',
-                          trailingText: 'تصدير',
-                          onTap: () {
-                            _showSimpleNotice(context, s.exportToExcel,
-                                'تم تصدير ملف Excel بنجاح وحفظه في مجلد المستندات.');
-                          },
-                        ),
-                        const Divider(
-                            height: 1, color: EngineRowingUI.bgGridLine),
-                        _buildActionTile(
-                          icon: Icons.picture_as_pdf_rounded,
-                          title: s.exportToPdf,
-                          subtitle:
-                              'توليد تقرير طبي وفني جاهز للطباعة أو الإرسال',
-                          trailingText: 'طباعة/PDF',
-                          onTap: () {
-                            _showSimpleNotice(context, s.exportToPdf,
-                                'تم إنشاء تقرير PDF الطبي والفني بنجاح.');
-                          },
-                        ),
-                        const Divider(
-                            height: 1, color: EngineRowingUI.bgGridLine),
-                        _buildActionTile(
-                          icon: Icons.share_rounded,
-                          title: s.shareReportAction,
-                          subtitle:
-                              'مشاركة التقارير مباشرة عبر البريد أو تطبيقات الفريق',
-                          trailingText: 'مشاركة',
-                          onTap: () {
-                            _showSimpleNotice(context, s.shareReportAction,
-                                'تم فتح نافذة المشاركة لإرسال التقرير للإدارة الفنية.');
-                          },
+                        Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      s.exportToExcel,
+                                      style: const TextStyle(
+                                        color: EngineRowingUI.textWhite,
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      s.isArabic
+                                          ? 'تحويل جميع بيانات الدورة والتمارين إلى ملف Excel'
+                                          : 'Export all cycle & workout data to Excel',
+                                      style: const TextStyle(
+                                        color: EngineRowingUI.labelSlate,
+                                        fontSize: 11.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: EngineRowingUI.equationCardFill,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                      color: EngineRowingUI.bgGridLine),
+                                ),
+                                child: Text(
+                                  s.isArabic ? 'قريبًا' : 'Coming soon',
+                                  style: const TextStyle(
+                                    color: EngineRowingUI.labelSlate,
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -1173,69 +1055,6 @@ class _HamburgerHubSheet extends StatelessWidget {
           ),
           ...children,
         ],
-      ),
-    );
-  }
-
-  Widget _buildActionTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required String trailingText,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      leading: Icon(icon, color: EngineRowingUI.neonLime, size: 22),
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 13.5,
-          fontWeight: FontWeight.w700,
-          color: EngineRowingUI.textWhite,
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style:
-            const TextStyle(fontSize: 11.5, color: EngineRowingUI.labelSlate),
-      ),
-      trailing: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: EngineRowingUI.neonLime,
-          foregroundColor: EngineRowingUI.bgNavy,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-        onPressed: onTap,
-        child: Text(
-          trailingText,
-          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
-        ),
-      ),
-      onTap: onTap,
-    );
-  }
-
-  void _showSimpleNotice(BuildContext context, String title, String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle_rounded,
-                color: EngineRowingUI.neonLime),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                '$title: $msg',
-                style: const TextStyle(
-                    fontSize: 12.5, color: EngineRowingUI.textWhite),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: EngineRowingUI.toastBg,
-        behavior: SnackBarBehavior.floating,
       ),
     );
   }

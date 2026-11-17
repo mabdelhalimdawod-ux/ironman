@@ -4,31 +4,34 @@ import 'package:rowing_app/program_service.dart';
 
 void main() {
   group('Program Tab & Workouts Hierarchy Tests', () {
-    test('6 Zones & Automatic HR% mapping verification', () {
-      expect(kProgramZonesDetailed.length, 6);
-      expect(kProgramZonesDetailed[0], 'zone1 = 55%:65%');
-      expect(kProgramZonesDetailed[1], 'zone2 = 65%:75%');
-      expect(kProgramZonesDetailed[2], 'zone3 = 75%:85%');
-      expect(kProgramZonesDetailed[3], 'zone4 = 85%:90%');
-      expect(kProgramZonesDetailed[4], 'Threshold = 90%:95%');
-      expect(kProgramZonesDetailed[5], 'zone5 = 95%:100%');
+    test('7 Zones & Automatic HR% mapping verification', () {
+      expect(kProgramZonesDetailed.length, 7);
+      expect(kProgramZonesDetailed[0], '(zone1 - UT3) = 55%:65%');
+      expect(kProgramZonesDetailed[1], '(zone2 - UT2) = 65%:75%');
+      expect(kProgramZonesDetailed[2], '(zone3 - UT1) = 75%:85%');
+      expect(kProgramZonesDetailed[3], '(zone4 - AT) = 85%:90%');
+      expect(kProgramZonesDetailed[4], '(Threshold - AT) = 90%:95%');
+      expect(kProgramZonesDetailed[5], '(zone5 - TR) = 95%:98%');
+      expect(kProgramZonesDetailed[6], '(VO2 max - AN) = 98%:105%');
 
       // Check automatic HR% drop map
-      expect(kZoneToHrPercentMap['zone1 = 55%:65%'], '55%:65%');
-      expect(kZoneToHrPercentMap['zone2 = 65%:75%'], '65%:75%');
-      expect(kZoneToHrPercentMap['zone3 = 75%:85%'], '75%:85%');
-      expect(kZoneToHrPercentMap['zone4 = 85%:90%'], '85%:90%');
-      expect(kZoneToHrPercentMap['Threshold = 90%:95%'], '90%:95%');
-      expect(kZoneToHrPercentMap['zone5 = 95%:100%'], '95%:100%');
+      expect(kZoneToHrPercentMap['(zone1 - UT3) = 55%:65%'], '55%:65%');
+      expect(kZoneToHrPercentMap['(zone2 - UT2) = 65%:75%'], '65%:75%');
+      expect(kZoneToHrPercentMap['(zone3 - UT1) = 75%:85%'], '75%:85%');
+      expect(kZoneToHrPercentMap['(zone4 - AT) = 85%:90%'], '85%:90%');
+      expect(kZoneToHrPercentMap['(Threshold - AT) = 90%:95%'], '90%:95%');
+      expect(kZoneToHrPercentMap['(zone5 - TR) = 95%:98%'], '95%:98%');
+      expect(kZoneToHrPercentMap['(VO2 max - AN) = 98%:105%'], '98%:105%');
     });
 
     test('Zone normalization maps all variations to base keys', () {
-      expect(normalizeZoneKey('zone1 = 55%:65%'), 'Z1');
-      expect(normalizeZoneKey('zone2 = 65%:75%'), 'Z2');
-      expect(normalizeZoneKey('zone3 = 75%:85%'), 'Z3');
-      expect(normalizeZoneKey('zone4 = 85%:90%'), 'Z4');
-      expect(normalizeZoneKey('Threshold = 90%:95%'), 'Threshold');
-      expect(normalizeZoneKey('zone5 = 95%:100%'), 'Z5');
+      expect(normalizeZoneKey('(zone1 - UT3) = 55%:65%'), 'Z1');
+      expect(normalizeZoneKey('(zone2 - UT2) = 65%:75%'), 'Z2');
+      expect(normalizeZoneKey('(zone3 - UT1) = 75%:85%'), 'Z3');
+      expect(normalizeZoneKey('(zone4 - AT) = 85%:90%'), 'Z4');
+      expect(normalizeZoneKey('(Threshold - AT) = 90%:95%'), 'Threshold');
+      expect(normalizeZoneKey('(zone5 - TR) = 95%:98%'), 'Z5');
+      expect(normalizeZoneKey('(VO2 max - AN) = 98%:105%'), 'VO2 max');
 
       // Also backward compatibility keys
       expect(normalizeZoneKey('Z1'), 'Z1');
@@ -37,6 +40,7 @@ void main() {
       expect(normalizeZoneKey('Z4'), 'Z4');
       expect(normalizeZoneKey('Threshold'), 'Threshold');
       expect(normalizeZoneKey('Z5'), 'Z5');
+      expect(normalizeZoneKey('VO2 max'), 'VO2 max');
     });
 
     test('Workout item correctly duplicates specs when added via (+)', () {
