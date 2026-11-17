@@ -5,7 +5,10 @@ import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart';
 import 'db.dart';
+import 'cloud_api.dart';
+import 'cloud_config.dart';
 
 /// نموذج بيانات المستخدم (User Model)
 class AppUser {
@@ -109,7 +112,8 @@ class AuthService {
   static const String devCoachEmail = 'mabdelhalimdawod@engine.rowing';
   static const String devCoachPassword = 'mahmoud@76Mm';
 
-  static const String devAthleteEmail = 'athlete.mabdelhalimdawod@engine.rowing';
+  static const String devAthleteEmail =
+      'athlete.mabdelhalimdawod@engine.rowing';
   static const String devAthletePassword = 'mahmoud@76Mm';
 
   /// توليد قيمة Salt عشوائية مشفرة باستخدام Random.secure
@@ -149,7 +153,7 @@ class AuthService {
     return count > 0;
   }
 
-  /// إنشاء مستخدم جديد مع توليد Salt عشوائي وتشفير كلمة السر
+  /// إنشاء مستخدم جديد مع التحقق السحابي والمزامنة المحلية كمرآة للـ profile
   static Future<int> registerUser({
     required String email,
     required String password,
@@ -159,22 +163,49 @@ class AuthService {
     int? playerId,
     bool subscriptionActive = false,
   }) async {
+    final cleanRole = role.trim().toLowerCase();
+    if (cleanRole == 'admin') {
+      throw ArgumentError('غير مسموح بالتسجيل بدور مسؤول');
+    }
+
     await ensureTables();
+
+    // 1. محاولة التسجيل في السحابة إذا كانت مهيأة أو في الاختبارات
+    if (CloudConfig.isConfigured || CloudApi.instance is MockCloudApi) {
+      final cloudRes = await CloudApi.instance.signUp(
+        email: email,
+        password: password,
+        name: name,
+        role: cleanRole,
+      );
+      if (!cloudRes.isSuccess && cloudRes.errorCode != null) {
+        if (cloudRes.errorCode == CloudAuthErrorCode.adminRoleForbidden) {
+          throw ArgumentError('غير مسموح بالتسجيل بدور مسؤول');
+        } else if (cloudRes.errorCode == CloudAuthErrorCode.emailAlreadyInUse) {
+          throw Exception('البريد الإلكتروني مسجل مسبقاً');
+        }
+      }
+    }
+
     final database = await DB.db;
     final salt = generateSalt();
     final hash = hashPassword(password, salt);
 
-    return await database.insert('users', {
-      'email': email.trim().toLowerCase(),
-      'password_hash': hash,
-      'salt': salt,
-      'name': name.trim(),
-      'role': role,
-      'coach_id': coachId,
-      'subscription_active': subscriptionActive ? 1 : 0,
-      'player_id': playerId,
-      'created_at': DateTime.now().toIso8601String(),
-    });
+    // 2. إدخال/مزامنة صف المستخدم محلياً كمرآة للـ profile
+    return await database.insert(
+        'users',
+        {
+          'email': email.trim().toLowerCase(),
+          'password_hash': hash,
+          'salt': salt,
+          'name': name.trim(),
+          'role': cleanRole,
+          'coach_id': coachId,
+          'subscription_active': subscriptionActive ? 1 : 0,
+          'player_id': playerId,
+          'created_at': DateTime.now().toIso8601String(),
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   /// إنشاء الجداول الخاصة بنظام المستخدمين والرسائل والمواعيد (CREATE TABLE IF NOT EXISTS)
@@ -203,10 +234,12 @@ class AuthService {
       final columns = await database.rawQuery('PRAGMA table_info(users)');
       final columnNames = columns.map((c) => c['name'] as String).toSet();
       if (!columnNames.contains('salt')) {
-        await database.execute("ALTER TABLE users ADD COLUMN salt TEXT DEFAULT ''");
+        await database
+            .execute("ALTER TABLE users ADD COLUMN salt TEXT DEFAULT ''");
       }
       if (!columnNames.contains('player_id')) {
-        await database.execute("ALTER TABLE users ADD COLUMN player_id INTEGER");
+        await database
+            .execute("ALTER TABLE users ADD COLUMN player_id INTEGER");
       }
       if (!columnNames.contains('photo_path')) {
         await database.execute("ALTER TABLE users ADD COLUMN photo_path TEXT");
@@ -271,13 +304,17 @@ class AuthService {
       });
     } else {
       final adminId = adminRows.first['id'] as int;
-      await database.update('users', {
-        'email': devAdminEmail,
-        'password_hash': adminHash,
-        'salt': adminSalt,
-        'name': 'محمود عبد الحليم (الأدمن)',
-        'subscription_active': 1,
-      }, where: 'id = ?', whereArgs: [adminId]);
+      await database.update(
+          'users',
+          {
+            'email': devAdminEmail,
+            'password_hash': adminHash,
+            'salt': adminSalt,
+            'name': 'محمود عبد الحليم (الأدمن)',
+            'subscription_active': 1,
+          },
+          where: 'id = ?',
+          whereArgs: [adminId]);
     }
 
     // 2. حساب المدرب (الأساسي بـ mabdelhalimdawod@engine.rowing)
@@ -301,13 +338,17 @@ class AuthService {
       });
     } else {
       coachId = coachRows.first['id'] as int;
-      await database.update('users', {
-        'email': devCoachEmail,
-        'password_hash': coachHash,
-        'salt': coachSalt,
-        'name': 'كابتن محمود عبد الحليم',
-        'subscription_active': 1,
-      }, where: 'id = ?', whereArgs: [coachId]);
+      await database.update(
+          'users',
+          {
+            'email': devCoachEmail,
+            'password_hash': coachHash,
+            'salt': coachSalt,
+            'name': 'كابتن محمود عبد الحليم',
+            'subscription_active': 1,
+          },
+          where: 'id = ?',
+          whereArgs: [coachId]);
     }
 
     // 3. حساب اللاعب (مربوط بالمدرب)
@@ -317,7 +358,8 @@ class AuthService {
       "SELECT id FROM users WHERE role = 'athlete' LIMIT 1",
     );
     if (athleteRows.isEmpty) {
-      final existingPlayers = await database.rawQuery('SELECT id, name FROM players LIMIT 1');
+      final existingPlayers =
+          await database.rawQuery('SELECT id, name FROM players LIMIT 1');
       int linkedPlayerId;
       String athleteName = 'محمود عبد الحليم (لاعب)';
 
@@ -347,25 +389,88 @@ class AuthService {
       await database.insert('coach_messages', {
         'athlete_id': athleteId,
         'coach_id': coachId,
-        'message': 'أهلاً بك في الدورة التدريبية الجديدة! ركّز اليوم على الإيقاع الثابت في الزون 2.',
+        'message':
+            'أهلاً بك في الدورة التدريبية الجديدة! ركّز اليوم على الإيقاع الثابت في الزون 2.',
         'date': DateTime.now().toIso8601String().substring(0, 10),
         'is_read': 0,
       });
     } else {
       final athleteId = athleteRows.first['id'] as int;
-      await database.update('users', {
-        'email': devAthleteEmail,
-        'password_hash': athleteHash,
-        'salt': athleteSalt,
-        'subscription_active': 1,
-      }, where: 'id = ?', whereArgs: [athleteId]);
+      await database.update(
+          'users',
+          {
+            'email': devAthleteEmail,
+            'password_hash': athleteHash,
+            'salt': athleteSalt,
+            'subscription_active': 1,
+          },
+          where: 'id = ?',
+          whereArgs: [athleteId]);
     }
   }
 
-  /// تسجيل الدخول والتحقق من كلمة السر والـ Salt والاشتراك مع دعم تحديد الدور
-  static Future<LoginResult> login(String email, String password, [String? role]) async {
+  /// تسجيل الدخول عبر السحابة مع المزامنة المحلية للحساب والعمل أوفلاين
+  static Future<LoginResult> login(String email, String password,
+      [String? role]) async {
     await ensureTables();
     final cleanEmail = email.trim().toLowerCase();
+
+    // 1. محاولة تسجيل الدخول عبر السحابة (أو المحاكي الوهمي في الاختبارات)
+    if (CloudConfig.isConfigured || (CloudApi.instance is MockCloudApi)) {
+      final cloudRes = await CloudApi.instance.signIn(
+        email: cleanEmail,
+        password: password,
+      );
+
+      if (cloudRes.isSuccess && cloudRes.profile != null) {
+        final profile = cloudRes.profile!;
+        final database = await DB.db;
+
+        // مزامنة و Upsert في جدول users المحلي كمرآة للـ profile
+        final existing = await database.rawQuery(
+          'SELECT * FROM users WHERE LOWER(email) = ?',
+          [cleanEmail],
+        );
+
+        int localId;
+        if (existing.isNotEmpty) {
+          localId = existing.first['id'] as int;
+          await database.update(
+              'users',
+              {
+                'name': profile.name,
+                'role': profile.role,
+                'subscription_active': profile.subscriptionActive ? 1 : 0,
+                'photo_path': profile.photoPath,
+              },
+              where: 'id = ?',
+              whereArgs: [localId]);
+        } else {
+          localId = await database.insert('users', {
+            'email': cleanEmail,
+            'password_hash': '',
+            'salt': '',
+            'name': profile.name,
+            'role': profile.role,
+            'coach_id': null,
+            'subscription_active': profile.subscriptionActive ? 1 : 0,
+            'player_id': profile.playerId,
+            'photo_path': profile.photoPath,
+            'created_at': DateTime.now().toIso8601String(),
+          });
+        }
+
+        final updatedRows = await database
+            .rawQuery('SELECT * FROM users WHERE id = ?', [localId]);
+        final user = AppUser.fromMap(updatedRows.first);
+        currentUser = user;
+        return LoginResult.success(user);
+      } else if (cloudRes.errorCode == CloudAuthErrorCode.accountInactive) {
+        return const LoginResult.failure(LoginError.accountInactive);
+      }
+    }
+
+    // 2. التحقق من الحسابات المحلية في SQLite (الوضع المحلي / Offline / الحسابات التجريبية)
     final database = await DB.db;
 
     List<Map<String, Object?>> rows = [];
@@ -427,7 +532,6 @@ class AuthService {
     return LoginResult.success(user);
   }
 
-
   /// حفظ بيانات الجلسة (تذكرني)
   static Future<void> saveSession(AppUser user, bool remember) async {
     final prefs = await SharedPreferences.getInstance();
@@ -452,7 +556,8 @@ class AuthService {
     if (userId == null) return null;
 
     final database = await DB.db;
-    final rows = await database.rawQuery('SELECT * FROM users WHERE id = ?', [userId]);
+    final rows =
+        await database.rawQuery('SELECT * FROM users WHERE id = ?', [userId]);
     if (rows.isEmpty) return null;
 
     final user = AppUser.fromMap(rows.first);
@@ -473,7 +578,9 @@ class AuthService {
     currentUser = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyUserId);
-    // نترك _keySavedEmail لو تذكرني كان مفعل أو نمسحه مع الجلسة
+    try {
+      await CloudApi.instance.signOut();
+    } catch (_) {}
   }
 
   /// تحديث صورة الملف الشخصي للمستخدم وحفظها في مجلد المستندات
@@ -484,7 +591,8 @@ class AuthService {
     required String sourcePath,
   }) async {
     if (targetUserId != actingUserId) {
-      throw Exception('Unauthorized: Users can only update their own profile photo');
+      throw Exception(
+          'Unauthorized: Users can only update their own profile photo');
     }
 
     final database = await DB.db;
@@ -515,8 +623,10 @@ class AuthService {
       photosDir.createSync(recursive: true);
     }
 
-    final ext = p.extension(sourcePath).isEmpty ? '.jpg' : p.extension(sourcePath);
-    final fileName = 'user_${targetUserId}_${DateTime.now().millisecondsSinceEpoch}$ext';
+    final ext =
+        p.extension(sourcePath).isEmpty ? '.jpg' : p.extension(sourcePath);
+    final fileName =
+        'user_${targetUserId}_${DateTime.now().millisecondsSinceEpoch}$ext';
     final targetFile = File(p.join(photosDir.path, fileName));
 
     final sourceFile = File(sourcePath);
@@ -547,7 +657,8 @@ class AuthService {
     required int actingUserId,
   }) async {
     if (targetUserId != actingUserId) {
-      throw Exception('Unauthorized: Users can only delete their own profile photo');
+      throw Exception(
+          'Unauthorized: Users can only delete their own profile photo');
     }
 
     final database = await DB.db;

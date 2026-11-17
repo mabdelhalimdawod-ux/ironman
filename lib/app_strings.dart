@@ -35,7 +35,8 @@ class AppLanguage extends ChangeNotifier {
   }
 
   Future<void> toggleLanguage() async {
-    final next = _locale.languageCode == 'ar' ? const Locale('en') : const Locale('ar');
+    final next =
+        _locale.languageCode == 'ar' ? const Locale('en') : const Locale('ar');
     await setLocale(next);
   }
 }
@@ -49,8 +50,10 @@ class AppStrings {
   }
 
   // ==================== General App ====================
-  String get appTitle => isArabic ? 'تطبيق انجن روينج للتجديف' : 'Engine Rowing App';
-  String get tabDashboard => isArabic ? 'Engine Rowing Dashboard' : 'Engine Rowing Dashboard';
+  String get appTitle =>
+      isArabic ? 'تطبيق انجن روينج للتجديف' : 'Engine Rowing App';
+  String get tabDashboard =>
+      isArabic ? 'Engine Rowing Dashboard' : 'Engine Rowing Dashboard';
   String get tabHome => isArabic ? 'الرئيسية' : 'Home';
   String get tabProgram => isArabic ? 'البرنامج' : 'Program';
   String get tabWorkouts => isArabic ? 'التمارين' : 'Workouts';
@@ -61,7 +64,8 @@ class AppStrings {
   String get delete => isArabic ? 'حذف' : 'Delete';
   String get edit => isArabic ? 'تعديل' : 'Edit';
   String get add => isArabic ? 'إضافة' : 'Add';
-  String get savedSuccessfully => isArabic ? 'تم حفظ البيانات بنجاح ✔' : 'Data saved successfully ✔';
+  String get savedSuccessfully =>
+      isArabic ? 'تم حفظ البيانات بنجاح ✔' : 'Data saved successfully ✔';
   String get loading => isArabic ? 'جاري التحميل...' : 'Loading...';
   String get noData => isArabic ? 'لا توجد بيانات' : 'No data available';
   String get error => isArabic ? 'خطأ' : 'Error';
@@ -75,90 +79,154 @@ class AppStrings {
   String get bpm => isArabic ? 'نبضة/د' : 'bpm';
 
   // ==================== Dashboard Strings ====================
-  String get teamReadiness => isArabic ? 'نسبة الجاهزية للفريق' : 'Team Readiness';
+  String get teamReadiness =>
+      isArabic ? 'نسبة الجاهزية للفريق' : 'Team Readiness';
   String get readinessScore => isArabic ? 'مؤشر الجاهزية' : 'Readiness Index';
-  String get teamReadinessDesc => isArabic ? 'متوسط جاهزية جميع اللاعبين للتدريب' : 'Average readiness of all athletes';
-  String get currentCycle => isArabic ? 'الدورة المرحلية الحالية' : 'Current Phase Cycle';
-  String get noActiveCycle => isArabic ? 'لا توجد دورة مرحلية نشطة حالياً' : 'No active phase cycle currently';
-  String get nextSession => isArabic ? 'الحصة التدريبية القادمة' : 'Next Session';
-  String get noUpcomingSessions => isArabic ? 'لا توجد حصص مجدولة لليوم' : 'No sessions scheduled for today';
-  String get efTrendTitle => isArabic ? 'اتجاه كفاءة الأداء (EF) للفريق' : 'Team Efficiency Factor (EF) Trend';
-  String get efMetricDesc => isArabic ? 'المؤشر الأهم لتقييم الكفاءة الهوائية (الواط / النبض)' : 'Primary metric for aerobic efficiency (Watts / HR)';
-  String get efImproving => isArabic ? 'اتجاه تصاعدي ممتاز 📈 (+تحسن في الكفاءة)' : 'Excellent upward trend 📈 (Improved efficiency)';
-  String get efStable => isArabic ? 'أداء مستقر ومثالي ➡️' : 'Stable & optimal performance ➡️';
-  String get efDeclining => isArabic ? 'تنبيه: انخفاض في الكفاءة 📉 (يُوصى بمراقبة الاستشفاء)' : 'Alert: Decline in efficiency 📉 (Monitor recovery)';
-  String get efNoData => isArabic ? 'لا توجد بيانات كافية لحساب متوسط EF' : 'Not enough data to compute team EF trend';
+  String get teamReadinessDesc => isArabic
+      ? 'متوسط جاهزية جميع اللاعبين للتدريب'
+      : 'Average readiness of all athletes';
+  String get currentCycle =>
+      isArabic ? 'الدورة المرحلية الحالية' : 'Current Phase Cycle';
+  String get noActiveCycle => isArabic
+      ? 'لا توجد دورة مرحلية نشطة حالياً'
+      : 'No active phase cycle currently';
+  String get nextSession =>
+      isArabic ? 'الحصة التدريبية القادمة' : 'Next Session';
+  String get noUpcomingSessions =>
+      isArabic ? 'لا توجد حصص مجدولة لليوم' : 'No sessions scheduled for today';
+  String get efTrendTitle => isArabic
+      ? 'اتجاه كفاءة الأداء (EF) للفريق'
+      : 'Team Efficiency Factor (EF) Trend';
+  String get efMetricDesc => isArabic
+      ? 'المؤشر الأهم لتقييم الكفاءة الهوائية (الواط / النبض)'
+      : 'Primary metric for aerobic efficiency (Watts / HR)';
+  String get efImproving => isArabic
+      ? 'اتجاه تصاعدي ممتاز 📈 (+تحسن في الكفاءة)'
+      : 'Excellent upward trend 📈 (Improved efficiency)';
+  String get efStable =>
+      isArabic ? 'أداء مستقر ومثالي ➡️' : 'Stable & optimal performance ➡️';
+  String get efDeclining => isArabic
+      ? 'تنبيه: انخفاض في الكفاءة 📉 (يُوصى بمراقبة الاستشفاء)'
+      : 'Alert: Decline in efficiency 📉 (Monitor recovery)';
+  String get efNoData => isArabic
+      ? 'لا توجد بيانات كافية لحساب متوسط EF'
+      : 'Not enough data to compute team EF trend';
   String get currentAvgEF => isArabic ? 'متوسط EF الحالي' : 'Current Team EF';
   String get baselineEF => isArabic ? 'خط الأساس لـ EF' : 'Baseline EF';
   String get readyPlayers => isArabic ? 'جاهز' : 'Ready';
   String get tiredPlayers => isArabic ? 'إجهاد' : 'Fatigued';
   String get daysRemaining => isArabic ? 'يوم متبقي' : 'days left';
-  String get cycleProgress => isArabic ? 'تقدم الدورة المرحلية' : 'Phase Cycle Progress';
+  String get cycleProgress =>
+      isArabic ? 'تقدم الدورة المرحلية' : 'Phase Cycle Progress';
 
   // ==================== Program & Cycles Strings (المرحلة الثانية) ====================
-  String get trainingCycles => isArabic ? 'الدورات المرحلية للتدريب' : 'Training Phase Cycles';
-  String get cyclesSubtitle => isArabic ? 'نظام الدورات المرحلية والدورات الأسبوعية' : 'Training Phase Cycles & Weekly Microcycles';
+  String get trainingCycles =>
+      isArabic ? 'الدورات المرحلية للتدريب' : 'Training Phase Cycles';
+  String get cyclesSubtitle => isArabic
+      ? 'نظام الدورات المرحلية والدورات الأسبوعية'
+      : 'Training Phase Cycles & Weekly Microcycles';
   String get cycleNumber => isArabic ? 'الدورة المرحلية' : 'Phase Cycle';
-  String cycleTitle(int num) => isArabic ? 'الدورة المرحلية $num' : 'Phase Cycle $num';
+  String cycleTitle(int num) =>
+      isArabic ? 'الدورة المرحلية $num' : 'Phase Cycle $num';
   String get addCycle => isArabic ? '+ دورة جديدة' : '+ New Cycle';
-  String get deleteCycle => isArabic ? 'حذف الدورة المرحلية' : 'Delete Phase Cycle';
-  String get deleteCycleConfirm => isArabic ? 'هل أنت متأكد من حذف هذه الدورة المرحلية؟' : 'Are you sure you want to delete this phase cycle?';
-  String get cannotDeleteLastCycle => isArabic ? 'لا يمكن حذف الدورة المرحلية الوحيدة المتبقية' : 'Cannot delete the only remaining phase cycle';
-  String get cycleAddedSuccess => isArabic ? 'تم إضافة دورة مرحلية جديدة بنجاح' : 'New phase cycle added successfully';
-  String get activeCycleBadge => isArabic ? 'الدورة المرحلية الشغالة حالياً' : 'Currently Active Phase Cycle';
+  String get deleteCycle =>
+      isArabic ? 'حذف الدورة المرحلية' : 'Delete Phase Cycle';
+  String get deleteCycleConfirm => isArabic
+      ? 'هل أنت متأكد من حذف هذه الدورة المرحلية؟'
+      : 'Are you sure you want to delete this phase cycle?';
+  String get cannotDeleteLastCycle => isArabic
+      ? 'لا يمكن حذف الدورة المرحلية الوحيدة المتبقية'
+      : 'Cannot delete the only remaining phase cycle';
+  String get cycleAddedSuccess => isArabic
+      ? 'تم إضافة دورة مرحلية جديدة بنجاح'
+      : 'New phase cycle added successfully';
+  String get activeCycleBadge => isArabic
+      ? 'الدورة المرحلية الشغالة حالياً'
+      : 'Currently Active Phase Cycle';
   String get cycleDuration => isArabic ? 'المدة' : 'Duration';
   String weeksCount(int count) => isArabic ? '$count أسابيع' : '$count weeks';
   String get startDate => isArabic ? 'تاريخ البداية' : 'Start Date';
   String get endDate => isArabic ? 'تاريخ النهاية' : 'End Date';
-  String get editCycleDates => isArabic ? 'تعديل تواريخ الدورة المرحلية' : 'Edit Phase Cycle Dates';
-  String get cycleDateConstraint => isArabic ? 'مدة الدورة المرحلية المرنة من 2 إلى 6 أسابيع' : 'Flexible phase cycle duration: 2 to 6 weeks';
-  String get trainingLocation => isArabic ? 'منطقة أو مكان التدريب' : 'Training Location';
-  String get trainingLocationHint => isArabic ? 'مثال: مجرى التجديف الدولي' : 'e.g. International Rowing Course';
+  String get editCycleDates =>
+      isArabic ? 'تعديل تواريخ الدورة المرحلية' : 'Edit Phase Cycle Dates';
+  String get cycleDateConstraint => isArabic
+      ? 'مدة الدورة المرحلية المرنة من 2 إلى 6 أسابيع'
+      : 'Flexible phase cycle duration: 2 to 6 weeks';
+  String get trainingLocation =>
+      isArabic ? 'منطقة أو مكان التدريب' : 'Training Location';
+  String get trainingLocationHint => isArabic
+      ? 'مثال: مجرى التجديف الدولي'
+      : 'e.g. International Rowing Course';
   String get creationDate => isArabic ? 'تاريخ الإنشاء' : 'Created Date';
   String get lastEditDate => isArabic ? 'آخر تعديل' : 'Last Edit';
   String get weeksCountCalculated => isArabic ? 'الأسابيع' : 'Weeks';
   String get enterCycle => isArabic ? 'دخول' : 'Enter';
   String get comment => isArabic ? 'تعليق' : 'Comment';
   String get addComment => isArabic ? 'إضافة تعليق' : 'Add Comment';
-  String get physiologicalNote => isArabic ? 'ملاحظة فسيولوجية' : 'Physiological Note';
+  String get physiologicalNote =>
+      isArabic ? 'ملاحظة فسيولوجية' : 'Physiological Note';
   String get technicalNote => isArabic ? 'ملاحظة فنية' : 'Technical Note';
   String get addNote => isArabic ? 'إضافة ملاحظة' : 'Add Note';
-  String get testDatesTitle => isArabic ? 'تواريخ التستات المقررة للدورة المرحلية' : 'Scheduled Phase Cycle Tests';
-  String get zoneParticipationTitle => isArabic ? 'نسب مشاركة الزونات بالدورة المرحلية' : 'Zone Distribution';
+  String get testDatesTitle => isArabic
+      ? 'تواريخ التستات المقررة للدورة المرحلية'
+      : 'Scheduled Phase Cycle Tests';
+  String get zoneParticipationTitle => isArabic
+      ? 'نسب توزيع مناطق التدريب بالدورة المرحلية'
+      : 'Zone Distribution';
 
   // المستوى 2: الدورات الأسبوعية الأساسية والفرعية
-  String get basicWeeklyCycleTitle => isArabic ? 'الدورة التدريبية الأسبوعية الأساسية' : 'Basic Weekly Training Cycle';
-  String get secondaryWeeklyCycleTitle => isArabic ? 'الدورة التدريبية الأسبوعية الفرعية (تستات وتهدئة)' : 'Secondary Weekly Training Cycle (Taper & Tests)';
-  String get basicRepsCount => isArabic ? 'عدد تكرارات الدورة الأساسية' : 'Basic Cycle Repetitions';
-  String get secondaryRepsCount => isArabic ? 'عدد تكرارات الدورة الفرعية' : 'Secondary Cycle Repetitions';
+  String get basicWeeklyCycleTitle => isArabic
+      ? 'الدورة التدريبية الأسبوعية الأساسية'
+      : 'Basic Weekly Training Cycle';
+  String get secondaryWeeklyCycleTitle => isArabic
+      ? 'الدورة التدريبية الأسبوعية الفرعية (تستات وتهدئة)'
+      : 'Secondary Weekly Training Cycle (Taper & Tests)';
+  String get basicRepsCount =>
+      isArabic ? 'عدد تكرارات الدورة الأساسية' : 'Basic Cycle Repetitions';
+  String get secondaryRepsCount =>
+      isArabic ? 'عدد تكرارات الدورة الفرعية' : 'Secondary Cycle Repetitions';
   String get repsMismatchWarning => isArabic
       ? 'تنبيه: مجموع تكرارات الدورة الأساسية والفرعية لا يساوي أسابيع الدورة المرحلية الكلية!'
       : 'Alert: Sum of basic and secondary cycle repetitions does not equal total phase cycle weeks!';
-  String get dispatchScheduleTitle => isArabic ? 'موعد إرسال مضمون اليوم التدريبي للاعبين' : 'Weekly Schedule Dispatch';
+  String get dispatchScheduleTitle => isArabic
+      ? 'موعد إرسال مضمون اليوم التدريبي للاعبين'
+      : 'Weekly Schedule Dispatch';
   String get dispatchTime => isArabic ? 'وقت الإرسال' : 'Dispatch Time';
   String get dispatchDate => isArabic ? 'تاريخ الإرسال' : 'Dispatch Date';
-  String get dayDatesInCycle => isArabic ? 'تواريخ هذا اليوم داخل الدورة المرحلية' : 'Dates in Phase Cycle';
+  String get dayDatesInCycle => isArabic
+      ? 'تواريخ هذا اليوم داخل الدورة المرحلية'
+      : 'Dates in Phase Cycle';
   String get pastDateBadge => isArabic ? 'منقضي' : 'Past';
   String get sessionsCountLabel => isArabic ? 'عدد الحصص' : 'Sessions';
 
   // المستوى 3: الحصص التدريبية
-  String get daySessionsPageTitle => isArabic ? 'الحصص التدريبية لليوم' : 'Daily Training Sessions';
-  String get addSession => isArabic ? 'إضافة حصة تدريبية' : 'Add Training Session';
+  String get daySessionsPageTitle =>
+      isArabic ? 'الحصص التدريبية لليوم' : 'Daily Training Sessions';
+  String get addSession =>
+      isArabic ? 'إضافة حصة تدريبية' : 'Add Training Session';
   String get removeSession => isArabic ? 'حذف الحصة' : 'Delete Session';
-  String get removeSessionConfirm => isArabic ? 'هل تريد حذف هذه الحصة وجميع تمارينها؟' : 'Delete this session and all its workouts?';
-  String sessionNumberTitle(int index) => isArabic ? 'الحصة ${index + 1}' : 'Session ${index + 1}';
+  String get removeSessionConfirm => isArabic
+      ? 'هل تريد حذف هذه الحصة وجميع تمارينها؟'
+      : 'Delete this session and all its workouts?';
+  String sessionNumberTitle(int index) =>
+      isArabic ? 'الحصة ${index + 1}' : 'Session ${index + 1}';
   String get sessionTime => isArabic ? 'وقت الحصة' : 'Session Time';
-  String get noSessionsForDay => isArabic ? 'لا توجد حصص تدريبية مجدولة لهذا اليوم (يوم راحة)' : 'No sessions scheduled for this day (Rest day)';
+  String get noSessionsForDay => isArabic
+      ? 'لا توجد حصص تدريبية مجدولة لهذا اليوم (يوم راحة)'
+      : 'No sessions scheduled for this day (Rest day)';
 
   // المستوى 4: تفاصيل التمارين
-  String get workoutsPageTitle => isArabic ? 'تمارين الحصة التدريبية' : 'Session Workouts';
+  String get workoutsPageTitle =>
+      isArabic ? 'تمارين الحصة التدريبية' : 'Session Workouts';
   String get warmupSection => isArabic ? '1. الإحماء' : '1. Warm-up';
-  String get mainWorkoutSection => isArabic ? '2. التمرين الرئيسي' : '2. Main Workout';
+  String get mainWorkoutSection =>
+      isArabic ? '2. التمرين الرئيسي' : '2. Main Workout';
   String get cooldownSection => isArabic ? '3. التهدئة' : '3. Cool-down';
   String get warmupTime => isArabic ? 'وقت الإحماء' : 'Time';
   String get warmupDuration => isArabic ? 'مدة زمن الإحماء' : 'Duration';
   String get warmupHR => isArabic ? 'نسبة نبض الإحماء' : 'HR %';
-  String get warmupDistance => isArabic ? 'مسافة الإحماء (متر)' : 'Distance (m)';
+  String get warmupDistance =>
+      isArabic ? 'مسافة الإحماء (متر)' : 'Distance (m)';
   String get warmupKind => isArabic ? 'نوع الإحماء' : 'Type';
   String get addWarmup => isArabic ? 'إضافة إحماء جديد' : 'Add Warm-up';
 
@@ -168,19 +236,27 @@ class AppStrings {
   String get mainReps => isArabic ? 'عدد تكرارات التمرين' : 'Reps';
   String get mainHR => isArabic ? 'نسبة النبض للتمرين الرئيسي' : 'HR %';
   String get mainKind => isArabic ? 'نوع التمرين الرئيسي' : 'Type';
-  String get addMainWorkout => isArabic ? 'إضافة تمرين رئيسي جديد' : 'Add Main Workout';
+  String get addMainWorkout =>
+      isArabic ? 'إضافة تمرين رئيسي جديد' : 'Add Main Workout';
 
   String get cooldownTime => isArabic ? 'وقت التهدئة' : 'Time';
   String get cooldownDuration => isArabic ? 'مدة زمن التهدئة' : 'Duration';
   String get cooldownHR => isArabic ? 'نسبة نبض التهدئة' : 'HR %';
-  String get cooldownDistance => isArabic ? 'مسافة التهدئة (متر)' : 'Distance (m)';
+  String get cooldownDistance =>
+      isArabic ? 'مسافة التهدئة (متر)' : 'Distance (m)';
   String get cooldownKind => isArabic ? 'نوع التهدئة' : 'Type';
   String get addCooldown => isArabic ? 'إضافة تهدئة جديدة' : 'Add Cool-down';
 
-  String get workoutDetails => isArabic ? 'ملاحظات / تفاصيل' : 'Details / Notes';
-  String get weeklyTemplateTitle => isArabic ? 'القالب الأسبوعي للحصص والتمارين' : 'Weekly Sessions & Workouts Template';
-  String get weeklyTemplateSubtitle => isArabic ? 'تنظيم الحصص اليومية والتمارين التابعة لكل حصة' : 'Organize daily sessions and workouts within each session';
-  String get addWorkoutToSession => isArabic ? 'إضافة تمرين للحصة' : 'Add Workout to Session';
+  String get workoutDetails =>
+      isArabic ? 'ملاحظات / تفاصيل' : 'Details / Notes';
+  String get weeklyTemplateTitle => isArabic
+      ? 'القالب الأسبوعي للحصص والتمارين'
+      : 'Weekly Sessions & Workouts Template';
+  String get weeklyTemplateSubtitle => isArabic
+      ? 'تنظيم الحصص اليومية والتمارين التابعة لكل حصة'
+      : 'Organize daily sessions and workouts within each session';
+  String get addWorkoutToSession =>
+      isArabic ? 'إضافة تمرين للحصة' : 'Add Workout to Session';
   String get daySaturday => isArabic ? 'السبت' : 'Saturday';
   String get daySunday => isArabic ? 'الأحد' : 'Sunday';
   String get dayMonday => isArabic ? 'الإثنين' : 'Monday';
@@ -188,8 +264,11 @@ class AppStrings {
   String get dayWednesday => isArabic ? 'الأربعاء' : 'Wednesday';
   String get dayThursday => isArabic ? 'الخميس' : 'Thursday';
   String get dayFriday => isArabic ? 'الجمعة' : 'Friday';
-  String get copyTemplateToDay => isArabic ? 'نسخ القالب ليوم آخر' : 'Copy Template to Another Day';
-  String get templateSaved => isArabic ? 'تم حفظ القالب وتحديث جدول التمارين' : 'Template saved successfully';
+  String get copyTemplateToDay =>
+      isArabic ? 'نسخ القالب ليوم آخر' : 'Copy Template to Another Day';
+  String get templateSaved => isArabic
+      ? 'تم حفظ القالب وتحديث جدول التمارين'
+      : 'Template saved successfully';
 
   // أنواع التمارين المحددة بدقة
   String get typeErg => isArabic ? 'إرج' : 'Erg';
@@ -200,189 +279,329 @@ class AppStrings {
   String get typeFitness => isArabic ? 'لياقة' : 'Fitness';
 
   // ==================== Workouts Tab Strings (المرحلة الثانية) ====================
-  String get todaysWorkoutsHeader => isArabic ? 'تمارين اليوم' : "Today's Workouts";
-  String get todaysWorkoutsSubtitle => isArabic ? 'الحصص المجدولة لليوم من قالب الدورة المرحلية النشطة' : 'Sessions scheduled for today from active phase cycle';
-  String get noWorkoutsToday => isArabic ? 'لا توجد تمارين مجدولة في برنامج اليوم (راحة)' : 'No workouts scheduled for today (Rest day)';
-  String workoutTimeAndType(String time, String type) => isArabic ? '$type • الساعة $time' : '$type • $time';
-  String get athletesListTitle => isArabic ? 'قائمة اللاعبين لتسجيل تمارين اليوم' : "Athletes List for Today's Workouts";
-  String get tapAthleteToLogMulti => isArabic ? 'اضغط على اللاعب لفتح فورمات تمارين اليوم وحفظها' : "Tap an athlete to open today's workout forms";
-  String get allWorkoutsCompleted => isArabic ? 'اكتمل تسجيل كل تمارين اليوم ✔' : 'All today workouts completed ✔';
-  String partialWorkoutsCompleted(int done, int total) => isArabic ? 'تم تسجيل $done من $total تمارين' : '$done of $total workouts recorded';
-  String get noWorkoutsCompletedYet => isArabic ? 'لم يبدأ التسجيل اليوم' : 'Not recorded yet today';
-  String get multiEntryTitle => isArabic ? 'تسجيل تمارين اليوم للاعب' : "Today's Athlete Workout Forms";
-  String formForSession(int idx, String type, String time) => isArabic ? 'تمرين ${idx + 1}: $type (الساعة $time)' : 'Workout ${idx + 1}: $type ($time)';
-  String get commonDailyMetrics => isArabic ? 'المؤشرات اليومية المشتركة (HRV، النوم، الوزن، الإرهاق)' : 'Common Daily Metrics (HRV, Sleep, Weight, Fatigue)';
-  String get saveAllWorkouts => isArabic ? 'حفظ جميع تمارين اليوم والعودة' : "Save All Today's Workouts & Return";
-  String get playerCompletedBanner => isArabic ? 'تم إنهاء وتسجيل كل تمارين اليوم بنجاح' : "All workouts completed and logged for today";
+  String get todaysWorkoutsHeader =>
+      isArabic ? 'تمارين اليوم' : "Today's Workouts";
+  String get todaysWorkoutsSubtitle => isArabic
+      ? 'الحصص المجدولة لليوم من قالب الدورة المرحلية النشطة'
+      : 'Sessions scheduled for today from active phase cycle';
+  String get noWorkoutsToday => isArabic
+      ? 'لا توجد تمارين مجدولة في برنامج اليوم (راحة)'
+      : 'No workouts scheduled for today (Rest day)';
+  String workoutTimeAndType(String time, String type) =>
+      isArabic ? '$type • الساعة $time' : '$type • $time';
+  String get athletesListTitle => isArabic
+      ? 'قائمة اللاعبين لتسجيل تمارين اليوم'
+      : "Athletes List for Today's Workouts";
+  String get tapAthleteToLogMulti => isArabic
+      ? 'اضغط على اللاعب لفتح فورمات تمارين اليوم وحفظها'
+      : "Tap an athlete to open today's workout forms";
+  String get allWorkoutsCompleted => isArabic
+      ? 'اكتمل تسجيل كل تمارين اليوم ✔'
+      : 'All today workouts completed ✔';
+  String partialWorkoutsCompleted(int done, int total) => isArabic
+      ? 'تم تسجيل $done من $total تمارين'
+      : '$done of $total workouts recorded';
+  String get noWorkoutsCompletedYet =>
+      isArabic ? 'لم يبدأ التسجيل اليوم' : 'Not recorded yet today';
+  String get multiEntryTitle =>
+      isArabic ? 'تسجيل تمارين اليوم للاعب' : "Today's Athlete Workout Forms";
+  String formForSession(int idx, String type, String time) => isArabic
+      ? 'تمرين ${idx + 1}: $type (الساعة $time)'
+      : 'Workout ${idx + 1}: $type ($time)';
+  String get commonDailyMetrics => isArabic
+      ? 'المؤشرات اليومية المشتركة (HRV، النوم، الوزن، الإرهاق)'
+      : 'Common Daily Metrics (HRV, Sleep, Weight, Fatigue)';
+  String get saveAllWorkouts => isArabic
+      ? 'حفظ جميع تمارين اليوم والعودة'
+      : "Save All Today's Workouts & Return";
+  String get playerCompletedBanner => isArabic
+      ? 'تم إنهاء وتسجيل كل تمارين اليوم بنجاح'
+      : "All workouts completed and logged for today";
 
   // القديم للتوافق
-  String get maxSlotsReached => isArabic ? 'تم الوصول للحد الأقصى للخانة (6 خانات)' : 'Max slots reached (6 slots)';
+  String get maxSlotsReached => isArabic
+      ? 'تم الوصول للحد الأقصى للخانة (6 خانات)'
+      : 'Max slots reached (6 slots)';
   String get addSlot => isArabic ? 'إضافة خانة' : 'Add Slot';
-  String slotTitle(int idx) => isArabic ? 'تمرين ${idx + 1}' : 'Workout ${idx + 1}';
+  String slotTitle(int idx) =>
+      isArabic ? 'تمرين ${idx + 1}' : 'Workout ${idx + 1}';
   String get removeSlot => isArabic ? 'حذف الخانة' : 'Remove Slot';
   String get workoutTime => isArabic ? 'وقت التمرين' : 'Workout Time';
-  String get selectZone => isArabic ? 'اختر الزون' : 'Select Zone';
+  String get selectZone => isArabic ? 'اختر منطقة التدريب' : 'Select Zone';
   String get todaySession => isArabic ? 'حصة اليوم' : "Today's Session";
   String get sessionNumber => isArabic ? 'الحصة' : 'Session';
   String get selectDate => isArabic ? 'تحديد التاريخ' : 'Select Date';
-  String get targetZone => isArabic ? 'الزون المستهدف' : 'Target Zone';
+  String get targetZone => isArabic ? 'منطقة التدريب المستهدفة' : 'Target Zone';
   String get workoutType => isArabic ? 'نوع التمرين' : 'Workout Type';
   String get playersList => isArabic ? 'قائمة اللاعبين' : 'Athletes List';
-  String get tapPlayerToLog => isArabic ? 'اضغط على اللاعب لإدخال بيانات الحصة' : 'Tap an athlete to enter session data';
+  String get tapPlayerToLog => isArabic
+      ? 'اضغط على اللاعب لإدخال بيانات الحصة'
+      : 'Tap an athlete to enter session data';
   String get statusRecorded => isArabic ? 'تم التسجيل ✔' : 'Recorded ✔';
   String get statusPending => isArabic ? 'لم يسجل بعد' : 'Pending';
-  String get addNewSession => isArabic ? 'إضافة حصة تدريبية' : 'Add Training Session';
-  String get noActivePlayers => isArabic ? 'لا يوجد لاعبون نشطون حالياً' : 'No active athletes available';
+  String get addNewSession =>
+      isArabic ? 'إضافة حصة تدريبية' : 'Add Training Session';
+  String get noActivePlayers =>
+      isArabic ? 'لا يوجد لاعبون نشطون حالياً' : 'No active athletes available';
 
   // ==================== Player Entry Form Strings ====================
-  String get playerEntryTitle => isArabic ? 'تسجيل بيانات اللاعب' : 'Athlete Data Entry';
-  String get targetHRRange => isArabic ? 'نطاق النبض المستهدف (كارفونين)' : 'Target HR Range (Karvonen)';
-  String get karvonenFormulaDesc => isArabic ? 'محسوب بمعادلة كارفونين وفق متوسط نبض الراحة لآخر 7 أيام' : 'Calculated via Karvonen using 7-day average resting HR';
+  String get playerEntryTitle =>
+      isArabic ? 'تسجيل بيانات اللاعب' : 'Athlete Data Entry';
+  String get targetHRRange => isArabic
+      ? 'نطاق النبض المستهدف (كارفونين)'
+      : 'Target HR Range (Karvonen)';
+  String get karvonenFormulaDesc => isArabic
+      ? 'محسوب بمعادلة كارفونين وفق متوسط نبض الراحة لآخر 7 أيام'
+      : 'Calculated via Karvonen using 7-day average resting HR';
   String get maxHRLabel => isArabic ? 'أقصى نبض (MHR)' : 'Max HR (MHR)';
   String get mhrFieldLabel => isArabic ? 'أقصى نبض (MHR)' : 'Max HR (MHR)';
   String get mhrFieldHint => 'bpm';
-  String get preWorkoutSection => isArabic ? 'المؤشرات قبل التمرين (الصباحية)' : 'Pre-Workout Morning Metrics';
+  String get preWorkoutSection => isArabic
+      ? 'المؤشرات قبل التمرين (الصباحية)'
+      : 'Pre-Workout Morning Metrics';
   String get rhrLabel => isArabic ? 'نبض الراحة (RHR)' : 'Resting HR (RHR)';
   String get rhrHint => isArabic ? 'متوسط آخر 7 أيام' : '7-day average';
-  String get morningRHRLabel => isArabic ? 'نبض الراحة الصباحي (RHR)' : 'Morning Resting HR (RHR)';
+  String get morningRHRLabel =>
+      isArabic ? 'نبض الراحة الصباحي (RHR)' : 'Morning Resting HR (RHR)';
   String get morningRHRHint => 'bpm';
-  String get autoZoneBadgeLabel => isArabic ? 'الزون المحسوب' : 'Calculated Zone';
+  String get autoZoneBadgeLabel =>
+      isArabic ? 'منطقة التدريب المحسوبة' : 'Calculated Zone';
   String get hrvLabel => isArabic ? 'تغير النبض (HRV)' : 'Heart Rate Var (HRV)';
   String get hrvHint => isArabic ? 'ms' : 'ms';
   String get sleepLabel => isArabic ? 'ساعات النوم' : 'Sleep Hours';
   String get sleepHint => isArabic ? 'ساعات' : 'Hours';
   String get fatigueLabel => isArabic ? 'مستوى الإرهاق' : 'Fatigue Level';
-  String get fatigueHint => isArabic ? '1 (ممتاز) - 5 (مرهق)' : '1 (Fresh) - 5 (Exhausted)';
+  String get fatigueHint =>
+      isArabic ? '1 (ممتاز) - 5 (مرهق)' : '1 (Fresh) - 5 (Exhausted)';
   String get weightLabel => isArabic ? 'الوزن (كجم)' : 'Weight (kg)';
   String get weightHint => isArabic ? 'كجم' : 'kg';
 
-  String get duringWorkoutSection => isArabic ? 'الأداء أثناء التمرين' : 'During Workout Performance';
+  String get duringWorkoutSection =>
+      isArabic ? 'الأداء أثناء التمرين' : 'During Workout Performance';
   String get avgPowerLabel => isArabic ? 'متوسط الواط' : 'Average Watts';
   String get avgPowerHint => isArabic ? 'واط' : 'Watts';
   String get maxPowerLabel => isArabic ? 'أقصى واط' : 'Max Watts';
   String get maxPowerHint => isArabic ? 'أقصى واط' : 'Max Watts';
   String get workoutHRLabel => isArabic ? 'معدل النبض' : 'Heart Rate (HR)';
   String get workoutHRHint => isArabic ? 'bpm' : 'bpm';
-  String get workoutMaxHRLabel => isArabic ? 'أقصى نبض بالتمرين' : 'Workout Max HR';
+  String get workoutMaxHRLabel =>
+      isArabic ? 'أقصى نبض بالتمرين' : 'Workout Max HR';
   String get workoutMaxHRHint => isArabic ? 'bpm' : 'bpm';
-  String get distanceLabel => isArabic ? 'المسافة بالمتر' : 'Distance in Meters';
+  String get distanceLabel =>
+      isArabic ? 'المسافة بالمتر' : 'Distance in Meters';
   String get distanceHint => isArabic ? 'متر' : 'Meters';
   String get splitLabel => isArabic ? 'السبليت (ث/500م)' : 'Split (s/500m)';
   String get splitHint => isArabic ? 'ثانية أو د:ث' : 'sec or m:s';
-  String get efLabel => isArabic ? 'معدل الكفاءة (EF)' : 'Efficiency Factor (EF)';
+  String get efLabel =>
+      isArabic ? 'معدل الكفاءة (EF)' : 'Efficiency Factor (EF)';
   String get efHint => isArabic ? 'واط / نبض' : 'Watts / HR';
 
-  String get postWorkoutSection => isArabic ? 'مؤشرات بعد التمرين والاستشفاء' : 'Post-Workout & Recovery';
-  String get postHRLabel => isArabic ? 'النبض فور الانتهاء' : 'Immediate Post HR';
+  String get postWorkoutSection =>
+      isArabic ? 'مؤشرات بعد التمرين والاستشفاء' : 'Post-Workout & Recovery';
+  String get postHRLabel =>
+      isArabic ? 'النبض فور الانتهاء' : 'Immediate Post HR';
   String get postHRHint => isArabic ? 'فورًا' : 'Immediate';
-  String get recoveryHRLabel => isArabic ? 'نبض الاستشفاء' : 'Recovery Heart Rate';
-  String get hr1MinLabel => isArabic ? 'نبض بعد دقيقة (الاستشفاء)' : '1-Min Recovery HR';
+  String get recoveryHRLabel =>
+      isArabic ? 'نبض الاستشفاء' : 'Recovery Heart Rate';
+  String get hr1MinLabel =>
+      isArabic ? 'نبض بعد دقيقة (الاستشفاء)' : '1-Min Recovery HR';
   String get hr1MinHint => isArabic ? 'استشفاء 60 ث' : 'Recovery 60s';
 
   // Key Athletes Optional Fields
-  String get keyAthletesSection => isArabic ? 'مؤشرات اختيارية (NP & Decoupling)' : 'Optional Metrics (NP & Decoupling)';
-  String get npWattsLabel => isArabic ? 'واط NP (اختياري)' : 'NP Watts (Optional)';
-  String get npWattsHint => isArabic ? 'قراءات مفصولة بفواصل أو قيمة واحدة' : 'Comma-separated watts or single value';
-  String get calculatedNP => isArabic ? 'القدرة المعيارية المحسوبة (NP)' : 'Calculated Normalized Power (NP)';
-  String get decouplingHRLabel => isArabic ? 'نبض Decoupling (اختياري)' : 'Decoupling HR (Optional)';
-  String get decouplingHRHint => isArabic ? 'قراءات مفصولة بفواصل' : 'Comma-separated HR values';
-  String get calculatedDecoupling => isArabic ? 'نسبة الـ Decoupling المتوقعة' : 'Estimated Decoupling %';
-  String get saveAndReturn => isArabic ? 'حفظ والعودة لقائمة اللاعبين' : 'Save & Return to Athletes';
+  String get keyAthletesSection => isArabic
+      ? 'مؤشرات اختيارية (NP & Decoupling)'
+      : 'Optional Metrics (NP & Decoupling)';
+  String get npWattsLabel =>
+      isArabic ? 'واط NP (اختياري)' : 'NP Watts (Optional)';
+  String get npWattsHint => isArabic
+      ? 'قراءات مفصولة بفواصل أو قيمة واحدة'
+      : 'Comma-separated watts or single value';
+  String get calculatedNP => isArabic
+      ? 'القدرة المعيارية المحسوبة (NP)'
+      : 'Calculated Normalized Power (NP)';
+  String get decouplingHRLabel =>
+      isArabic ? 'نبض Decoupling (اختياري)' : 'Decoupling HR (Optional)';
+  String get decouplingHRHint =>
+      isArabic ? 'قراءات مفصولة بفواصل' : 'Comma-separated HR values';
+  String get calculatedDecoupling =>
+      isArabic ? 'نسبة الـ Decoupling المتوقعة' : 'Estimated Decoupling %';
+  String get saveAndReturn =>
+      isArabic ? 'حفظ والعودة لقائمة اللاعبين' : 'Save & Return to Athletes';
 
   // Validation messages
-  String invalidHR(String name) => isArabic ? 'نبض غير منطقي للاعب $name' : 'Unrealistic HR for athlete $name';
-  String get invalidPostHR => isArabic ? 'النبض بعد التمرين أعلى من أثناء التمرين' : 'Post-workout HR is higher than workout HR';
-  String get invalidRecoveryHR => isArabic ? 'نبض الاستشفاء (دقيقة) أعلى من النبض فور الانتهاء' : '1-min recovery HR cannot exceed immediate post HR';
-  String get invalidFatigue => isArabic ? 'الإرهاق يجب أن يكون من 1 (ممتاز) إلى 5 (مرهق)' : 'Fatigue must be between 1 (Fresh) and 5 (Exhausted)';
-  String get invalidAvgPower => isArabic ? 'متوسط الواط غير منطقي' : 'Invalid average power';
-  String get invalidMaxPower => isArabic ? 'أقصى واط يجب ألا يقل عن المتوسط' : 'Max power cannot be less than average power';
-  String get invalidDistance => isArabic ? 'المسافة يجب أن تكون أكبر من صفر' : 'Distance must be greater than zero';
+  String invalidHR(String name) => isArabic
+      ? 'نبض غير منطقي للاعب $name'
+      : 'Unrealistic HR for athlete $name';
+  String get invalidPostHR => isArabic
+      ? 'النبض بعد التمرين أعلى من أثناء التمرين'
+      : 'Post-workout HR is higher than workout HR';
+  String get invalidRecoveryHR => isArabic
+      ? 'نبض الاستشفاء (دقيقة) أعلى من النبض فور الانتهاء'
+      : '1-min recovery HR cannot exceed immediate post HR';
+  String get invalidFatigue => isArabic
+      ? 'الإرهاق يجب أن يكون من 1 (ممتاز) إلى 5 (مرهق)'
+      : 'Fatigue must be between 1 (Fresh) and 5 (Exhausted)';
+  String get invalidAvgPower =>
+      isArabic ? 'متوسط الواط غير منطقي' : 'Invalid average power';
+  String get invalidMaxPower => isArabic
+      ? 'أقصى واط يجب ألا يقل عن المتوسط'
+      : 'Max power cannot be less than average power';
+  String get invalidDistance => isArabic
+      ? 'المسافة يجب أن تكون أكبر من صفر'
+      : 'Distance must be greater than zero';
   String get invalidEF => isArabic ? 'معدل EF غير منطقي' : 'Invalid EF value';
 
   // ==================== Players Tab & Profile Strings (المرحلة الثانية) ====================
-  String get playersTabTitle => isArabic ? 'سجل وبوابة اللاعبين' : 'Athletes Portal & Directory';
-  String get playersTabSubtitle => isArabic ? 'إدارة قائمة اللاعبين واستعراض البروفايل الفسيولوجي الكامل' : 'Manage athlete roster and explore comprehensive physiological profiles';
+  String get playersTabTitle =>
+      isArabic ? 'سجل وبوابة اللاعبين' : 'Athletes Portal & Directory';
+  String get playersTabSubtitle => isArabic
+      ? 'إدارة قائمة اللاعبين واستعراض البروفايل الفسيولوجي الكامل'
+      : 'Manage athlete roster and explore comprehensive physiological profiles';
   String get addNewPlayer => isArabic ? 'إضافة لاعب جديد' : 'Add New Athlete';
   String get playerName => isArabic ? 'اسم اللاعب' : 'Athlete Name';
   String get athleteMhr => isArabic ? 'أقصى نبض (MHR)' : 'Max HR (MHR)';
-  String get enterPlayerName => isArabic ? 'أدخل اسم اللاعب' : 'Enter athlete name';
-  String get enterMhr => isArabic ? 'أدخل أقصى نبض (مثال: 195)' : 'Enter Max HR (e.g. 195)';
-  String get playerAdded => isArabic ? 'تمت إضافة اللاعب بنجاح' : 'Athlete added successfully';
+  String get enterPlayerName =>
+      isArabic ? 'أدخل اسم اللاعب' : 'Enter athlete name';
+  String get enterMhr =>
+      isArabic ? 'أدخل أقصى نبض (مثال: 195)' : 'Enter Max HR (e.g. 195)';
+  String get playerAdded =>
+      isArabic ? 'تمت إضافة اللاعب بنجاح' : 'Athlete added successfully';
   String get playerStatusActive => isArabic ? 'نشط' : 'Active';
   String get playerStatusInactive => isArabic ? 'غير نشط' : 'Inactive';
-  String get viewProfile => isArabic ? 'عرض الملف التفصيلي' : 'View Full Profile';
+  String get viewProfile =>
+      isArabic ? 'عرض الملف التفصيلي' : 'View Full Profile';
   String get athleteDetails => isArabic ? 'تفاصيل اللاعب' : 'Athlete Details';
-  String get baselineMetrics => isArabic ? 'المؤشرات الأساسية' : 'Baseline Metrics';
-  String get physiologicalBalance => isArabic ? 'التوازن الفسيولوجي' : 'Physiological Balance';
-  String get overtrainingAlerts => isArabic ? 'تنبيهات الإجهاد والإفراط التدريبي' : 'Overtraining & Fatigue Alerts';
-  String get noAlertsHealthy => isArabic ? 'لا توجد تنبيهات - المؤشرات الفسيولوجية ممتازة ✔' : 'No alerts - Physiological metrics look optimal ✔';
-  String get cpTestsHistory => isArabic ? 'سجل اختبارات القدرة الحرجة (CP)' : 'Critical Power (CP) Tests';
-  String get recoveryAnalytics => isArabic ? 'تحليلات الاستشفاء ونبض القلب' : 'Recovery & Heart Rate Analytics';
-  String get sessionsHistory => isArabic ? 'سجل التمارين السابقة' : 'Past Workouts History';
-  String get noLogsForPlayer => isArabic ? 'لا توجد تمارين مسجلة لهذا اللاعب حتى الآن' : 'No workout logs recorded for this athlete yet';
+  String get baselineMetrics =>
+      isArabic ? 'المؤشرات الأساسية' : 'Baseline Metrics';
+  String get physiologicalBalance =>
+      isArabic ? 'التوازن الفسيولوجي' : 'Physiological Balance';
+  String get overtrainingAlerts => isArabic
+      ? 'تنبيهات الإجهاد والإفراط التدريبي'
+      : 'Overtraining & Fatigue Alerts';
+  String get noAlertsHealthy => isArabic
+      ? 'لا توجد تنبيهات - المؤشرات الفسيولوجية ممتازة ✔'
+      : 'No alerts - Physiological metrics look optimal ✔';
+  String get cpTestsHistory => isArabic
+      ? 'سجل اختبارات القدرة الحرجة (CP)'
+      : 'Critical Power (CP) Tests';
+  String get recoveryAnalytics => isArabic
+      ? 'تحليلات الاستشفاء ونبض القلب'
+      : 'Recovery & Heart Rate Analytics';
+  String get sessionsHistory =>
+      isArabic ? 'سجل التمارين السابقة' : 'Past Workouts History';
+  String get noLogsForPlayer => isArabic
+      ? 'لا توجد تمارين مسجلة لهذا اللاعب حتى الآن'
+      : 'No workout logs recorded for this athlete yet';
 
   // ==================== Settings Tab Strings ====================
   String get languageSettings => isArabic ? 'لغة التطبيق' : 'App Language';
-  String get languageSwitchDesc => isArabic ? 'التبديل الفوري بين اللغة العربية والإنجليزية' : 'Toggle instantly between Arabic and English';
+  String get languageSwitchDesc => isArabic
+      ? 'التبديل الفوري بين اللغة العربية والإنجليزية'
+      : 'Toggle instantly between Arabic and English';
   String get arabic => isArabic ? 'العربية' : 'Arabic';
   String get english => isArabic ? 'الإنجليزية' : 'English';
   String get appArchitecture => isArabic ? 'بنية التطبيق' : 'App Architecture';
-  String get phase2Active => isArabic ? 'المرحلة الثانية: البرنامج وقوالب الدورات المرحلية، تمارين اليوم، وبوابة اللاعبين' : 'Phase 2: Program & Phase Cycle Templates, Daily Workouts, Athletes Gateway';
-  String get phase1Active => isArabic ? 'المرحلة الأولى: لوحة انجن روينج، التمارين، والإعدادات' : 'Phase 1: Engine Rowing Dashboard, Workouts & Settings';
-  String get databaseStatus => isArabic ? 'حالة قاعدة البيانات: متصلة ونشطة' : 'Database Status: Connected & Active';
+  String get phase2Active => isArabic
+      ? 'المرحلة الثانية: البرنامج وقوالب الدورات المرحلية، تمارين اليوم، وبوابة اللاعبين'
+      : 'Phase 2: Program & Phase Cycle Templates, Daily Workouts, Athletes Gateway';
+  String get phase1Active => isArabic
+      ? 'المرحلة الأولى: لوحة انجن روينج، التمارين، والإعدادات'
+      : 'Phase 1: Engine Rowing Dashboard, Workouts & Settings';
+  String get databaseStatus => isArabic
+      ? 'حالة قاعدة البيانات: متصلة ونشطة'
+      : 'Database Status: Connected & Active';
 
   // ==================== Login & Authentication ====================
   String get authBrandTitle => 'ENGINE ROWING';
-  String get authBrandSubtitle =>
-      isArabic ? 'منصة التدريب وتحليل الأداء الذكي' : 'Smart Training & Performance Analytics';
+  String get authBrandSubtitle => isArabic
+      ? 'منصة التدريب وتحليل الأداء الذكي'
+      : 'Smart Training & Performance Analytics';
   String get loginTab => isArabic ? 'تسجيل الدخول' : 'Sign In';
   String get signUpTab => isArabic ? 'إنشاء حساب' : 'Sign Up';
   String get loginTitle => isArabic ? 'تسجيل الدخول' : 'Sign In';
-  String get loginSubtitle => isArabic ? 'مرحباً بك في منصة Engine Rowing' : 'Welcome to Engine Rowing Platform';
+  String get loginSubtitle => isArabic
+      ? 'مرحباً بك في منصة Engine Rowing'
+      : 'Welcome to Engine Rowing Platform';
   String get email => isArabic ? 'البريد الإلكتروني' : 'Email Address';
   String get emailHint => 'coach@engine.rowing';
   String get password => isArabic ? 'كلمة المرور' : 'Password';
   String get passwordHint => '••••••••';
   String get firstName => isArabic ? 'الاسم الأول' : 'First Name';
   String get lastName => isArabic ? 'اسم العائلة' : 'Last Name';
-  String get confirmPassword => isArabic ? 'تأكيد كلمة المرور' : 'Confirm Password';
+  String get confirmPassword =>
+      isArabic ? 'تأكيد كلمة المرور' : 'Confirm Password';
   String get accountType => isArabic ? 'نوع الحساب' : 'Account Type';
   String get roleAthlete => isArabic ? 'لاعب' : 'Athlete';
   String get roleCoach => isArabic ? 'مدرب' : 'Coach';
-  String get agreeToTerms => isArabic ? 'أوافق على الشروط والأحكام' : 'I agree to the Terms & Conditions';
-  String get termsAndConditionsTitle => isArabic ? 'الشروط والأحكام' : 'Terms & Conditions';
-  String get termsComingSoon => isArabic ? 'الشروط والأحكام ستتوفر قريباً.' : 'Terms and conditions coming soon.';
-  String get continueWithGoogle => isArabic ? 'المتابعة باستخدام Google' : 'Continue with Google';
-  String get googleComingSoon => isArabic ? 'ميزة تسجيل الدخول عبر Google ستتوفر قريباً.' : 'Google Sign-In is coming soon.';
-  String get forgotPasswordTitle => isArabic ? 'استعادة كلمة المرور' : 'Forgot Password';
+  String get agreeToTerms => isArabic
+      ? 'أوافق على الشروط والأحكام'
+      : 'I agree to the Terms & Conditions';
+  String get termsAndConditionsTitle =>
+      isArabic ? 'الشروط والأحكام' : 'Terms & Conditions';
+  String get termsComingSoon => isArabic
+      ? 'الشروط والأحكام ستتوفر قريباً.'
+      : 'Terms and conditions coming soon.';
+  String get continueWithGoogle =>
+      isArabic ? 'المتابعة باستخدام Google' : 'Continue with Google';
+  String get googleComingSoon => isArabic
+      ? 'ميزة تسجيل الدخول عبر Google ستتوفر قريباً.'
+      : 'Google Sign-In is coming soon.';
+  String get forgotPasswordTitle =>
+      isArabic ? 'استعادة كلمة المرور' : 'Forgot Password';
   String get forgotPasswordDialogText => isArabic
       ? 'يرجى التواصل مع المدرب أو إدارة النظام لإعادة تعيين كلمة المرور الخاصة بحسابك.'
       : 'Please contact your coach or system administrator to reset your password.';
   String get rememberMe => isArabic ? 'تذكرني' : 'Remember me';
   String get signInButton => isArabic ? 'دخول' : 'Sign In';
   String get signingIn => isArabic ? 'جاري التحقق...' : 'Signing in...';
-  String get createAccountButton => isArabic ? 'إنشاء حساب جديد' : 'Create Account';
-  String get creatingAccount => isArabic ? 'جاري إنشاء الحساب...' : 'Creating account...';
-  String get forgotPasswordNote => isArabic ? 'نسيت كلمة المرور؟ تواصل مع مدربك' : 'Forgot password? Contact your coach';
-  String get invalidEmail => isArabic ? 'يرجى إدخال بريد إلكتروني صحيح' : 'Please enter a valid email address';
-  String get emptyPassword => isArabic ? 'يرجى إدخال كلمة المرور' : 'Please enter your password';
-  String get invalidCredentials => isArabic ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة' : 'Invalid email or password';
-  String get accountInactive => isArabic ? 'تم إيقاف هذا الحساب. يرجى مراجعة الإدارة' : 'This account is inactive. Please contact administration';
-  String get awaitingActivationError => isArabic ? 'حسابك بانتظار التفعيل من الإدارة' : 'Your account is awaiting admin activation';
-  String get coachSubscriptionInactive => isArabic ? 'اشتراك المدرب متوقف حالياً. تواصل مع مدربك' : 'Coach subscription is inactive. Contact your coach';
-  String get signUpSuccessTitle => isArabic ? 'تم إنشاء الحساب بنجاح!' : 'Account Created Successfully!';
+  String get createAccountButton =>
+      isArabic ? 'إنشاء حساب جديد' : 'Create Account';
+  String get creatingAccount =>
+      isArabic ? 'جاري إنشاء الحساب...' : 'Creating account...';
+  String get forgotPasswordNote => isArabic
+      ? 'نسيت كلمة المرور؟ تواصل مع مدربك'
+      : 'Forgot password? Contact your coach';
+  String get invalidEmail => isArabic
+      ? 'يرجى إدخال بريد إلكتروني صحيح'
+      : 'Please enter a valid email address';
+  String get emptyPassword =>
+      isArabic ? 'يرجى إدخال كلمة المرور' : 'Please enter your password';
+  String get invalidCredentials => isArabic
+      ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة'
+      : 'Invalid email or password';
+  String get accountInactive => isArabic
+      ? 'حسابك غير مفعّل حاليًا، تواصل مع الإدارة'
+      : 'Your account is not active right now. Please contact the administration.';
+  String get awaitingActivationError => isArabic
+      ? 'حسابك غير مفعّل حاليًا، تواصل مع الإدارة'
+      : 'Your account is not active right now. Please contact the administration.';
+  String get coachSubscriptionInactive => isArabic
+      ? 'اشتراك المدرب متوقف حالياً. تواصل مع مدربك'
+      : 'Coach subscription is inactive. Contact your coach';
+  String get signUpSuccessTitle =>
+      isArabic ? 'تم إنشاء الحساب بنجاح!' : 'Account Created Successfully!';
   String get signUpSuccessMessage => isArabic
       ? 'تم تسجيل حسابك بنجاح. حسابك الآن بانتظار التفعيل من إدارة النظام، وستتمكن من تسجيل الدخول فور تفعيله.'
       : 'Your account was created successfully and is awaiting admin activation. You can sign in once activated.';
-  String get emailAlreadyExists => isArabic ? 'هذا البريد الإلكتروني مسجل بالفعل' : 'This email is already registered';
-  String get passwordMismatch => isArabic ? 'كلمتا المرور غير متطابقتين' : 'Passwords do not match';
-  String get passwordTooShort => isArabic ? 'كلمة المرور يجب ألا تقل عن 6 أحرف' : 'Password must be at least 6 characters';
-  String get mustAcceptTerms => isArabic ? 'يجب الموافقة على الشروط والأحكام للمتابعة' : 'You must accept the Terms & Conditions';
-  String get fieldRequired => isArabic ? 'هذا الحقل مطلوب' : 'This field is required';
+  String get emailAlreadyExists => isArabic
+      ? 'هذا البريد الإلكتروني مسجل بالفعل'
+      : 'This email is already registered';
+  String get passwordMismatch =>
+      isArabic ? 'كلمتا المرور غير متطابقتين' : 'Passwords do not match';
+  String get passwordTooShort => isArabic
+      ? 'كلمة المرور يجب ألا تقل عن 6 أحرف'
+      : 'Password must be at least 6 characters';
+  String get mustAcceptTerms => isArabic
+      ? 'يجب الموافقة على الشروط والأحكام للمتابعة'
+      : 'You must accept the Terms & Conditions';
+  String get fieldRequired =>
+      isArabic ? 'هذا الحقل مطلوب' : 'This field is required';
   String get orDivider => isArabic ? 'أو' : 'OR';
   String get ok => isArabic ? 'حسناً' : 'OK';
   String get logout => isArabic ? 'تسجيل الخروج' : 'Log Out';
-  String get logoutConfirm => isArabic ? 'هل تريد تسجيل الخروج من التطبيق؟' : 'Are you sure you want to log out?';
+  String get logoutConfirm => isArabic
+      ? 'هل تريد تسجيل الخروج من التطبيق؟'
+      : 'Are you sure you want to log out?';
 
   // ==================== Home & Greetings ====================
   String get goodMorning => isArabic ? 'صباح الخير' : 'Good Morning';
@@ -392,56 +611,89 @@ class AppStrings {
       isArabic ? '$greeting يا $name' : '$greeting, $name';
 
   // ==================== Coach Messages ====================
-  String get coachMessageTitle => isArabic ? 'رسالة من المدرب' : "Coach's Message";
+  String get coachMessageTitle =>
+      isArabic ? 'رسالة من المدرب' : "Coach's Message";
   String get markAsRead => isArabic ? 'تمت القراءة' : 'Mark as Read';
   String get noMessages => isArabic ? 'لا توجد رسائل جديدة' : 'No new messages';
 
   // ==================== Highlights ====================
-  String get highlightsTitle => isArabic ? 'أبرز المؤشرات (Highlights)' : 'Key Highlights';
-  String get dynamicZoneHighlight => isArabic ? 'آخر زون تدريبي' : 'Latest Zone';
-  String get cpHighlight => isArabic ? 'القدرة الحرجة (CP)' : 'Critical Power (CP)';
-  String get wellnessHighlight => isArabic ? 'المؤشرات اليومية' : 'Daily Wellness';
-  String get efTrendHighlight => isArabic ? 'كفاءة الأداء (EF)' : 'Efficiency Factor (EF)';
+  String get highlightsTitle =>
+      isArabic ? 'أبرز المؤشرات (Highlights)' : 'Key Highlights';
+  String get dynamicZoneHighlight =>
+      isArabic ? 'آخر منطقة تدريبية' : 'Latest Zone';
+  String get cpHighlight =>
+      isArabic ? 'القدرة الحرجة (CP)' : 'Critical Power (CP)';
+  String get wellnessHighlight =>
+      isArabic ? 'المؤشرات اليومية' : 'Daily Wellness';
+  String get efTrendHighlight =>
+      isArabic ? 'كفاءة الأداء (EF)' : 'Efficiency Factor (EF)';
   String get hrUnit => isArabic ? 'نبضة/د' : 'bpm';
   String get wattsUnit => isArabic ? 'واط' : 'W';
   String get sleepUnit => isArabic ? 'س' : 'hrs';
 
   // ==================== Testing Dates ====================
-  String get testingDatesTitle => isArabic ? 'مواعيد الاختبارات القادمة' : 'Upcoming Testing Dates';
-  String get noUpcomingTests => isArabic ? 'لا توجد اختبارات مجدولة قريباً' : 'No upcoming tests scheduled';
+  String get testingDatesTitle =>
+      isArabic ? 'مواعيد الاختبارات القادمة' : 'Upcoming Testing Dates';
+  String get noUpcomingTests => isArabic
+      ? 'لا توجد اختبارات مجدولة قريباً'
+      : 'No upcoming tests scheduled';
   String get addTestingDate => isArabic ? 'إضافة موعد اختبار' : 'Schedule Test';
   String get testName => isArabic ? 'اسم الاختبار' : 'Test Name';
-  String get testNameHint => isArabic ? 'مثال: 2000m Erg Test' : 'e.g. 2000m Erg Test';
+  String get testNameHint =>
+      isArabic ? 'مثال: 2000m Erg Test' : 'e.g. 2000m Erg Test';
   String get testDate => isArabic ? 'تاريخ الاختبار' : 'Test Date';
   String get recipients => isArabic ? 'المستهدفون' : 'Recipients';
   String get allAthletes => isArabic ? 'جميع اللاعبين' : 'All Athletes';
   String get selectAthletes => isArabic ? 'تحديد لاعبين' : 'Select Athletes';
-  String get pastDateError => isArabic ? 'لا يمكن اختيار تاريخ في الماضي' : 'Test date cannot be in the past';
-  String get testScheduledSuccess => isArabic ? 'تمت جدولة موعد الاختبار بنجاح' : 'Testing date scheduled successfully';
-  String get testNameRequired => isArabic ? 'يرجى كتابة اسم الاختبار' : 'Test name is required';
+  String get pastDateError => isArabic
+      ? 'لا يمكن اختيار تاريخ في الماضي'
+      : 'Test date cannot be in the past';
+  String get testScheduledSuccess => isArabic
+      ? 'تمت جدولة موعد الاختبار بنجاح'
+      : 'Testing date scheduled successfully';
+  String get testNameRequired =>
+      isArabic ? 'يرجى كتابة اسم الاختبار' : 'Test name is required';
   String get deleteTestDate => isArabic ? 'حذف الموعد' : 'Delete Test Date';
 
   // ==================== Admin Placeholder ====================
-  String get adminPlaceholderTitle => isArabic ? 'لوحة تحكم الأدمن' : 'Admin Dashboard';
-  String get adminPlaceholderDesc =>
-      isArabic ? 'لوحة الإدارة والمدربين قيد التطوير وستتاح قريباً.' : 'Admin & coach management is under development and coming soon.';
+  String get adminPlaceholderTitle =>
+      isArabic ? 'لوحة تحكم الأدمن' : 'Admin Dashboard';
+  String get adminPlaceholderDesc => isArabic
+      ? 'لوحة الإدارة والمدربين قيد التطوير وستتاح قريباً.'
+      : 'Admin & coach management is under development and coming soon.';
 
   // ==================== Metrics Curves Strings (المنحنيات الخمسة) ====================
-  String get metricsCurvesTitle => isArabic ? 'منحنيات مؤشرات التدريب' : 'Training Metrics Curves';
-  String get metricsCurvesSubtitle => isArabic ? 'تحليل بياني ذكي وتطور الأداء الفسيولوجي' : 'Smart analytics & physiological performance curves';
+  String get metricsCurvesTitle =>
+      isArabic ? 'منحنيات مؤشرات التدريب' : 'Training Metrics Curves';
+  String get metricsCurvesSubtitle => isArabic
+      ? 'تحليل بياني ذكي وتطور الأداء الفسيولوجي'
+      : 'Smart analytics & physiological performance curves';
   String get progressCurves => isArabic ? 'منحنيات الأداء' : 'Progress Curves';
-  String get curveEF => isArabic ? 'معامل الكفاءة (EF)' : 'Efficiency Factor (EF)';
+  String get curveEF =>
+      isArabic ? 'معامل الكفاءة (EF)' : 'Efficiency Factor (EF)';
   String get curveWatts => isArabic ? 'القدرة (الواط)' : 'Power (Watts)';
-  String get curveDecoupling => isArabic ? 'التفكك القلبي (Decoupling)' : 'Cardiac Decoupling';
+  String get curveDecoupling =>
+      isArabic ? 'التفكك القلبي (Decoupling)' : 'Cardiac Decoupling';
   String get curveHR => isArabic ? 'النبض (Heart Rate)' : 'Heart Rate';
-  String get curveZone => isArabic ? 'زون كيرف (Zone Curve)' : 'Zone Curve';
-  String get zoneCurvePurpose => isArabic ? 'مراقبة تحسن الواط في كل زون تدريبي على مدار الفترة' : 'Track watts progression across training zones over time';
-  String get zoneCurveSubtitle => isArabic ? 'منحنى الزونات الخمسة بمعادلة كارفونين التلقائية' : '5-zone curve with auto Karvonen calculation';
-  String get selectZonesPrompt => isArabic ? 'علّم الزونات لعرض خطوطها في المنحنى:' : 'Select zones to plot on the curve:';
+  String get curveZone =>
+      isArabic ? 'منحنى مناطق التدريب (Zone Curve)' : 'Zone Curve';
+  String get zoneCurvePurpose => isArabic
+      ? 'مراقبة تحسن الواط في كل منطقة تدريبية على مدار الفترة'
+      : 'Track watts progression across training zones over time';
+  String get zoneCurveSubtitle => isArabic
+      ? 'منحنى مناطق التدريب الخمس بمعادلة كارفونين التلقائية'
+      : '5-zone curve with auto Karvonen calculation';
+  String get selectZonesPrompt => isArabic
+      ? 'حدد مناطق التدريب لعرض خطوطها في المنحنى:'
+      : 'Select zones to plot on the curve:';
   String get zoneNoData => isArabic ? 'لا توجد بيانات' : 'No data';
   String get exportExcel => isArabic ? 'تصدير Excel' : 'Export Excel';
-  String get exportExcelDone => isArabic ? 'تم تصدير الزونات المعلّمة بنجاح' : 'Checked zones exported successfully';
-  String get selectAtLeastOneZone => isArabic ? 'يرجى تعليم زون واحد على الأقل للعرض والتصدير' : 'Please check at least one zone to display & export';
+  String get exportExcelDone => isArabic
+      ? 'تم تصدير مناطق التدريب المحددة بنجاح'
+      : 'Checked zones exported successfully';
+  String get selectAtLeastOneZone => isArabic
+      ? 'يرجى تحديد منطقة تدريبية واحدة على الأقل للعرض والتصدير'
+      : 'Please check at least one zone to display & export';
   String get periodLast7Days => isArabic ? '7 أيام' : '7 Days';
   String get periodLast30Days => isArabic ? '30 يوم' : '30 Days';
   String get periodLast90Days => isArabic ? '90 يوم' : '90 Days';
@@ -449,87 +701,148 @@ class AppStrings {
   String get periodCustomRange => isArabic ? 'تحديد فترة' : 'Custom';
   String get avgWattsLabel => isArabic ? 'متوسط الواط' : 'Avg Watts';
   String get maxWattsLabel => isArabic ? 'أقصى واط' : 'Max Watts';
-  String get autoKarvonenNote => isArabic ? 'الزون محسوب تلقائياً من النبض بمعادلة كارفونين' : 'Zone is automatically calculated from HR via Karvonen';
-  String get dailyAggregationNote => isArabic ? 'كل نقطة تمثل متوسط الواط لورك أوت اليوم لنفس الزون' : 'Each point represents daily average watts for the zone';
+  String get autoKarvonenNote => isArabic
+      ? 'منطقة التدريب محسوبة تلقائياً من النبض بمعادلة كارفونين'
+      : 'Zone is automatically calculated from HR via Karvonen';
+  String get dailyAggregationNote => isArabic
+      ? 'كل نقطة تمثل متوسط الواط لتمرين اليوم لنفس منطقة التدريب'
+      : 'Each point represents daily average watts for the zone';
 
   // ==================== Hamburger Menu Hub Strings ====================
-  String get hamburgerTitle => isArabic ? 'لوحة التحكم والعمليات' : 'Command & Operations Hub';
-  String get hamburgerSubtitle => isArabic ? 'إدارة التحليلات، الحسابات، الأجهزة، والتقارير' : 'Analytics, profiles, hardware & reports management';
-  String get multiDashboardNav => isArabic ? 'الانتقال بين شاشات التحليل المعقدة' : 'Multi-Dashboard Navigation';
-  String get physicalPerformance => isArabic ? 'شاشة الأداء البدني (النبض، السرعة، المسافة)' : 'Physical Performance (HR, Speed, Distance)';
-  String get analyticsDashboard => isArabic ? 'شاشة التحليلات المتقدمة' : 'Advanced Analytics Dashboard';
-  String get medicalReport => isArabic ? 'التقرير الطبي (مستويات الإرهاق والاستشفاء والإصابات)' : 'Medical Report (Fatigue, Recovery & Injuries)';
-  String get peerDataComparison => isArabic ? 'مقارنة بيانات وأداء اللاعبين' : 'Athlete Peer Comparison';
-  String get rosterManagement => isArabic ? 'إدارة وتبديل الحسابات (Profiles & Roster)' : 'Profiles & Team Roster Management';
-  String get switchAthlete => isArabic ? 'تبديل اللاعب السريع' : 'Quick Athlete Switch';
-  String get hardwareIntegration => isArabic ? 'التحكم في أدوات التتبع وأجهزة الاستشعار' : 'Hardware & Sensor Integration';
-  String get coachConnection => isArabic ? 'فحص اتصال اللاعب بالمدرب' : 'Coach-Athlete Connection Status';
-  String get sensorCalibration => isArabic ? 'معايرة المستشعرات والاتصال بالبلوتوث' : 'Sensor Calibration & Bluetooth Pairing';
-  String get cloudSync => isArabic ? 'مزامنة البيانات السحابية' : 'Cloud Data Sync';
-  String get metricsCurvesShortcut => isArabic ? 'لوحة المنحنيات (اختصارات جميع المنحنيات)' : 'Metrics Curves Hub (All Curves)';
-  String get advancedDataExport => isArabic ? 'تصدير التقارير المتقدمة' : 'Advanced Data Export';
-  String get exportToExcel => isArabic ? 'تحويل البيانات إلى ملف Excel' : 'Export Data to Excel (.xlsx)';
-  String get exportToPdf => isArabic ? 'تحويل البيانات إلى تقرير PDF' : 'Export Report to PDF';
-  String get shareReportAction => isArabic ? 'مشاركة التقرير عبر البريد أو الفريق' : 'Share Report via Email / Chat';
+  String get hamburgerTitle =>
+      isArabic ? 'لوحة التحكم والعمليات' : 'Command & Operations Hub';
+  String get hamburgerSubtitle => isArabic
+      ? 'إدارة التحليلات، الحسابات، الأجهزة، والتقارير'
+      : 'Analytics, profiles, hardware & reports management';
+  String get multiDashboardNav => isArabic
+      ? 'الانتقال بين شاشات التحليل المعقدة'
+      : 'Multi-Dashboard Navigation';
+  String get physicalPerformance => isArabic
+      ? 'شاشة الأداء البدني (النبض، السرعة، المسافة)'
+      : 'Physical Performance (HR, Speed, Distance)';
+  String get analyticsDashboard =>
+      isArabic ? 'شاشة التحليلات المتقدمة' : 'Advanced Analytics Dashboard';
+  String get medicalReport => isArabic
+      ? 'التقرير الطبي (مستويات الإرهاق والاستشفاء والإصابات)'
+      : 'Medical Report (Fatigue, Recovery & Injuries)';
+  String get peerDataComparison =>
+      isArabic ? 'مقارنة بيانات وأداء اللاعبين' : 'Athlete Peer Comparison';
+  String get rosterManagement => isArabic
+      ? 'إدارة وتبديل الحسابات (Profiles & Roster)'
+      : 'Profiles & Team Roster Management';
+  String get switchAthlete =>
+      isArabic ? 'تبديل اللاعب السريع' : 'Quick Athlete Switch';
+  String get hardwareIntegration => isArabic
+      ? 'التحكم في أدوات التتبع وأجهزة الاستشعار'
+      : 'Hardware & Sensor Integration';
+  String get coachConnection =>
+      isArabic ? 'فحص اتصال اللاعب بالمدرب' : 'Coach-Athlete Connection Status';
+  String get sensorCalibration => isArabic
+      ? 'معايرة المستشعرات والاتصال بالبلوتوث'
+      : 'Sensor Calibration & Bluetooth Pairing';
+  String get cloudSync =>
+      isArabic ? 'مزامنة البيانات السحابية' : 'Cloud Data Sync';
+  String get metricsCurvesShortcut => isArabic
+      ? 'لوحة المنحنيات (اختصارات جميع المنحنيات)'
+      : 'Metrics Curves Hub (All Curves)';
+  String get advancedDataExport =>
+      isArabic ? 'تصدير التقارير المتقدمة' : 'Advanced Data Export';
+  String get exportToExcel => isArabic
+      ? 'تحويل البيانات إلى ملف Excel'
+      : 'Export Data to Excel (.xlsx)';
+  String get exportToPdf =>
+      isArabic ? 'تحويل البيانات إلى تقرير PDF' : 'Export Report to PDF';
+  String get shareReportAction => isArabic
+      ? 'مشاركة التقرير عبر البريد أو الفريق'
+      : 'Share Report via Email / Chat';
 
   // ==================== Display Settings, Zoom & Intensity ====================
-  String get displayScaleTitle => isArabic ? 'مقياس الرؤية والتكبير' : 'Display Scale & Zoom';
+  String get displayScaleTitle =>
+      isArabic ? 'مقياس الرؤية والتكبير' : 'Display Scale & Zoom';
   String get displayControlTitle => displayScaleTitle;
-  String get displayScaleDesc => isArabic ? 'تكبير أو تصغير عناصر الواجهة للموبايل' : 'Scale UI elements for mobile';
-  String get colorIntensityTitle => isArabic ? 'حدة الألوان والإضاءة' : 'Color & Light Intensity';
-  String get colorIntensityDesc => isArabic ? 'التحكم في قوة إضاءة الخطوط والأرقام والحدود' : 'Control brightness & contrast of text & neon borders';
+  String get displayScaleDesc => isArabic
+      ? 'تكبير أو تصغير عناصر الواجهة للموبايل'
+      : 'Scale UI elements for mobile';
+  String get colorIntensityTitle =>
+      isArabic ? 'حدة الألوان والإضاءة' : 'Color & Light Intensity';
+  String get colorIntensityDesc => isArabic
+      ? 'التحكم في قوة إضاءة الخطوط والأرقام والحدود'
+      : 'Control brightness & contrast of text & neon borders';
   String get intensityNormal => isArabic ? 'عادي (متوازن)' : 'Normal';
   String get intensityBright => isArabic ? 'ساطع (واضح)' : 'Bright';
   String get intensityUltra => isArabic ? 'فائق الإضاءة (نيون)' : 'Ultra Neon';
-  String get pinchZoomHint => isArabic ? 'يمكنك التكبير والتصغير بأصابعك على الشاشة' : 'Pinch with two fingers to zoom anywhere';
+  String get pinchZoomHint => isArabic
+      ? 'يمكنك التكبير والتصغير بأصابعك على الشاشة'
+      : 'Pinch with two fingers to zoom anywhere';
   String get defaultBoardName => isArabic ? 'إحماء' : 'Warm-up';
 
   // ==================== Progress Tab Strings ====================
   String get tabProgress => isArabic ? 'التقدم' : 'Progress';
-  String get progressTitle => isArabic ? 'مؤشرات التطور والتقدم' : 'Progress & Analytics';
-  String get progressSubtitle =>
-      isArabic ? 'تحليل الأداء الفسيولوجي، الأحمال التدريبية (PMC)، ومراقبة الزونات' : 'Physiological performance, PMC training load & zone monitoring';
-  String get allTeamAthletes => isArabic ? 'جميع اللاعبين (متوسط الفريق)' : 'All Athletes (Team Average)';
+  String get progressTitle =>
+      isArabic ? 'مؤشرات التطور والتقدم' : 'Progress & Analytics';
+  String get progressSubtitle => isArabic
+      ? 'تحليل الأداء الفسيولوجي، الأحمال التدريبية (PMC)، ومراقبة مناطق التدريب'
+      : 'Physiological performance, PMC training load & zone monitoring';
+  String get allTeamAthletes =>
+      isArabic ? 'جميع اللاعبين (متوسط الفريق)' : 'All Athletes (Team Average)';
   String get filter7d => isArabic ? '7D' : '7D';
   String get filter30d => isArabic ? '30D' : '30D';
   String get filter90d => isArabic ? '90D' : '90D';
   String get filterAll => isArabic ? 'All' : 'All';
   String get filterCustom => isArabic ? 'Custom' : 'Custom';
-  String get completeInputsWarning =>
-      isArabic ? 'رجاء أستكمال المدخلات لضمان دقة النتائج' : 'Please complete all inputs to ensure accurate results';
-  String get pmcTitle => isArabic ? 'مخطط إدارة الأداء (PMC)' : 'Performance Management Chart (PMC)';
+  String get completeInputsWarning => isArabic
+      ? 'رجاء أستكمال المدخلات لضمان دقة النتائج'
+      : 'Please complete all inputs to ensure accurate results';
+  String get pmcTitle => isArabic
+      ? 'مخطط إدارة الأداء (PMC)'
+      : 'Performance Management Chart (PMC)';
   String get pmcExplanation => isArabic
       ? 'يوضح اللياقة التراكمية (CTL) والإرهاق الحاد (ATL) وفارق الجاهزية (TSB) لمراقبة ذروة الأداء ومنع الإجهاد الزائد.'
       : 'Tracks Chronic Training Load (CTL), Acute Training Load (ATL), and Training Stress Balance (TSB).';
   String get ctlLabel => isArabic ? 'اللياقة التراكمية (CTL)' : 'Fitness (CTL)';
   String get atlLabel => isArabic ? 'الإرهاق الحاد (ATL)' : 'Fatigue (ATL)';
-  String get tsbLabel => isArabic ? 'مؤشر الجاهزية (TSB)' : 'Form / Balance (TSB)';
-  String get estimatedCurveOnly => isArabic ? 'منحنى تقديري فقط' : 'Estimated curve only';
-  String get zoneBaselinesTitle => isArabic ? 'مراقبة الزونات وخط الأساس (Personal Best)' : 'Zone Baselines & Progress Tracking';
-  String get hrvTitle => isArabic ? 'تغير معدل النبض (HRV)' : 'Heart Rate Variability (HRV)';
+  String get tsbLabel =>
+      isArabic ? 'مؤشر الجاهزية (TSB)' : 'Form / Balance (TSB)';
+  String get estimatedCurveOnly =>
+      isArabic ? 'منحنى تقديري فقط' : 'Estimated curve only';
+  String get zoneBaselinesTitle => isArabic
+      ? 'مراقبة مناطق التدريب وخط الأساس (Personal Best)'
+      : 'Zone Baselines & Progress Tracking';
+  String get hrvTitle =>
+      isArabic ? 'تغير معدل النبض (HRV)' : 'Heart Rate Variability (HRV)';
   String get hrvExplanation => isArabic
       ? 'مؤشر توازن الجهاز العصبي اللاإرادي ومستوى الجاهزية والاستشفاء اليومي.'
       : 'Autonomic nervous system recovery and daily readiness index.';
-  String get rhrTitle => isArabic ? 'نبض الراحة الصباحي (RHR)' : 'Resting Heart Rate (RHR)';
+  String get rhrTitle =>
+      isArabic ? 'نبض الراحة الصباحي (RHR)' : 'Resting Heart Rate (RHR)';
   String get rhrExplanation => isArabic
       ? 'انخفاض نبض الراحة يعكس تحسن الكفاءة القلبية، وارتفاعه المفاجئ يشير لإجهاد أو نقص استشفاء.'
       : 'Resting heart rate reflects cardiovascular conditioning and recovery status.';
-  String get sleepWeightTitle => isArabic ? 'مؤشرات النوم والوزن' : 'Sleep & Body Weight';
-  String get sleepWeightExplanation =>
-      isArabic ? 'مراقبة جودة واستقرار النوم اليومي والتغير في وزن الجسم.' : 'Daily sleep duration and body weight tracking.';
-  String get eupneaTitle => isArabic ? 'معدل التنفس أثناء الراحة (Eupnea)' : 'Resting Breathing Rate (Eupnea)';
+  String get sleepWeightTitle =>
+      isArabic ? 'مؤشرات النوم والوزن' : 'Sleep & Body Weight';
+  String get sleepWeightExplanation => isArabic
+      ? 'مراقبة جودة واستقرار النوم اليومي والتغير في وزن الجسم.'
+      : 'Daily sleep duration and body weight tracking.';
+  String get eupneaTitle => isArabic
+      ? 'معدل التنفس أثناء الراحة (Eupnea)'
+      : 'Resting Breathing Rate (Eupnea)';
   String get eupneaExplanation => isArabic
       ? 'معدل التنفس الطبيعي في الدقيقة؛ مؤشر دقيق للجهد الفسيولوجي والاستشفاء.'
       : 'Resting respiratory rate in breaths per minute.';
-  String get decouplingTitle => isArabic ? 'التفكك القلبي الهوائي (Decoupling)' : 'Aerobic Cardiac Decoupling';
+  String get decouplingTitle => isArabic
+      ? 'التفكك القلبي الهوائي (Decoupling)'
+      : 'Aerobic Cardiac Decoupling';
   String get decouplingExplanation => isArabic
       ? 'يقيس الانجراف في النبض مقارنة بالواط؛ نسبة أقل من 5% تعني كفاءة هوائية ممتازة وثباتاً عضلياً.'
       : 'Cardiac drift relative to power output; below 5% indicates solid aerobic base.';
-  String get efTitle => isArabic ? 'معامل الكفاءة الهوائية (EF)' : 'Aerobic Efficiency Factor (EF)';
+  String get efTitle => isArabic
+      ? 'معامل الكفاءة الهوائية (EF)'
+      : 'Aerobic Efficiency Factor (EF)';
   String get efExplanation => isArabic
       ? 'حاصل قسمة الواط المعياري أو المتوسط على النبض (Watts/HR)؛ ارتفاعه يدل على زيادة القوة بنفس الجهد القلبي.'
       : 'Normalized power divided by average heart rate (Watts/HR).';
-  String get movingAverage7Legend => isArabic ? 'متوسط متحرك 7 أيام' : '7-day moving average';
+  String get movingAverage7Legend =>
+      isArabic ? 'متوسط متحرك 7 أيام' : '7-day moving average';
   String get chipWatts => isArabic ? 'واط' : 'Watts';
   String get chipHR => isArabic ? 'نبض' : 'Heart Rate';
   String get chipDecoupling => isArabic ? 'Decoupling' : 'Decoupling';
@@ -544,21 +857,23 @@ class AppStrings {
   String get chipATL => isArabic ? 'الإرهاق (ATL)' : 'Fatigue (ATL)';
   String get chipTSB => isArabic ? 'الجاهزية (TSB)' : 'Form (TSB)';
   String get chipSplit => isArabic ? 'السبليت' : 'Split';
-  String get chipZone => isArabic ? 'الزون' : 'Zone';
-  String get notEnoughData => isArabic ? 'لا توجد بيانات كافية' : 'Not enough data';
+  String get chipZone => isArabic ? 'منطقة التدريب' : 'Zone';
+  String get notEnoughData =>
+      isArabic ? 'لا توجد بيانات كافية' : 'Not enough data';
 
   // ==================== Progress Dafaa 1 Menu & Shared Filter/Header ====================
   String get matrixZoneTitle => 'Matrix Zone';
   String get matrixZoneDesc => isArabic
       ? 'مقارنة شاملة لمناطق الأداء على محورين مشتركين'
       : 'Shared dual-axis athlete zone comparison';
-  String get efDecouplingTitle => isArabic ? 'EF و Decoupling' : 'EF & Decoupling';
+  String get efDecouplingTitle =>
+      isArabic ? 'EF و Decoupling' : 'EF & Decoupling';
   String get efDecouplingDesc => isArabic
       ? 'تطور معامل الكفاءة والتفكك القلبي الهوائي'
       : 'Aerobic efficiency factor & cardiac drift';
   String get wattsCurveTitle => isArabic ? 'الواط' : 'Watts';
   String get wattsCurveDesc => isArabic
-      ? 'منحنيات القدرة (الواط) عبر الزمن والزونات السبعة'
+      ? 'منحنيات القدرة (الواط) عبر الزمن ومناطق التدريب السبع'
       : 'Power progression across time and 7 HR zones';
   String get pmcLoadTitle => isArabic ? 'PMC (الحمل)' : 'PMC (Load)';
   String get pmcLoadDesc => isArabic
@@ -568,9 +883,9 @@ class AppStrings {
   String get recoveryCurvesDesc => isArabic
       ? 'أربع منحنيات (HRV، RHR، النوم، الوزن) + منحنى Eupnea'
       : '4 curves (HRV, RHR, Sleep, Weight) + Eupnea curve';
-  String get zoneHoursTitle => isArabic ? 'ساعات الزونات' : 'Zone Hours';
+  String get zoneHoursTitle => isArabic ? 'ساعات مناطق التدريب' : 'Zone Hours';
   String get zoneHoursDesc => isArabic
-      ? 'جدول توزيع ساعات التدريب والنسب المئوية لكل زون'
+      ? 'جدول توزيع ساعات التدريب والنسب المئوية لكل منطقة تدريبية'
       : 'Training hours & percentage distribution per zone';
   String get cpTestsCurveTitle => isArabic ? 'اختبارات CP' : 'CP Tests';
   String get cpTestsCurveDesc => isArabic
@@ -581,20 +896,19 @@ class AppStrings {
   String get periodFilterCycle => isArabic ? 'سايكل' : 'Cycle';
 
   // ==================== Workouts Tab & Athlete Entry ====================
-  String get athleteWorkoutTitle => isArabic ? 'تماريني اليومية' : 'My Daily Workouts';
-  String get eupneaSectionTitle => isArabic ? 'معدل التنفس بعد التمرين (Eupnea)' : 'Post-Workout Eupnea (s)';
+  String get athleteWorkoutTitle =>
+      isArabic ? 'تماريني اليومية' : 'My Daily Workouts';
+  String get eupneaSectionTitle =>
+      isArabic ? 'معدل التنفس بعد التمرين (Eupnea)' : 'Post-Workout Eupnea (s)';
   String get eupneaField1 => isArabic ? 'القياس 1 (ث)' : 'Reading 1 (s)';
   String get eupneaField2 => isArabic ? 'القياس 2 (ث)' : 'Reading 2 (s)';
   String get eupneaField3 => isArabic ? 'القياس 3 (ث)' : 'Reading 3 (s)';
-  String get sessionLockedNotice => isArabic
-      ? 'الحصة مقفولة (للقراءة فقط)'
-      : 'Session locked (Read-only)';
-  String get sessionNotStartedNotice => isArabic
-      ? 'الحصة لم تبدأ بعد'
-      : 'Session has not started yet';
-  String get sessionOpenNotice => isArabic
-      ? 'مفتوحة لتسجيل أرقامك'
-      : 'Open for logging';
+  String get sessionLockedNotice =>
+      isArabic ? 'الحصة مقفولة (للقراءة فقط)' : 'Session locked (Read-only)';
+  String get sessionNotStartedNotice =>
+      isArabic ? 'الحصة لم تبدأ بعد' : 'Session has not started yet';
+  String get sessionOpenNotice =>
+      isArabic ? 'مفتوحة لتسجيل أرقامك' : 'Open for logging';
   String get coachEditableNotice => isArabic
       ? 'وضع المدرب (صلاحية كاملة للتعديل)'
       : 'Coach mode (Full edit permission)';
@@ -606,9 +920,11 @@ class AppStrings {
       isArabic ? 'لسه مفيش سايكلات متسجلة' : 'No cycles recorded yet';
   String get prevWeek => isArabic ? 'الأسبوع السابق' : 'Previous week';
   String get nextWeek => isArabic ? 'الأسبوع التالي' : 'Next week';
-  String get pickWeekTooltip => isArabic ? 'اختيار أسبوع آخر' : 'Pick another week';
+  String get pickWeekTooltip =>
+      isArabic ? 'اختيار أسبوع آخر' : 'Pick another week';
   String get pickCycleHint => isArabic ? 'اختر السايكل' : 'Select cycle';
-  String get pickCustomDates => isArabic ? 'تحديد من - إلى' : 'Pick start - end';
+  String get pickCustomDates =>
+      isArabic ? 'تحديد من - إلى' : 'Pick start - end';
 
   String curveHeaderTitle(String curveName, DateTime start, DateTime end) {
     final sDate = '${start.day}/${start.month}/${start.year}';
@@ -626,16 +942,27 @@ class AppStrings {
       ? 'اختر لاعبًا واحدًا على الأقل لعرض البيانات'
       : 'Select at least one athlete to display data';
   String get matrixZoneComparisonNote => isArabic
-      ? 'وضع المقارنة المشترك لماتركس الزون: محور أفقي (% احتياطي النبض) ومحور رأسي (الواط) — التفاصيل الكاملة في الدفعة 2'
+      ? 'وضع المقارنة المشترك لمصفوفة مناطق التدريب (Matrix Zone): محور أفقي (% احتياطي النبض) ومحور رأسي (الواط) — التفاصيل الكاملة في الدفعة 2'
       : 'Shared dual-axis Matrix Zone chart (% HRR vs Watts) — full details in Batch 2';
 
-  String get zoneColHeader => isArabic ? 'الزون' : 'Zone';
+  String get zoneColHeader => isArabic ? 'منطقة التدريب' : 'Zone';
   String get zoneDescColHeader => isArabic ? 'الوصف' : 'Description';
   String get totalHoursColHeader => isArabic ? 'إجمالي الساعات' : 'Total Hours';
   String get percentageColHeader => isArabic ? 'النسبة %' : 'Percentage %';
-  String get noZoneName => isArabic ? 'بدون زون' : 'No Zone';
+  String get noZoneName => isArabic ? 'بدون منطقة تدريب' : 'No Zone';
   String get noZoneDesc =>
       isArabic ? 'تمارين بدون نبض مسجل' : 'Workouts without recorded HR';
+
+  // رسالة عدم تفعيل الحساب المحايدة
+  String get accountInactiveNotice => isArabic
+      ? 'حسابك غير مفعّل حاليًا، تواصل مع الإدارة'
+      : 'Your account is not active right now. Please contact the administration.';
+  String get registrationSuccessPendingActivation => isArabic
+      ? 'تم تسجيل حسابك بنجاح! حسابك في انتظار التفعيل من قِبل الإدارة.'
+      : 'Account created successfully! Your account is pending activation by administration.';
+  String get adminRoleNotAllowedOnSignup => isArabic
+      ? 'غير مسموح بالتسجيل بدور مسؤول'
+      : 'Admin role is not permitted during registration';
 
   String get tsbExcessRest => isArabic ? 'راحة زيادة' : 'Too Much Rest';
   String get tsbRaceReady => isArabic ? 'جاهز للسباق' : 'Race Ready';
@@ -676,4 +1003,3 @@ class AppStrings {
       ? 'لا يوجد تمرين مخصص لهذا اليوم'
       : 'No custom workout for this day';
 }
-

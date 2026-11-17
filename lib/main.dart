@@ -4,6 +4,8 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'admin_placeholder.dart';
 import 'app_strings.dart';
 import 'auth_service.dart';
+import 'cloud_api.dart';
+import 'cloud_config.dart';
 import 'dashboard_tab.dart';
 import 'engine_rowing_ui.dart';
 import 'login_page.dart';
@@ -23,6 +25,11 @@ void main() async {
     databaseFactory = databaseFactoryFfi;
   }
   await AppLanguage.instance.init();
+  if (CloudConfig.isConfigured) {
+    try {
+      await CloudApi.instance.initialize();
+    } catch (_) {}
+  }
   await AuthService.seedInitialData();
   runApp(const IronmanApp());
 }

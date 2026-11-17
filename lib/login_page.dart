@@ -456,9 +456,12 @@ class _LoginPageState extends State<LoginPage> {
                   // ── الشريط العلوي: الساعة الحية + زر تبديل اللغة ──
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        horizontal: 16, vertical: 10),
+                    child: Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 6,
                       children: [
                         // الساعة الحية
                         Container(
@@ -746,8 +749,11 @@ class _LoginPageState extends State<LoginPage> {
           const SizedBox(height: 12),
 
           // سطر خيارات: تذكرني + نسيت كلمة المرور
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 4,
             children: [
               // خيار تذكرني
               InkWell(
@@ -1173,13 +1179,17 @@ class _LoginPageState extends State<LoginPage> {
             children: [
               const _GoogleLogoIcon(size: 20),
               const SizedBox(width: 10),
-              Text(
-                s.continueWithGoogle,
-                style: const TextStyle(
-                  color: EngineRowingUI.textWhite,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.3,
+              Flexible(
+                child: Text(
+                  s.continueWithGoogle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: EngineRowingUI.textWhite,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.3,
+                  ),
                 ),
               ),
             ],
@@ -1346,14 +1356,18 @@ class _RoleChoiceChip extends StatelessWidget {
                   : EngineRowingUI.labelSlate,
             ),
             const SizedBox(width: 4),
-            Text(
-              title,
-              style: TextStyle(
-                color: isSelected
-                    ? EngineRowingUI.bgNavy
-                    : EngineRowingUI.textWhite,
-                fontSize: 12.5,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            Flexible(
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: isSelected
+                      ? EngineRowingUI.bgNavy
+                      : EngineRowingUI.textWhite,
+                  fontSize: 12.5,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
               ),
             ),
           ],
