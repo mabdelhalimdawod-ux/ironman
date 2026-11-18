@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'db.dart';
 import 'heart_rate_zones.dart';
+import 'sync_engine.dart';
 
 // ============================================================================
 // ثوابت ومناطق النبض والأنواع المعتمدة في تاب Program (المصدر الموحد للزونات الـ 7)
@@ -1590,6 +1591,7 @@ class ProgramService {
         'details': w.details,
       });
     }
+    SyncEngine.instance.scheduleDebouncedSync();
   }
 }
 

@@ -132,6 +132,29 @@ abstract class CloudApi {
 
   /// التحقق من حالة تفعيل الاشتراك
   Future<bool> isSubscriptionActive(String userId);
+
+  /// رفع دفعة من السجلات إلى جدول في السحابة
+  Future<List<Map<String, dynamic>>> pushBatch(
+    String table,
+    List<Map<String, dynamic>> records, {
+    String? userRole,
+    String? userId,
+  });
+
+  /// سحب التحديثات من جدول في السحابة منذ تاريخ محدد
+  Future<List<Map<String, dynamic>>> pullBatch(
+    String table, {
+    String? since,
+    String? userRole,
+    String? userId,
+    String? coachId,
+  });
+
+  /// تسجيل حذف ناعم في السحابة لمجموعة سجلات
+  Future<void> softDeleteBatch(
+    String table,
+    List<String> remoteIds,
+  );
 }
 
 /// التنفيذ الحقيقي لخدمة السحابة عبر Supabase
@@ -330,11 +353,66 @@ class SupabaseCloudApi implements CloudApi {
       return false;
     }
   }
+
+  @override
+  Future<List<Map<String, dynamic>>> pushBatch(
+    String table,
+    List<Map<String, dynamic>> records, {
+    String? userRole,
+    String? userId,
+  }) async {
+    try {
+      final res = await client.from(table).upsert(records).select();
+      return List<Map<String, dynamic>>.from(res);
+    } on PostgrestException catch (e) {
+      if (e.message.contains('مقفولة تلقائياً') || e.message.contains('locked')) {
+        throw ServerLockException(e.message);
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> pullBatch(
+    String table, {
+    String? since,
+    String? userRole,
+    String? userId,
+    String? coachId,
+  }) async {
+    var query = client.from(table).select();
+    if (since != null && since.isNotEmpty) {
+      query = query.gt('updated_at', since);
+    }
+    final res = await query;
+    return List<Map<String, dynamic>>.from(res);
+  }
+
+  @override
+  Future<void> softDeleteBatch(
+    String table,
+    List<String> remoteIds,
+  ) async {
+    if (remoteIds.isEmpty) return;
+    await client.from(table).update({
+      'deleted_at': DateTime.now().toUtc().toIso8601String(),
+    }).inFilter('id', remoteIds);
+  }
+}
+
+/// استثناء رفض الخادم لتعديل حصة مقفولة
+class ServerLockException implements Exception {
+  final String message;
+  const ServerLockException(this.message);
+
+  @override
+  String toString() => message;
 }
 
 /// التنفيذ الوهمي في الذاكرة (In-Memory Mock) للاختبارات والوضع المحلي
 class MockCloudApi implements CloudApi {
   final Map<String, _MockUserEntry> _users = {};
+  final Map<String, Map<String, Map<String, dynamic>>> _cloudTables = {};
   String? _currentUserId;
 
   @override
@@ -342,6 +420,136 @@ class MockCloudApi implements CloudApi {
 
   @override
   Future<void> initialize() async {}
+
+  /// الحصول على بيانات جدول سحابي وهمي مباشرة للاختبارات
+  Map<String, Map<String, dynamic>> getCloudTable(String table) {
+    return _cloudTables.putIfAbsent(table, () => {});
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> pushBatch(
+    String table,
+    List<Map<String, dynamic>> records, {
+    String? userRole,
+    String? userId,
+  }) async {
+    final tableMap = _cloudTables.putIfAbsent(table, () => {});
+    final results = <Map<String, dynamic>>[];
+    final todayStr = DateTime.now().toUtc().toIso8601String().substring(0, 10);
+
+    for (final raw in records) {
+      final rec = Map<String, dynamic>.from(raw);
+
+      // التحقق من قفل الحصص على السيرفر للاعب
+      if (table == 'logs' && userRole == 'athlete') {
+        final sessionDate = rec['date'] as String? ?? '';
+        if (sessionDate.isNotEmpty && sessionDate.compareTo(todayStr) < 0) {
+          throw const ServerLockException(
+              'هذه الحصة مقفولة تلقائياً بعد منتصف الليل (12:00 AM). يرجى مراجعة المدرب.');
+        }
+      }
+
+      String id = rec['id']?.toString() ?? rec['remote_id']?.toString() ?? '';
+      if (id.isEmpty) {
+        id = 'mock-id-${table}-${tableMap.length + 1}-${DateTime.now().microsecondsSinceEpoch}';
+        rec['id'] = id;
+      }
+      rec['remote_id'] = id;
+      rec['updated_at'] ??= DateTime.now().toUtc().toIso8601String();
+      if (userRole == 'athlete' && userId != null) {
+        rec['athlete_user_id'] ??= userId;
+      }
+      if (userRole == 'coach' && userId != null) {
+        rec['coach_id'] ??= userId;
+      }
+
+      tableMap[id] = rec;
+      results.add(rec);
+    }
+
+    return results;
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> pullBatch(
+    String table, {
+    String? since,
+    String? userRole,
+    String? userId,
+    String? coachId,
+  }) async {
+    final tableMap = _cloudTables.putIfAbsent(table, () => {});
+    final list = <Map<String, dynamic>>[];
+
+    for (final rec in tableMap.values) {
+      // فلترة التوقيت
+      if (since != null && since.isNotEmpty) {
+        final updatedAt = rec['updated_at'] as String? ?? '';
+        if (updatedAt.isNotEmpty && updatedAt.compareTo(since) <= 0) {
+          continue;
+        }
+      }
+
+      // فلترة صلاحيات الدور RLS
+      if (userRole == 'athlete' && userId != null) {
+        // اللاعب يقرأ بياناته أو بيانات مدربه
+        if (table == 'logs' ||
+            table == 'athlete_custom_sessions' ||
+            table == 'athlete_custom_workout_items' ||
+            table == 'cp_tests' ||
+            table == 'cp_values') {
+          final authorId = rec['athlete_user_id']?.toString() ??
+              rec['user_id']?.toString() ??
+              rec['player_id']?.toString();
+          if (authorId != null && authorId != userId) {
+            continue; // لا يسحب سجلات لاعب آخر
+          }
+        } else if (table == 'program_cycles' ||
+            table == 'program_sessions' ||
+            table == 'program_workout_items' ||
+            table == 'cycle_templates' ||
+            table == 'sessions' ||
+            table == 'notes') {
+          final cId = rec['coach_id']?.toString();
+          if (coachId != null && cId != null && cId != coachId) {
+            continue;
+          }
+        }
+      } else if (userRole == 'coach' && userId != null) {
+        // المدرب يسحب كل ما يخصه ويخص لاعبيه
+        final cId = rec['coach_id']?.toString();
+        if (cId != null && cId != userId) {
+          continue;
+        }
+      }
+
+      list.add(Map<String, dynamic>.from(rec));
+    }
+
+    return list;
+  }
+
+  @override
+  Future<void> softDeleteBatch(
+    String table,
+    List<String> remoteIds,
+  ) async {
+    final tableMap = _cloudTables.putIfAbsent(table, () => {});
+    final nowStr = DateTime.now().toUtc().toIso8601String();
+    for (final id in remoteIds) {
+      var rec = tableMap[id];
+      if (rec == null) {
+        rec = tableMap.values.cast<Map<String, dynamic>?>().firstWhere(
+              (r) => r?['remote_id'] == id,
+              orElse: () => null,
+            );
+      }
+      if (rec != null) {
+        rec['deleted_at'] = nowStr;
+        rec['updated_at'] = nowStr;
+      }
+    }
+  }
 
   /// إضافة أو تحديث مستخدم في الذاكرة لأغراض الاختبار
   void seedUser({
@@ -464,6 +672,7 @@ class MockCloudApi implements CloudApi {
 
   void reset() {
     _users.clear();
+    _cloudTables.clear();
     _currentUserId = null;
   }
 }

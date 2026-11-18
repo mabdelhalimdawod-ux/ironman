@@ -593,6 +593,8 @@ CREATE TRIGGER on_auth_user_created
 CREATE OR REPLACE FUNCTION public.prevent_direct_admin_promotion()
 RETURNS TRIGGER
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
 AS $$
 BEGIN
     IF (NEW.role = 'admin' AND (OLD.role IS NULL OR OLD.role <> 'admin')) THEN
@@ -732,8 +734,8 @@ CREATE POLICY "profiles_select_policy" ON public.profiles
         auth.uid() = id
         OR public.is_admin()
         OR (public.is_coach() AND coach_id = auth.uid())
-        OR (coach_id IS NOT NULL AND coach_id = (SELECT p.coach_id FROM public.profiles p WHERE p.id = auth.uid()))
-        OR (id = (SELECT p.coach_id FROM public.profiles p WHERE p.id = auth.uid()))
+        OR (coach_id IS NOT NULL AND coach_id = public.get_my_coach_id())
+        OR (id = public.get_my_coach_id())
     );
 
 DROP POLICY IF EXISTS "profiles_update_policy" ON public.profiles;

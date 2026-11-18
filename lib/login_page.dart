@@ -127,9 +127,8 @@ class _LoginPageState extends State<LoginPage> {
       } else {
         final s = AppStrings.of(context);
         String msg = s.invalidCredentials;
-        if (result.error == LoginError.awaitingActivation) {
-          msg = s.awaitingActivationError;
-        } else if (result.error == LoginError.accountInactive) {
+        if (result.error == LoginError.awaitingActivation ||
+            result.error == LoginError.accountInactive) {
           msg = s.accountInactive;
         } else if (result.error == LoginError.coachSubscriptionInactive) {
           msg = s.coachSubscriptionInactive;

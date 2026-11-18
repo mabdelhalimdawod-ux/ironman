@@ -390,7 +390,7 @@ class AuthService {
         'athlete_id': athleteId,
         'coach_id': coachId,
         'message':
-            'أهلاً بك في الدورة التدريبية الجديدة! ركّز اليوم على الإيقاع الثابت في الزون 2.',
+            'أهلاً بك في الدورة التدريبية الجديدة! ركّز اليوم على الإيقاع الثابت في المنطقة 2.',
         'date': DateTime.now().toIso8601String().substring(0, 10),
         'is_read': 0,
       });

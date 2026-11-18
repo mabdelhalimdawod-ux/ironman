@@ -1034,21 +1034,24 @@ class RowingAdaptiveZoneBoxes extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: const [
-              Icon(Icons.show_chart_rounded,
-                  size: 14, color: Color(0xFF1E293B)),
-              SizedBox(width: 4),
-              Text(
-                'منحنى توزيع الزونات',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1E293B),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Icon(Icons.show_chart_rounded,
+                    size: 14, color: Color(0xFF1E293B)),
+                SizedBox(width: 4),
+                Text(
+                  'منحنى توزيع مناطق التدريب',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1E293B),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 6),
           Expanded(

@@ -266,7 +266,7 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                'الحصص التدريبية ليوم ${widget.dayName} • كل حصة تحتوي على خانة التوقيت، وحسابات الـ 6 زونات، وملاحظات وزر الدخول للتمارين.',
+                                'الحصص التدريبية ليوم ${widget.dayName} • كل حصة تحتوي على خانة التوقيت، وحسابات مناطق التدريب الست، وملاحظات وزر الدخول للتمارين.',
                                 style: const TextStyle(
                                     fontSize: 12.5,
                                     color: EngineRowingUI.labelSlate,
@@ -442,7 +442,7 @@ class _DaySessionsPageState extends State<DaySessionsPage> {
                 RowingAdaptiveZoneBoxes(
                   zoneSeconds: zoneDurations,
                   title: s.isArabic
-                      ? 'أحمال الزونات لهذه الحصة (تحسب تلقائياً من التمارين):'
+                      ? 'أحمال مناطق التدريب لهذه الحصة (تحسب تلقائياً من التمارين):'
                       : 'Session Zone Loads:',
                   showCurveChart: true,
                 ),

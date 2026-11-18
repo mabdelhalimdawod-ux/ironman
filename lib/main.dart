@@ -12,6 +12,8 @@ import 'login_page.dart';
 import 'metrics_curve_page.dart';
 import 'program_tab.dart';
 import 'progress_tab.dart';
+import 'sync_engine.dart';
+import 'sync_status_widget.dart';
 import 'workouts_tab.dart';
 
 const Color navy = EngineRowingUI.bgNavy;
@@ -31,6 +33,7 @@ void main() async {
     } catch (_) {}
   }
   await AuthService.seedInitialData();
+  SyncEngine.instance.initConnectivityListener();
   runApp(const IronmanApp());
 }
 
@@ -59,6 +62,9 @@ class _IronmanAppState extends State<IronmanApp> {
           _currentUser = user;
           _checkingSession = false;
         });
+        if (user != null) {
+          SyncEngine.instance.syncNow(user: user);
+        }
       }
     } catch (_) {
       if (mounted) {
@@ -73,6 +79,7 @@ class _IronmanAppState extends State<IronmanApp> {
     setState(() {
       _currentUser = user;
     });
+    SyncEngine.instance.syncNow(user: user);
   }
 
   void _handleLogout() async {
@@ -145,6 +152,22 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
   int _currentIndex = 0;
   double _navWidth = 0.0;
   bool _isResizing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    SyncEngine.instance.onServerLockRejection = (msg) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: const Color(0xFFD32F2F),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    };
+  }
 
   // ── أحجام الشريط الجانبي ──
   static const double _minWidth = 0.0; // مخفي تماماً
@@ -309,6 +332,9 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
                   textAlign: isArabic ? TextAlign.right : TextAlign.left,
                 ),
               ),
+              // أيقونة حالة المزامنة اللحظية
+              const SyncStatusIcon(),
+              const SizedBox(width: 4),
               // زرار داخل AppBar للتحكم في مقاسات الرؤية والسطوع والإضاءة
               IconButton(
                 icon: const Icon(Icons.tune_rounded, color: yellow, size: 24),
@@ -915,7 +941,7 @@ class HamburgerHubSheet extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'الوصول المباشر إلى المنحنيات الخمسة في البرنامج (كفاءة EF، الواط، التفكك القلبي، النبض، وزونات كارفونين الذكية).',
+                                'الوصول المباشر إلى المنحنيات الخمسة في البرنامج (كفاءة EF، الواط، التفكك القلبي، النبض، ومناطق تدريب كارفونين الذكية).',
                                 style: TextStyle(
                                     fontSize: 13,
                                     color: EngineRowingUI.labelSlate),

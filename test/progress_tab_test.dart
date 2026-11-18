@@ -204,7 +204,8 @@ void main() {
       subscriptionActive: true,
     );
 
-    testWidgets('ProgressTab shows all 7 curve menu icons & opens curve screens',
+    testWidgets(
+        'ProgressTab shows all 7 curve menu icons & opens curve screens',
         (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.75;
@@ -228,12 +229,12 @@ void main() {
       expect(find.text('الواط'), findsOneWidget);
       expect(find.text('PMC (الحمل)'), findsOneWidget);
       expect(find.text('الاستشفاء'), findsOneWidget);
-      expect(find.text('ساعات الزونات'), findsOneWidget);
+      expect(find.text('ساعات مناطق التدريب'), findsOneWidget);
       expect(find.text('اختبارات CP'), findsOneWidget);
 
       // Tap Zone Hours to verify opening ProgressCurvePage
       await tester.runAsync(() async {
-        await tester.tap(find.text('ساعات الزونات'));
+        await tester.tap(find.text('ساعات مناطق التدريب'));
         await tester.pump();
         for (int i = 0; i < 12; i++) {
           await Future.delayed(const Duration(milliseconds: 30));
@@ -245,7 +246,8 @@ void main() {
       expect(find.byType(ProgressCurveHeader), findsOneWidget);
     });
 
-    testWidgets('ProgressPeriodFilter handles empty cycles gracefully without crashing',
+    testWidgets(
+        'ProgressPeriodFilter handles empty cycles gracefully without crashing',
         (tester) async {
       await AppLanguage.instance.setLocale(const Locale('ar'));
       ProgressPeriodSelection selection = ProgressPeriodSelection.defaultWeek(
@@ -286,16 +288,17 @@ void main() {
 
       // Tap Cycle filter with zero cycles in DB -> must show message without crash
       await tester.runAsync(() async {
-        await tester.tap(find.text('سايكل'));
+        await tester.tap(find.text('الدورة المرحلية'));
         await tester.pump();
         await Future.delayed(const Duration(milliseconds: 50));
       });
       await tester.pump();
 
-      expect(find.text('لسه مفيش سايكلات متسجلة'), findsOneWidget);
+      expect(find.text('لا توجد دورات مرحلية مسجلة بعد'), findsOneWidget);
     });
 
-    testWidgets('ProgressCurveHeader English format matches From D/M/YYYY to D/M/YYYY',
+    testWidgets(
+        'ProgressCurveHeader English format matches From D/M/YYYY to D/M/YYYY',
         (tester) async {
       await AppLanguage.instance.setLocale(const Locale('en'));
       addTearDown(() => AppLanguage.instance.setLocale(const Locale('ar')));
@@ -319,7 +322,8 @@ void main() {
       expect(find.text('HRV, From 1/10/2026 to 31/10/2026'), findsOneWidget);
     });
 
-    testWidgets('Zone Hours screen displays 8 zone rows and toggles players locally',
+    testWidgets(
+        'Zone Hours screen displays 8 zone rows and toggles players locally',
         (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.75;
@@ -332,8 +336,10 @@ void main() {
         final database = await DB.db;
         await database.delete('logs');
         await database.delete('players');
-        await database.insert('players', {'id': 1, 'name': 'أحمد', 'mhr': 190, 'active': 1});
-        await database.insert('players', {'id': 2, 'name': 'كريم', 'mhr': 195, 'active': 1});
+        await database.insert(
+            'players', {'id': 1, 'name': 'أحمد', 'mhr': 190, 'active': 1});
+        await database.insert(
+            'players', {'id': 2, 'name': 'كريم', 'mhr': 195, 'active': 1});
         await database.insert('logs', {
           'player_id': 1,
           'date': dstr(DateTime.now()),
@@ -365,7 +371,7 @@ void main() {
       expect(find.text('Threshold - AT'), findsOneWidget);
       expect(find.text('Zone 5 - TR'), findsOneWidget);
       expect(find.text('VO2 max - AN'), findsOneWidget);
-      expect(find.text('بدون زون'), findsOneWidget);
+      expect(find.text('بدون منطقة تدريب'), findsOneWidget);
 
       // Toggle second athlete ('كريم') on -> now two 8-row tables appear
       await tester.runAsync(() async {
@@ -385,7 +391,8 @@ void main() {
       expect(find.text('Zone 1 - UT3'), findsOneWidget);
     });
 
-    testWidgets('PMC Load renders Today cards, lines, TSB bars & missing CP notice',
+    testWidgets(
+        'PMC Load renders Today cards, lines, TSB bars & missing CP notice',
         (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.75;
@@ -407,7 +414,8 @@ void main() {
           await database.delete('daily_load');
         } catch (_) {}
 
-        await database.insert('players', {'id': 1, 'name': 'أحمد', 'mhr': 190, 'active': 1});
+        await database.insert(
+            'players', {'id': 1, 'name': 'أحمد', 'mhr': 190, 'active': 1});
         await database.insert('cp_values', {
           'player_id': 1,
           'date': dstr(yesterday),
@@ -453,7 +461,8 @@ void main() {
       expect(find.textContaining('--'), findsWidgets);
     });
 
-    testWidgets('Matrix Zone renders single shared dual-axis chart for multiple athletes',
+    testWidgets(
+        'Matrix Zone renders single shared dual-axis chart for multiple athletes',
         (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.75;
@@ -466,8 +475,10 @@ void main() {
         final database = await DB.db;
         await database.delete('logs');
         await database.delete('players');
-        await database.insert('players', {'id': 1, 'name': 'أحمد', 'mhr': 190, 'active': 1});
-        await database.insert('players', {'id': 2, 'name': 'كريم', 'mhr': 195, 'active': 1});
+        await database.insert(
+            'players', {'id': 1, 'name': 'أحمد', 'mhr': 190, 'active': 1});
+        await database.insert(
+            'players', {'id': 2, 'name': 'كريم', 'mhr': 195, 'active': 1});
         await database.insert('logs', {
           'player_id': 1,
           'date': dstr(DateTime.now()),
@@ -520,7 +531,8 @@ void main() {
         final database = await DB.db;
         await database.delete('logs');
         await database.delete('players');
-        await database.insert('players', {'id': 1, 'name': 'أحمد', 'mhr': 190, 'active': 1});
+        await database.insert(
+            'players', {'id': 1, 'name': 'أحمد', 'mhr': 190, 'active': 1});
 
         await tester.pumpWidget(
           const MaterialApp(
@@ -539,5 +551,9 @@ void main() {
 
       expect(find.byType(ProgressCurveHeader), findsNWidgets(5));
     });
+  });
+
+  tearDownAll(() async {
+    DB.testDatabase = null;
   });
 }

@@ -95,7 +95,7 @@ class HomeService {
       if (latestZone != null && latestZone.isNotEmpty) {
         highlights.add(HighlightItem(
           id: 'dynamic_zone',
-          titleAr: 'آخر زون تدريبي',
+          titleAr: 'آخر منطقة تدريبية',
           titleEn: 'Latest Zone',
           value: latestZone,
           subtitle: 'Target HR Training Zone',

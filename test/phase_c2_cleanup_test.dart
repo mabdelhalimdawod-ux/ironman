@@ -22,6 +22,7 @@ void main() {
 
     final tempDir = Directory.systemTemp.createTempSync('rowing_c2_test_');
     await databaseFactory.setDatabasesPath(tempDir.path);
+    DB.testDatabase = null;
 
     await AuthService.ensureTables();
     await ProgramService.ensureTables();
@@ -348,5 +349,9 @@ void main() {
         }
       }
     }
+  });
+
+  tearDownAll(() async {
+    DB.testDatabase = null;
   });
 }

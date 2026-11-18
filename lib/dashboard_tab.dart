@@ -1154,7 +1154,7 @@ class _DashboardTabState extends State<DashboardTab> {
           const SizedBox(height: 10),
           Text(
             s.isArabic
-                ? 'تحليل ذكي لـ EF، الواط، Decoupling، النبض، وزون كيرف (كارفونين)'
+                ? 'تحليل ذكي لـ EF، الواط، Decoupling، النبض، ومنحنى مناطق التدريب (كارفونين)'
                 : 'Smart curves for EF, Watts, Decoupling, HR & Zone Curve',
             style: const TextStyle(
               fontSize: 12,

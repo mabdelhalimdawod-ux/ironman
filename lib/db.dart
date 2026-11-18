@@ -2,6 +2,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dart:math';
 import 'heart_rate_zones.dart';
+import 'sync_engine.dart';
 
 const kinds = ['Erg', 'Water', 'Fitness', 'Running'];
 
@@ -317,7 +318,7 @@ class DB {
 
   static Future<Database> _open() async {
     final path = join(await getDatabasesPath(), 'rowing.db');
-    return openDatabase(path, version: 7, onCreate: (d, v) async {
+    return openDatabase(path, version: 8, onCreate: (d, v) async {
       await d.execute(
           'CREATE TABLE players(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mhr INTEGER, active INTEGER DEFAULT 1, curves_shared INTEGER, curves_shared_by TEXT)');
       await d.execute(
@@ -427,6 +428,121 @@ class DB {
               value REAL
             )
           ''');
+      await d.execute('''
+            CREATE TABLE IF NOT EXISTS program_cycles (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              name TEXT NOT NULL,
+              start_date TEXT NOT NULL,
+              end_date TEXT NOT NULL,
+              location TEXT DEFAULT '',
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL,
+              basic_reps INTEGER DEFAULT 3,
+              secondary_reps INTEGER DEFAULT 1,
+              notes_physio TEXT DEFAULT '',
+              notes_tech TEXT DEFAULT '',
+              comment TEXT DEFAULT ''
+            )
+          ''');
+      await d.execute('''
+            CREATE TABLE IF NOT EXISTS program_cycle_tests (
+              cycle_id INTEGER NOT NULL,
+              test_type TEXT NOT NULL,
+              test_date TEXT DEFAULT '',
+              target_value TEXT DEFAULT '',
+              is_completed INTEGER DEFAULT 0,
+              PRIMARY KEY (cycle_id, test_type)
+            )
+          ''');
+      await d.execute('''
+            CREATE TABLE IF NOT EXISTS program_day_config (
+              cycle_id INTEGER NOT NULL,
+              cycle_type TEXT NOT NULL,
+              day_of_week INTEGER NOT NULL,
+              location TEXT DEFAULT '',
+              dispatch_date TEXT DEFAULT '',
+              dispatch_time TEXT DEFAULT '',
+              comment TEXT DEFAULT '',
+              PRIMARY KEY (cycle_id, cycle_type, day_of_week)
+            )
+          ''');
+      await d.execute('''
+            CREATE TABLE IF NOT EXISTS program_sessions (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              cycle_id INTEGER NOT NULL,
+              cycle_type TEXT NOT NULL,
+              day_of_week INTEGER NOT NULL,
+              session_idx INTEGER NOT NULL,
+              name TEXT NOT NULL,
+              time TEXT NOT NULL,
+              notes_physio TEXT DEFAULT '',
+              notes_tech TEXT DEFAULT '',
+              comment TEXT DEFAULT ''
+            )
+          ''');
+      await d.execute('''
+            CREATE TABLE IF NOT EXISTS program_workout_items (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              session_id INTEGER NOT NULL,
+              section TEXT NOT NULL,
+              item_idx INTEGER NOT NULL,
+              time TEXT DEFAULT '',
+              duration_minutes INTEGER DEFAULT 0,
+              duration_seconds INTEGER DEFAULT 0,
+              hr_percent INTEGER DEFAULT 0,
+              hr_range TEXT DEFAULT '',
+              distance_meters INTEGER DEFAULT 0,
+              reps INTEGER DEFAULT 1,
+              kind TEXT DEFAULT 'Erg',
+              zone TEXT DEFAULT 'Z2',
+              details TEXT DEFAULT ''
+            )
+          ''');
+      await d.execute('''
+            CREATE TABLE IF NOT EXISTS cycle_templates (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              cycle_id INTEGER,
+              day_of_week INTEGER NOT NULL,
+              slot_idx INTEGER NOT NULL,
+              name TEXT DEFAULT '',
+              time TEXT DEFAULT '',
+              kind TEXT DEFAULT 'Erg',
+              zone TEXT DEFAULT 'Z2'
+            )
+          ''');
+      await d.execute('''
+            CREATE TABLE IF NOT EXISTS testing_dates (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              coach_id INTEGER,
+              test_name TEXT NOT NULL,
+              test_date TEXT NOT NULL,
+              created_at TEXT
+            )
+          ''');
+      await d.execute('''
+            CREATE TABLE IF NOT EXISTS testing_date_recipients (
+              testing_date_id INTEGER NOT NULL,
+              athlete_id INTEGER NOT NULL,
+              PRIMARY KEY (testing_date_id, athlete_id)
+            )
+          ''');
+      await d.execute('''
+            CREATE TABLE IF NOT EXISTS coach_messages (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              athlete_id INTEGER NOT NULL,
+              coach_id INTEGER,
+              message TEXT NOT NULL,
+              date TEXT NOT NULL,
+              is_read INTEGER DEFAULT 0
+            )
+          ''');
+      await d.execute('''
+            CREATE TABLE IF NOT EXISTS matrix_zone_config (
+              key TEXT PRIMARY KEY,
+              value TEXT
+            )
+          ''');
+      await SyncEngine.ensureDatabaseSyncSchema(d);
     }, onUpgrade: (d, oldVersion, newVersion) async {
       if (oldVersion < 2) {
         await d.execute('ALTER TABLE logs ADD COLUMN hr_max INTEGER');
@@ -500,12 +616,15 @@ class DB {
         }
 
         final playerCols = await d.rawQuery('PRAGMA table_info(players)');
-        final playerColNames = playerCols.map((c) => c['name'] as String).toSet();
+        final playerColNames =
+            playerCols.map((c) => c['name'] as String).toSet();
         if (!playerColNames.contains('curves_shared')) {
-          await d.execute('ALTER TABLE players ADD COLUMN curves_shared INTEGER');
+          await d
+              .execute('ALTER TABLE players ADD COLUMN curves_shared INTEGER');
         }
         if (!playerColNames.contains('curves_shared_by')) {
-          await d.execute('ALTER TABLE players ADD COLUMN curves_shared_by TEXT');
+          await d
+              .execute('ALTER TABLE players ADD COLUMN curves_shared_by TEXT');
         }
 
         await d.execute('''
@@ -567,6 +686,140 @@ class DB {
           }
         }
       }
+      if (oldVersion < 8) {
+        await d.execute('''
+          CREATE TABLE IF NOT EXISTS program_cycles (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            start_date TEXT NOT NULL,
+            end_date TEXT NOT NULL,
+            location TEXT DEFAULT '',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            basic_reps INTEGER DEFAULT 3,
+            secondary_reps INTEGER DEFAULT 1,
+            notes_physio TEXT DEFAULT '',
+            notes_tech TEXT DEFAULT '',
+            comment TEXT DEFAULT ''
+          )
+        ''');
+        await d.execute('''
+          CREATE TABLE IF NOT EXISTS program_cycle_tests (
+            cycle_id INTEGER NOT NULL,
+            test_type TEXT NOT NULL,
+            test_date TEXT DEFAULT '',
+            target_value TEXT DEFAULT '',
+            is_completed INTEGER DEFAULT 0,
+            PRIMARY KEY (cycle_id, test_type)
+          )
+        ''');
+        await d.execute('''
+          CREATE TABLE IF NOT EXISTS program_day_config (
+            cycle_id INTEGER NOT NULL,
+            cycle_type TEXT NOT NULL,
+            day_of_week INTEGER NOT NULL,
+            location TEXT DEFAULT '',
+            dispatch_date TEXT DEFAULT '',
+            dispatch_time TEXT DEFAULT '',
+            comment TEXT DEFAULT '',
+            PRIMARY KEY (cycle_id, cycle_type, day_of_week)
+          )
+        ''');
+        await d.execute('''
+          CREATE TABLE IF NOT EXISTS program_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cycle_id INTEGER NOT NULL,
+            cycle_type TEXT NOT NULL,
+            day_of_week INTEGER NOT NULL,
+            session_idx INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            time TEXT NOT NULL,
+            notes_physio TEXT DEFAULT '',
+            notes_tech TEXT DEFAULT '',
+            comment TEXT DEFAULT ''
+          )
+        ''');
+        await d.execute('''
+          CREATE TABLE IF NOT EXISTS program_workout_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id INTEGER NOT NULL,
+            section TEXT NOT NULL,
+            item_idx INTEGER NOT NULL,
+            time TEXT DEFAULT '',
+            duration_minutes INTEGER DEFAULT 0,
+            duration_seconds INTEGER DEFAULT 0,
+            hr_percent INTEGER DEFAULT 0,
+            hr_range TEXT DEFAULT '',
+            distance_meters INTEGER DEFAULT 0,
+            reps INTEGER DEFAULT 1,
+            kind TEXT DEFAULT 'Erg',
+            zone TEXT DEFAULT 'Z2',
+            details TEXT DEFAULT ''
+          )
+        ''');
+        await d.execute('''
+          CREATE TABLE IF NOT EXISTS cycle_templates (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cycle_id INTEGER,
+            day_of_week INTEGER NOT NULL,
+            slot_idx INTEGER NOT NULL,
+            name TEXT DEFAULT '',
+            time TEXT DEFAULT '',
+            kind TEXT DEFAULT 'Erg',
+            zone TEXT DEFAULT 'Z2'
+          )
+        ''');
+        await d.execute('''
+          CREATE TABLE IF NOT EXISTS testing_dates (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            coach_id INTEGER,
+            test_name TEXT NOT NULL,
+            test_date TEXT NOT NULL,
+            created_at TEXT
+          )
+        ''');
+        final tdCols = await d.rawQuery("PRAGMA table_info('testing_dates')");
+        final tdNames = tdCols.map((c) => c['name'] as String).toSet();
+        if (!tdNames.contains('coach_id')) {
+          await d
+              .execute("ALTER TABLE testing_dates ADD COLUMN coach_id INTEGER");
+        }
+        if (!tdNames.contains('created_at')) {
+          await d
+              .execute("ALTER TABLE testing_dates ADD COLUMN created_at TEXT");
+        }
+
+        await d.execute('''
+          CREATE TABLE IF NOT EXISTS testing_date_recipients (
+            testing_date_id INTEGER NOT NULL,
+            athlete_id INTEGER NOT NULL,
+            PRIMARY KEY (testing_date_id, athlete_id)
+          )
+        ''');
+        await d.execute('''
+          CREATE TABLE IF NOT EXISTS coach_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            athlete_id INTEGER NOT NULL,
+            coach_id INTEGER,
+            message TEXT NOT NULL,
+            date TEXT NOT NULL,
+            is_read INTEGER DEFAULT 0
+          )
+        ''');
+        final cmCols = await d.rawQuery("PRAGMA table_info('coach_messages')");
+        final cmNames = cmCols.map((c) => c['name'] as String).toSet();
+        if (!cmNames.contains('coach_id')) {
+          await d.execute(
+              "ALTER TABLE coach_messages ADD COLUMN coach_id INTEGER");
+        }
+        await d.execute('''
+          CREATE TABLE IF NOT EXISTS matrix_zone_config (
+            key TEXT PRIMARY KEY,
+            value TEXT
+          )
+        ''');
+        await SyncEngine.ensureDatabaseSyncSchema(d);
+      }
     });
   }
 
@@ -574,11 +827,16 @@ class DB {
           [List<Object?>? a]) async =>
       (await db).rawQuery(sql, a);
 
-  static Future<void> put(String table, Map<String, Object?> v) async =>
-      (await db).insert(table, v, conflictAlgorithm: ConflictAlgorithm.replace);
+  static Future<void> put(String table, Map<String, Object?> v) async {
+    await (await db)
+        .insert(table, v, conflictAlgorithm: ConflictAlgorithm.replace);
+    SyncEngine.instance.scheduleDebouncedSync();
+  }
 
-  static Future<void> del(String table, String where, List<Object?> a) async =>
-      (await db).delete(table, where: where, whereArgs: a);
+  static Future<void> del(String table, String where, List<Object?> a) async {
+    await (await db).delete(table, where: where, whereArgs: a);
+    SyncEngine.instance.scheduleDebouncedSync();
+  }
 
   static Future<List<Map<String, Object?>>> sessions(String date) =>
       q('SELECT * FROM sessions WHERE date=? ORDER BY idx', [date]);

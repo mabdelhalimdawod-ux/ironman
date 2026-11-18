@@ -19,6 +19,7 @@ void main() {
 
     final tempDir = Directory.systemTemp.createTempSync('rowing_multi_size_');
     await databaseFactory.setDatabasesPath(tempDir.path);
+    DB.testDatabase = null;
 
     // بذرة بيانات أساسية لإظهار الحصة القادمة ومواعيد الاختبارات والدورات
     await AuthService.ensureTables();
@@ -43,6 +44,10 @@ void main() {
     });
   });
 
+  tearDownAll(() async {
+    DB.testDatabase = null;
+  });
+
   const testUser = AppUser(
     id: 1,
     email: 'coach@engine.rowing',
@@ -64,11 +69,11 @@ void main() {
 
   Future<void> pumpUntilLoaded(WidgetTester tester) async {
     await tester.pump();
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < 200; i++) {
       if (find.byType(CircularProgressIndicator).evaluate().isEmpty) {
         break;
       }
-      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 100)));
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 50)));
       await tester.pump();
     }
   }

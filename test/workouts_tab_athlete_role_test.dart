@@ -20,6 +20,7 @@ void main() {
 
     final tempDir = Directory.systemTemp.createTempSync('rowing_workouts_role_');
     await databaseFactory.setDatabasesPath(tempDir.path);
+    DB.testDatabase = null;
 
     // تجهيز الجداول وزرع البيانات
     await AuthService.ensureTables();
@@ -326,5 +327,9 @@ void main() {
         }
       }
     }
+  });
+
+  tearDownAll(() async {
+    DB.testDatabase = null;
   });
 }

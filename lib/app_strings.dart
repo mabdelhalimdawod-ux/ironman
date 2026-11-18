@@ -573,8 +573,8 @@ class AppStrings {
       ? 'حسابك غير مفعّل حاليًا، تواصل مع الإدارة'
       : 'Your account is not active right now. Please contact the administration.';
   String get awaitingActivationError => isArabic
-      ? 'حسابك غير مفعّل حاليًا، تواصل مع الإدارة'
-      : 'Your account is not active right now. Please contact the administration.';
+      ? 'حسابك بانتظار التفعيل من الإدارة'
+      : 'Your account is awaiting admin activation';
   String get coachSubscriptionInactive => isArabic
       ? 'اشتراك المدرب متوقف حالياً. تواصل مع مدربك'
       : 'Coach subscription is inactive. Contact your coach';
@@ -893,7 +893,7 @@ class AppStrings {
       : 'Critical Power (CP) history & official tests';
 
   String get periodFilterWeek => isArabic ? 'أسبوع' : 'Week';
-  String get periodFilterCycle => isArabic ? 'سايكل' : 'Cycle';
+  String get periodFilterCycle => isArabic ? 'الدورة المرحلية' : 'Cycle';
 
   // ==================== Workouts Tab & Athlete Entry ====================
   String get athleteWorkoutTitle =>
@@ -917,12 +917,13 @@ class AppStrings {
       : 'No scheduled sessions for this date';
   String get periodFilterCustom => isArabic ? 'مدة مخصصة' : 'Custom range';
   String get noCyclesRecorded =>
-      isArabic ? 'لسه مفيش سايكلات متسجلة' : 'No cycles recorded yet';
+      isArabic ? 'لا توجد دورات مرحلية مسجلة بعد' : 'No cycles recorded yet';
   String get prevWeek => isArabic ? 'الأسبوع السابق' : 'Previous week';
   String get nextWeek => isArabic ? 'الأسبوع التالي' : 'Next week';
   String get pickWeekTooltip =>
       isArabic ? 'اختيار أسبوع آخر' : 'Pick another week';
-  String get pickCycleHint => isArabic ? 'اختر السايكل' : 'Select cycle';
+  String get pickCycleHint =>
+      isArabic ? 'اختر الدورة المرحلية' : 'Select cycle';
   String get pickCustomDates =>
       isArabic ? 'تحديد من - إلى' : 'Pick start - end';
 
@@ -1002,4 +1003,20 @@ class AppStrings {
   String get noCustomWorkout => isArabic
       ? 'لا يوجد تمرين مخصص لهذا اليوم'
       : 'No custom workout for this day';
+
+  // ==================== محرك المزامنة (Sync Engine) ====================
+  String get syncStatusSynced => isArabic ? 'تمت المزامنة بنجاح' : 'Synced';
+  String get syncStatusSyncing => isArabic ? 'جاري المزامنة...' : 'Syncing...';
+  String get syncStatusOffline =>
+      isArabic ? 'الوضع المحلي (غير متصل)' : 'Offline (Local)';
+  String get syncStatusError =>
+      isArabic ? 'تعذر الاتصال بالمزامنة' : 'Sync Error';
+  String syncLastTime(String time) =>
+      isArabic ? 'آخر مزامنة: $time' : 'Last sync: $time';
+  String syncPendingCount(int count) =>
+      isArabic ? '$count تعديل بانتظار الرفع' : '$count pending changes';
+  String get syncNowAction => isArabic ? 'مزامنة فورية الآن' : 'Sync Now';
+  String get serverLockRejectionNotice => isArabic
+      ? 'هذه الحصة مقفولة تلقائياً بعد منتصف الليل ولا يمكن تعديلها، تم استعادة بيانات الخادم'
+      : 'This session is locked after midnight and cannot be edited. Server state restored.';
 }
