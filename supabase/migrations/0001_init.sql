@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS public.coach_requests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     athlete_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     coach_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected')),
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'cancelled')),
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
     deleted_at TIMESTAMPTZ,
@@ -1108,3 +1108,33 @@ FROM public.logs l
 JOIN public.players p ON (l.player_id = p.local_id OR l.athlete_user_id = p.athlete_user_id)
 WHERE p.curves_shared = 1
   AND p.coach_id = public.get_my_coach_id();
+
+-- ============================================================================
+-- 25. إعداد مجلد تخزين صور المستخدمين (avatars storage bucket)
+-- ============================================================================
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('avatars', 'avatars', false)
+ON CONFLICT (id) DO NOTHING;
+
+DROP POLICY IF EXISTS "avatars_user_upload" ON storage.objects;
+CREATE POLICY "avatars_user_upload" ON storage.objects
+FOR INSERT TO authenticated
+WITH CHECK (
+    bucket_id = 'avatars'
+    AND (name = auth.uid()::text || '.jpg' OR (storage.foldername(name))[1] = auth.uid()::text)
+);
+
+DROP POLICY IF EXISTS "avatars_user_update" ON storage.objects;
+CREATE POLICY "avatars_user_update" ON storage.objects
+FOR UPDATE TO authenticated
+USING (
+    bucket_id = 'avatars'
+    AND (name = auth.uid()::text || '.jpg' OR (storage.foldername(name))[1] = auth.uid()::text)
+);
+
+DROP POLICY IF EXISTS "avatars_read" ON storage.objects;
+CREATE POLICY "avatars_read" ON storage.objects
+FOR SELECT TO authenticated
+USING (
+    bucket_id = 'avatars'
+);

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'app_strings.dart';
 import 'auth_service.dart';
+import 'curve_privacy_service.dart';
+import 'db.dart';
 import 'engine_rowing_ui.dart';
 import 'progress_curve_page.dart';
 import 'progress_panel.dart';
@@ -86,6 +88,83 @@ class _ProgressTabState extends State<ProgressTab> {
     ),
   ];
 
+  bool _curvesShared = false;
+  List<Map<String, dynamic>> _teammates = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTeammatesAndPrivacy();
+  }
+
+  Future<void> _loadTeammatesAndPrivacy() async {
+    final user = widget.user;
+    if (user != null && user.isAthlete) {
+      final db = await DB.db;
+      final playerRows = await db.query('players', where: 'id = ?', whereArgs: [user.id], limit: 1);
+      if (playerRows.isNotEmpty) {
+        _curvesShared = (playerRows.first['curves_shared'] as num?)?.toInt() == 1;
+      }
+      if (user.coachId != null) {
+        final teamRows = await db.query(
+          'players',
+          where: 'id != ?',
+          whereArgs: [user.id],
+        );
+        _teammates = teamRows;
+      }
+      if (mounted) setState(() {});
+    }
+  }
+
+  void _onTeammateTap(AppStrings s, Map<String, dynamic> teammate) {
+    final shared = (teammate['curves_shared'] as num?)?.toInt() == 1;
+    final name = teammate['name']?.toString() ?? 'لاعب';
+    if (!shared) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: EngineRowingUI.cardFill,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: EngineRowingUI.bgGridLine),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.lock_rounded, color: Colors.amber, size: 22),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  name,
+                  style: const TextStyle(color: EngineRowingUI.textWhite, fontSize: 16),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            s.curvesNotShared,
+            style: const TextStyle(color: EngineRowingUI.captionGrey, fontSize: 13),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(s.cancel, style: const TextStyle(color: EngineRowingUI.captionGrey)),
+            ),
+          ],
+        ),
+      );
+    } else {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ProgressCurvePage(
+            curveType: ProgressCurveType.matrixZone,
+            user: widget.user,
+          ),
+        ),
+      );
+    }
+  }
+
   void _openCurve(ProgressCurveType type) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -143,6 +222,16 @@ class _ProgressTabState extends State<ProgressTab> {
               ],
             ),
           ),
+
+          // ── قسم مشاركة المنحنيات وزملاء الفريق (خاص باللاعبين) ──
+          if (widget.user != null && widget.user!.isAthlete) ...[
+            _buildAthletePrivacyCard(s),
+            const SizedBox(height: 12),
+            if (_teammates.isNotEmpty) ...[
+              _buildTeammatesList(s),
+              const SizedBox(height: 14),
+            ],
+          ],
           LayoutBuilder(
             builder: (context, constraints) {
               final isWide = constraints.maxWidth >= 560;
@@ -165,6 +254,131 @@ class _ProgressTabState extends State<ProgressTab> {
           const SizedBox(height: 20),
         ],
       ),
+    );
+  }
+
+  Widget _buildAthletePrivacyCard(AppStrings s) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: EngineRowingUI.cardFill,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: EngineRowingUI.bgGridLine),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            _curvesShared ? Icons.lock_open_rounded : Icons.lock_outline_rounded,
+            color: _curvesShared ? EngineRowingUI.neonLime : Colors.amber,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  s.shareMyCurves,
+                  style: const TextStyle(
+                    color: EngineRowingUI.textWhite,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+                Text(
+                  s.shareMyCurvesSubtitle,
+                  style: const TextStyle(color: EngineRowingUI.captionGrey, fontSize: 10.5),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: _curvesShared,
+            activeThumbColor: EngineRowingUI.neonLime,
+            onChanged: (val) async {
+              setState(() => _curvesShared = val);
+              await CurvePrivacyService.setCurveSharing(
+                actor: widget.user!,
+                targetPlayerId: widget.user!.id,
+                shared: val,
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTeammatesList(AppStrings s) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          s.myTeammates,
+          style: const TextStyle(
+            color: EngineRowingUI.gold,
+            fontWeight: FontWeight.bold,
+            fontSize: 12.5,
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 44,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _teammates.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, idx) {
+              final tm = _teammates[idx];
+              final shared = (tm['curves_shared'] as num?)?.toInt() == 1;
+              final name = tm['name']?.toString() ?? 'لاعب';
+
+              return InkWell(
+                onTap: () => _onTeammateTap(s, tm),
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: EngineRowingUI.equationCardFill,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: shared ? EngineRowingUI.neonLime.withAlpha(90) : EngineRowingUI.bgGridLine,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircleAvatar(
+                        radius: 12,
+                        backgroundColor: shared ? EngineRowingUI.neonLime.withAlpha(40) : Colors.white12,
+                        child: Text(
+                          name.isNotEmpty ? name.substring(0, 1) : '?',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.bold,
+                            color: shared ? EngineRowingUI.neonLime : EngineRowingUI.captionGrey,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        name,
+                        style: const TextStyle(color: EngineRowingUI.textWhite, fontSize: 12),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        shared ? Icons.check_circle_outline_rounded : Icons.lock_outline_rounded,
+                        size: 14,
+                        color: shared ? EngineRowingUI.neonLime : Colors.amber,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 

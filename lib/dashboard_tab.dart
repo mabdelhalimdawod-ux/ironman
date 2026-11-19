@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_strings.dart';
 import 'auth_service.dart';
+import 'coach_request_service.dart';
 import 'engine_rowing_ui.dart';
 import 'home_service.dart';
 import 'metrics_curve_page.dart';
@@ -33,6 +34,10 @@ class _DashboardTabState extends State<DashboardTab> {
   // مواعيد الاختبارات
   List<TestingDateItem> _testingDates = [];
 
+  // طلبات انضمام المدرب (المرحلة س3)
+  Map<String, dynamic>? _pendingCoachRequest;
+  List<Map<String, dynamic>> _coachPendingRequests = [];
+
   @override
   void initState() {
     super.initState();
@@ -53,11 +58,22 @@ class _DashboardTabState extends State<DashboardTab> {
     try {
       final user = widget.user ?? AuthService.currentUser;
 
-      // 1. رسالة المدرب (للاعب)
+      // 1. رسالة المدرب والطلبات (للاعب)
       if (user != null && user.isAthlete) {
         _unreadMessage = await HomeService.getUnreadCoachMessage(user.id);
+        _pendingCoachRequest =
+            await CoachRequestService.getPendingRequestForAthlete(user.id);
       } else {
         _unreadMessage = null;
+        _pendingCoachRequest = null;
+      }
+
+      // 2. طلبات اللاعبين الواردة (للمدرب)
+      if (user != null && user.isCoach) {
+        _coachPendingRequests =
+            await CoachRequestService.getPendingRequestsForCoach(user.id);
+      } else {
+        _coachPendingRequests = [];
       }
 
       // 3. Highlights
@@ -114,6 +130,20 @@ class _DashboardTabState extends State<DashboardTab> {
                 // ── رسالة المدرب إن وجدت (فقط للاعبين) ──
                 if (_unreadMessage != null) ...[
                   _buildCoachMessageCard(s, _unreadMessage!),
+                  const SizedBox(height: 16),
+                ],
+
+                // ── كارت اختيار المدرب أو الطلب المعلق (فقط للاعبين) ──
+                if (user != null && user.isAthlete) ...[
+                  _buildAthleteCoachCard(s, user),
+                  const SizedBox(height: 16),
+                ],
+
+                // ── كارت طلبات اللاعبين الواردة (فقط للمدربين) ──
+                if (user != null &&
+                    user.isCoach &&
+                    _coachPendingRequests.isNotEmpty) ...[
+                  _buildCoachRequestsCard(s, user),
                   const SizedBox(height: 16),
                 ],
 
@@ -322,6 +352,521 @@ class _DashboardTabState extends State<DashboardTab> {
                 ),
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── كارت اختيار المدرب أو الطلب المعلق للاعب ──
+  Widget _buildAthleteCoachCard(AppStrings s, AppUser user) {
+    if (_pendingCoachRequest != null) {
+      return Container(
+        decoration: BoxDecoration(
+          color: EngineRowingUI.cardFill,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.amber.withAlpha(120), width: 1.2),
+        ),
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withAlpha(40),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.hourglass_top_rounded,
+                      color: Colors.amber, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        s.pendingCoachRequest,
+                        style: const TextStyle(
+                          color: EngineRowingUI.textWhite,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        s.isArabic
+                            ? 'طلبك قيد المراجعة لدى المدرب، يمكنك إلغاؤه إن أردت'
+                            : 'Your request is pending review by the coach',
+                        style: const TextStyle(
+                            color: EngineRowingUI.captionGrey, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: TextButton.icon(
+                icon: const Icon(Icons.close_rounded, size: 16),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.redAccent,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                ),
+                onPressed: () async {
+                  final reqId =
+                      (_pendingCoachRequest!['id'] as num?)?.toInt() ?? 0;
+                  if (reqId > 0) {
+                    await CoachRequestService.cancelRequest(reqId);
+                    await _loadHomeData();
+                  }
+                },
+                label:
+                    Text(s.cancelRequest, style: const TextStyle(fontSize: 12)),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (user.coachId == null) {
+      return Container(
+        decoration: BoxDecoration(
+          color: EngineRowingUI.cardFill,
+          borderRadius: BorderRadius.circular(16),
+          border:
+              Border.all(color: EngineRowingUI.gold.withAlpha(140), width: 1.2),
+        ),
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: EngineRowingUI.gold.withAlpha(40),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.person_search_rounded,
+                      color: EngineRowingUI.gold, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        s.chooseCoach,
+                        style: const TextStyle(
+                          color: EngineRowingUI.textWhite,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        s.chooseCoachSubtitle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            color: EngineRowingUI.captionGrey, fontSize: 11.5),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.person_add_alt_1_rounded, size: 16),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: EngineRowingUI.gold,
+                  foregroundColor: EngineRowingUI.bgNavy,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: () => _openCoachSelectionDialog(s, user),
+                label: Text(s.chooseCoach,
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // اللاعب لديه مدرب بالفعل: كارت معلومات مختصر
+    return Container(
+      decoration: BoxDecoration(
+        color: EngineRowingUI.equationCardFill,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: EngineRowingUI.bgGridLine),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      child: Row(
+        children: [
+          const Icon(Icons.sports_rounded,
+              color: EngineRowingUI.gold, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '${s.currentCoach}: كوتش الفريق',
+              style: const TextStyle(
+                  color: EngineRowingUI.textWhite, fontSize: 12),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          TextButton(
+            onPressed: () => _openCoachSelectionDialog(s, user),
+            child: Text(s.changeCoach,
+                style:
+                    const TextStyle(color: EngineRowingUI.gold, fontSize: 11)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openCoachSelectionDialog(AppStrings s, AppUser user) async {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return FutureBuilder<List<Map<String, dynamic>>>(
+          future: CoachRequestService.getActiveCoaches(),
+          builder: (context, snapshot) {
+            return AlertDialog(
+              backgroundColor: EngineRowingUI.cardFill,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: EngineRowingUI.bgGridLine),
+              ),
+              title: Text(
+                s.chooseCoach,
+                style: const TextStyle(
+                    color: EngineRowingUI.textWhite, fontSize: 16),
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: snapshot.connectionState == ConnectionState.waiting
+                    ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20),
+                          child: CircularProgressIndicator(
+                              color: EngineRowingUI.gold),
+                        ),
+                      )
+                    : (snapshot.data == null || snapshot.data!.isEmpty)
+                        ? Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Text(
+                              s.isArabic
+                                  ? 'لا يوجد مدربين مفعّلين متاحين حالياً'
+                                  : 'No active coaches available at the moment',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                  color: EngineRowingUI.captionGrey,
+                                  fontSize: 13),
+                            ),
+                          )
+                        : ListView.separated(
+                            shrinkWrap: true,
+                            itemCount: snapshot.data!.length,
+                            separatorBuilder: (_, __) => const Divider(
+                                color: EngineRowingUI.bgGridLine, height: 1),
+                            itemBuilder: (context, idx) {
+                              final coach = snapshot.data![idx];
+                              final coachId = coach['id']?.toString() ?? '';
+                              final coachName =
+                                  coach['name']?.toString() ?? 'مدرب';
+
+                              return ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor:
+                                      EngineRowingUI.gold.withAlpha(40),
+                                  child: const Icon(Icons.sports,
+                                      color: EngineRowingUI.gold, size: 20),
+                                ),
+                                title: Text(
+                                  coachName,
+                                  style: const TextStyle(
+                                      color: EngineRowingUI.textWhite,
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                subtitle: Text(
+                                  coach['email']?.toString() ?? '',
+                                  style: const TextStyle(
+                                      color: EngineRowingUI.captionGrey,
+                                      fontSize: 11),
+                                ),
+                                trailing: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: EngineRowingUI.gold,
+                                    foregroundColor: EngineRowingUI.bgNavy,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 4),
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                                  onPressed: () async {
+                                    Navigator.pop(ctx);
+                                    try {
+                                      await CoachRequestService
+                                          .sendCoachRequest(
+                                        athleteId: user.id,
+                                        coachId: coachId,
+                                      );
+                                      await _loadHomeData();
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              s.isArabic
+                                                  ? 'تم إرسال طلب الانضمام للمدرب بنجاح'
+                                                  : 'Coach request sent successfully',
+                                            ),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content: Text('$e'),
+                                            backgroundColor: Colors.redAccent,
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                                  child: Text(s.sendRequest,
+                                      style: const TextStyle(fontSize: 11)),
+                                ),
+                              );
+                            },
+                          ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(s.cancel,
+                      style:
+                          const TextStyle(color: EngineRowingUI.captionGrey)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ── كارت طلبات اللاعبين الواردة للمدرب ──
+  Widget _buildCoachRequestsCard(AppStrings s, AppUser user) {
+    return Container(
+      decoration: BoxDecoration(
+        color: EngineRowingUI.cardFill,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+            color: EngineRowingUI.neonLime.withAlpha(120), width: 1.2),
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: EngineRowingUI.neonLime.withAlpha(40),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.group_add_rounded,
+                    color: EngineRowingUI.neonLime, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${s.coachRequestsTitle} (${_coachPendingRequests.length})',
+                      style: const TextStyle(
+                        color: EngineRowingUI.textWhite,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      s.isArabic
+                          ? 'لديك طلبات انضمام جديدة من لاعبين بانتظار موافقتك'
+                          : 'You have new athlete join requests waiting for review',
+                      style: const TextStyle(
+                          color: EngineRowingUI.captionGrey, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.checklist_rounded, size: 16),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: EngineRowingUI.neonLime,
+                foregroundColor: EngineRowingUI.bgNavy,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: () => _openCoachRequestsDialog(s, user),
+              label: Text(
+                s.isArabic ? 'مراجعة الطلبات' : 'Review Requests',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openCoachRequestsDialog(AppStrings s, AppUser user) async {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: EngineRowingUI.cardFill,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: EngineRowingUI.bgGridLine),
+        ),
+        title: Text(
+          s.coachRequestsTitle,
+          style: const TextStyle(color: EngineRowingUI.textWhite, fontSize: 16),
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: _coachPendingRequests.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    s.isArabic
+                        ? 'لا توجد طلبات معلّقة حالياً'
+                        : 'No pending requests',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        color: EngineRowingUI.captionGrey, fontSize: 13),
+                  ),
+                )
+              : ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: _coachPendingRequests.length,
+                  separatorBuilder: (_, __) => const Divider(
+                      color: EngineRowingUI.bgGridLine, height: 1),
+                  itemBuilder: (context, idx) {
+                    final req = _coachPendingRequests[idx];
+                    final reqId = (req['id'] as num?)?.toInt() ?? 0;
+                    final athleteId = req['athlete_id'];
+
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.lightBlueAccent.withAlpha(40),
+                        child: const Icon(Icons.person,
+                            color: Colors.lightBlueAccent, size: 20),
+                      ),
+                      title: Text(
+                        'لاعب #$athleteId',
+                        style: const TextStyle(
+                            color: EngineRowingUI.textWhite,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text(
+                        'تاريخ الطلب: ${(req['created_at']?.toString() ?? "").substring(0, 10)}',
+                        style: const TextStyle(
+                            color: EngineRowingUI.captionGrey, fontSize: 10.5),
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.check_circle_rounded,
+                                color: Colors.greenAccent, size: 22),
+                            tooltip: s.accept,
+                            onPressed: () async {
+                              Navigator.pop(ctx);
+                              try {
+                                await CoachRequestService.respondToRequest(
+                                  requestId: reqId,
+                                  accept: true,
+                                  coach: user,
+                                );
+                                await _loadHomeData();
+                              } catch (e) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text('$e'),
+                                        backgroundColor: Colors.redAccent),
+                                  );
+                                }
+                              }
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.cancel_rounded,
+                                color: Colors.redAccent, size: 22),
+                            tooltip: s.reject,
+                            onPressed: () async {
+                              Navigator.pop(ctx);
+                              try {
+                                await CoachRequestService.respondToRequest(
+                                  requestId: reqId,
+                                  accept: false,
+                                  coach: user,
+                                );
+                                await _loadHomeData();
+                              } catch (e) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text('$e'),
+                                        backgroundColor: Colors.redAccent),
+                                  );
+                                }
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(s.cancel,
+                style: const TextStyle(color: EngineRowingUI.captionGrey)),
           ),
         ],
       ),

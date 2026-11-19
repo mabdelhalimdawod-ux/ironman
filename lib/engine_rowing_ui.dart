@@ -83,6 +83,7 @@ class EngineRowingUI {
   static const Color labelSlate = Color(0xFF8596B8);
   static const Color captionGrey = Color(0xFF637599);
   static const Color barTrackBg = Color(0xFF162752);
+  static const Color gold = Color(0xFFFFB300);
 
   // ألوان الزونات الجديدة المعتمدة
   // اللون الفسفوري الخفيف لـ zone1

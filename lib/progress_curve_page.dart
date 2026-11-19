@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'app_strings.dart';
 import 'auth_service.dart';
+import 'curve_privacy_service.dart';
 import 'db.dart';
 import 'engine_rowing_ui.dart';
 import 'heart_rate_zones.dart';
@@ -188,8 +189,18 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
       final isAthlete = widget.user?.isAthlete == true;
       final athletePlayerId = widget.user?.playerId ?? widget.user?.id;
       if (isAthlete && athletePlayerId != null) {
+        // اللاعب يرى نفسه وزملاء الفريق الذين وافقوا على مشاركة منحنياتهم فقط
+        final allowedTeammateIds = <int>{};
+        for (final p in players) {
+          final pid = (p['id'] as num?)?.toInt();
+          if (pid != null &&
+              (pid == athletePlayerId ||
+                  (p['curves_shared'] as num?)?.toInt() == 1)) {
+            allowedTeammateIds.add(pid);
+          }
+        }
         _players = _players
-            .where((p) => (p['id'] as num?)?.toInt() == athletePlayerId)
+            .where((p) => allowedTeammateIds.contains((p['id'] as num?)?.toInt()))
             .toList();
         if (_players.isEmpty) {
           _players = [
@@ -223,10 +234,10 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
   /// تبديل اختيار لاعب: عملية محلية على قائمة الـ IDs فقط عبر setState،
   /// ولا تستعلم من القاعدة عن باقي اللاعبين أبداً، وتعيد استخدام الكاش إن وُجد لنفس المدة.
   void _togglePlayer(int playerId) {
-    if (widget.user?.isAthlete == true) {
-      return;
-    }
     if (_selectedPlayerIds.contains(playerId)) {
+      if (widget.user?.isAthlete == true && _selectedPlayerIds.length <= 1) {
+        return; // الإبقاء على لاعب واحد على الأقل للمقارنة
+      }
       setState(() {
         _selectedPlayerIds.remove(playerId);
       });
@@ -321,6 +332,17 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
     setState(() => _loadingPlayerIds.add(playerId));
 
     try {
+      if (widget.user != null) {
+        final allowed = await CurvePrivacyService.canViewCurves(
+          viewer: widget.user!,
+          ownerPlayerId: playerId,
+        );
+        if (!allowed) {
+          if (mounted) setState(() => _loadingPlayerIds.remove(playerId));
+          return;
+        }
+      }
+
       final playerMap = _players.firstWhere(
         (p) => (p['id'] as num?)?.toInt() == playerId,
         orElse: () => {'id': playerId, 'name': '#$playerId', 'mhr': 190},
@@ -332,14 +354,28 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
       final startStr = dstr(_period.start);
       final endStr = dstr(_period.end);
 
-      final logRows = await DB.q('''
-        SELECT l.*, p.mhr as player_mhr, s.zone as session_zone
-        FROM logs l
-        JOIN players p ON l.player_id = p.id
-        LEFT JOIN sessions s ON l.date = s.date AND l.idx = s.idx
-        WHERE l.player_id = ? AND l.date >= ? AND l.date <= ?
-        ORDER BY l.date ASC, l.idx ASC
-      ''', [playerId, startStr, endStr]);
+      final isTeammate = widget.user?.isAthlete == true &&
+          (widget.user?.playerId ?? widget.user?.id) != playerId;
+
+      final List<Map<String, Object?>> logRows;
+      if (isTeammate) {
+        logRows = await DB.q('''
+          SELECT c.*, p.mhr as player_mhr, '' as session_zone
+          FROM shared_curve_cache c
+          LEFT JOIN players p ON c.player_id = p.id
+          WHERE c.player_id = ? AND c.date >= ? AND c.date <= ?
+          ORDER BY c.date ASC, c.idx ASC
+        ''', [playerId, startStr, endStr]);
+      } else {
+        logRows = await DB.q('''
+          SELECT l.*, p.mhr as player_mhr, s.zone as session_zone
+          FROM logs l
+          JOIN players p ON l.player_id = p.id
+          LEFT JOIN sessions s ON l.date = s.date AND l.idx = s.idx
+          WHERE l.player_id = ? AND l.date >= ? AND l.date <= ?
+          ORDER BY l.date ASC, l.idx ASC
+        ''', [playerId, startStr, endStr]);
+      }
 
       final hrvByDate = <String, List<double>>{};
       final rhrByDate = <String, List<double>>{};

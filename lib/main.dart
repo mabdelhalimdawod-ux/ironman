@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'admin_placeholder.dart';
+import 'admin_page.dart';
 import 'app_strings.dart';
 import 'auth_service.dart';
 import 'cloud_api.dart';
@@ -122,7 +122,10 @@ class _IronmanAppState extends State<IronmanApp> {
               : _currentUser == null
                   ? LoginPage(onLoginSuccess: _handleLoginSuccess)
                   : _currentUser!.isAdmin
-                      ? AdminPlaceholderPage(onLogout: _handleLogout)
+                      ? AdminPage(
+                          onLogout: _handleLogout,
+                          currentUser: _currentUser,
+                        )
                       : MainNavigationScaffold(
                           user: _currentUser,
                           onLogout: _handleLogout,

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'cloud_config.dart';
 
@@ -23,6 +24,7 @@ class CloudUserProfile {
   final String? photoPath;
   final String timezone;
   final bool subscriptionActive;
+  final DateTime? createdAt;
 
   const CloudUserProfile({
     required this.id,
@@ -34,6 +36,7 @@ class CloudUserProfile {
     this.photoPath,
     this.timezone = 'Africa/Cairo',
     required this.subscriptionActive,
+    this.createdAt,
   });
 
   bool get isAdmin => role == 'admin';
@@ -51,6 +54,7 @@ class CloudUserProfile {
       photoPath: map['photo_path']?.toString(),
       timezone: map['timezone']?.toString() ?? 'Africa/Cairo',
       subscriptionActive: subscriptionActive,
+      createdAt: map['created_at'] != null ? DateTime.tryParse(map['created_at'].toString()) : null,
     );
   }
 
@@ -63,6 +67,7 @@ class CloudUserProfile {
         'player_id': playerId,
         'photo_path': photoPath,
         'timezone': timezone,
+        'created_at': createdAt?.toIso8601String(),
         'subscription_active': subscriptionActive ? 1 : 0,
       };
 }
@@ -73,6 +78,7 @@ class CloudAuthResult {
   final CloudUserProfile? profile;
   final CloudAuthErrorCode? errorCode;
   final String? errorMessage;
+  CloudUserProfile? get user => profile;
 
   const CloudAuthResult.success(this.profile)
       : isSuccess = true,
@@ -94,6 +100,10 @@ abstract class CloudApi {
   }
 
   static set instance(CloudApi api) {
+    _instance = api;
+  }
+
+  static set mockInstance(CloudApi? api) {
     _instance = api;
   }
 
@@ -155,6 +165,73 @@ abstract class CloudApi {
     String table,
     List<String> remoteIds,
   );
+
+  /// جلب كافة ملفات المستخدمين (للأدمن فقط)
+  Future<List<CloudUserProfile>> listAllProfiles();
+
+  /// تحديث حالة الاشتراك (للأدمن فقط مع التسجيل في سجل التدقيق)
+  Future<void> updateSubscription({
+    required String userId,
+    required bool active,
+    String? note,
+    required String adminId,
+  });
+
+  /// جلب سجل تدقيق اشتراكات مستخدم محدد
+  Future<List<Map<String, dynamic>>> getSubscriptionLogs(String userId);
+
+  /// جلب قائمة المدربين المفعّلين
+  Future<List<CloudUserProfile>> getActiveCoaches();
+
+  /// إرسال طلب انضمام لمدرب
+  Future<void> sendCoachRequest({
+    required String athleteId,
+    required String coachId,
+  });
+
+  /// جلب طلبات الانضمام الخاصة باللاعب
+  Future<List<Map<String, dynamic>>> getCoachRequestsForAthlete(String athleteId);
+
+  /// جلب طلبات الانضمام الواردة للمدرب
+  Future<List<Map<String, dynamic>>> getCoachRequestsForCoach(String coachId);
+
+  /// الرد على طلب الانضمام (قبول / رفض)
+  Future<void> respondToCoachRequest({
+    required String requestId,
+    required String status,
+    required String coachId,
+  });
+
+  /// إلغاء طلب انضمام معلّق
+  Future<void> cancelCoachRequest(String requestId);
+
+  /// إزالة لاعب من قائمة مدرب
+  Future<void> removeAthleteFromCoach({
+    required String coachId,
+    required String athleteId,
+  });
+
+  /// تحديث خصوصية مشاركة المنحنيات
+  Future<void> updateCurveSharing({
+    required String playerId,
+    required bool shared,
+    required String byWho,
+  });
+
+  /// جلب زملاء الفريق تحت نفس المدرب
+  Future<List<CloudUserProfile>> getTeammates(String coachId);
+
+  /// جلب بيانات المنحنيات المشتركة للاعب
+  Future<List<Map<String, dynamic>>> getSharedCurveData(String playerId);
+
+  /// رفع صورة المستخدم الرمزية إلى باكت avatars
+  Future<String?> uploadAvatar({
+    required String userId,
+    required List<int> bytes,
+  });
+
+  /// تنزيل صورة المستخدم الرمزية
+  Future<List<int>?> downloadAvatar(String userId);
 }
 
 /// التنفيذ الحقيقي لخدمة السحابة عبر Supabase
@@ -397,6 +474,193 @@ class SupabaseCloudApi implements CloudApi {
     await client.from(table).update({
       'deleted_at': DateTime.now().toUtc().toIso8601String(),
     }).inFilter('id', remoteIds);
+  }
+
+  @override
+  Future<List<CloudUserProfile>> listAllProfiles() async {
+    final res = await client.from('profiles').select('*, subscriptions(status)');
+    return (res as List).map((row) {
+      final subMap = row['subscriptions'] as Map<String, dynamic>?;
+      final isActive = subMap != null && subMap['status'] == 'active';
+      return CloudUserProfile.fromMap(row, subscriptionActive: isActive);
+    }).toList();
+  }
+
+  @override
+  Future<void> updateSubscription({
+    required String userId,
+    required bool active,
+    String? note,
+    required String adminId,
+  }) async {
+    await client.from('subscriptions').upsert({
+      'user_id': userId,
+      'status': active ? 'active' : 'inactive',
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    });
+    await client.from('subscription_log').insert({
+      'user_id': userId,
+      'action': active ? 'activated' : 'deactivated',
+      'changed_by': adminId,
+      'note': note ?? '',
+      'created_at': DateTime.now().toUtc().toIso8601String(),
+    });
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getSubscriptionLogs(String userId) async {
+    final res = await client
+        .from('subscription_log')
+        .select()
+        .eq('user_id', userId)
+        .order('created_at', ascending: false);
+    return List<Map<String, dynamic>>.from(res);
+  }
+
+  @override
+  Future<List<CloudUserProfile>> getActiveCoaches() async {
+    final res = await client
+        .from('profiles')
+        .select('*, subscriptions!inner(status)')
+        .eq('role', 'coach')
+        .eq('subscriptions.status', 'active');
+    return (res as List).map((row) => CloudUserProfile.fromMap(row, subscriptionActive: true)).toList();
+  }
+
+  @override
+  Future<void> sendCoachRequest({
+    required String athleteId,
+    required String coachId,
+  }) async {
+    final existing = await client
+        .from('coach_requests')
+        .select()
+        .eq('athlete_id', athleteId)
+        .eq('coach_id', coachId)
+        .eq('status', 'pending');
+    if ((existing as List).isNotEmpty) {
+      throw Exception('يوجد طلب معلّق بالفعل لهذا المدرب');
+    }
+    await client.from('coach_requests').insert({
+      'athlete_id': athleteId,
+      'coach_id': coachId,
+      'status': 'pending',
+      'created_at': DateTime.now().toUtc().toIso8601String(),
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    });
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getCoachRequestsForAthlete(String athleteId) async {
+    final res = await client
+        .from('coach_requests')
+        .select('*, coach:profiles!coach_id(name, email, photo_path)')
+        .eq('athlete_id', athleteId)
+        .order('created_at', ascending: false);
+    return List<Map<String, dynamic>>.from(res);
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getCoachRequestsForCoach(String coachId) async {
+    final res = await client
+        .from('coach_requests')
+        .select('*, athlete:profiles!athlete_id(name, email, photo_path)')
+        .eq('coach_id', coachId)
+        .eq('status', 'pending')
+        .order('created_at', ascending: false);
+    return List<Map<String, dynamic>>.from(res);
+  }
+
+  @override
+  Future<void> respondToCoachRequest({
+    required String requestId,
+    required String status,
+    required String coachId,
+  }) async {
+    if (status == 'accepted') {
+      final active = await isSubscriptionActive(coachId);
+      if (!active) {
+        throw Exception('لا يمكن قبول الطلب: اشتراك المدرب غير مفعّل');
+      }
+      final reqRow = await client.from('coach_requests').select().eq('id', requestId).maybeSingle();
+      if (reqRow != null) {
+        final athleteId = reqRow['athlete_id'];
+        await client.from('profiles').update({'coach_id': coachId}).eq('id', athleteId);
+      }
+    }
+    await client.from('coach_requests').update({
+      'status': status,
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    }).eq('id', requestId);
+  }
+
+  @override
+  Future<void> cancelCoachRequest(String requestId) async {
+    await client.from('coach_requests').update({
+      'status': 'cancelled',
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    }).eq('id', requestId);
+  }
+
+  @override
+  Future<void> removeAthleteFromCoach({
+    required String coachId,
+    required String athleteId,
+  }) async {
+    await client.from('profiles').update({'coach_id': null}).eq('id', athleteId).eq('coach_id', coachId);
+  }
+
+  @override
+  Future<void> updateCurveSharing({
+    required String playerId,
+    required bool shared,
+    required String byWho,
+  }) async {
+    await client.from('players').update({
+      'curves_shared': shared ? 1 : 0,
+      'curves_shared_by': byWho,
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    }).eq('id', playerId);
+  }
+
+  @override
+  Future<List<CloudUserProfile>> getTeammates(String coachId) async {
+    final res = await client
+        .from('profiles')
+        .select('*, players(curves_shared, curves_shared_by)')
+        .eq('coach_id', coachId)
+        .eq('role', 'athlete');
+    return (res as List).map((row) => CloudUserProfile.fromMap(row, subscriptionActive: true)).toList();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getSharedCurveData(String playerId) async {
+    final res = await client.from('shared_curve_data').select().eq('player_id', playerId);
+    return List<Map<String, dynamic>>.from(res);
+  }
+
+  @override
+  Future<String?> uploadAvatar({
+    required String userId,
+    required List<int> bytes,
+  }) async {
+    final path = '$userId.jpg';
+    await client.storage.from('avatars').uploadBinary(
+      path,
+      Uint8List.fromList(bytes),
+      fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
+    );
+    return path;
+  }
+
+  @override
+  Future<List<int>?> downloadAvatar(String userId) async {
+    try {
+      final bytes = await client.storage.from('avatars').download('$userId.jpg');
+      return bytes;
+    } catch (_) {
+      return null;
+    }
   }
 }
 
@@ -673,7 +937,220 @@ class MockCloudApi implements CloudApi {
   void reset() {
     _users.clear();
     _cloudTables.clear();
+    _subscriptionLogs.clear();
+    _coachRequests.clear();
+    _mockAvatars.clear();
     _currentUserId = null;
+  }
+
+  final List<Map<String, dynamic>> _subscriptionLogs = [];
+  final List<Map<String, dynamic>> _coachRequests = [];
+  final Map<String, List<int>> _mockAvatars = {};
+
+  @override
+  Future<List<CloudUserProfile>> listAllProfiles() async {
+    return _users.values.map((u) => u.toProfile()).toList();
+  }
+
+  @override
+  Future<void> updateSubscription({
+    required String userId,
+    required bool active,
+    String? note,
+    required String adminId,
+  }) async {
+    for (final u in _users.values) {
+      if (u.id == userId) {
+        u.subscriptionActive = active;
+        break;
+      }
+    }
+    _subscriptionLogs.add({
+      'id': 'log-${_subscriptionLogs.length + 1}',
+      'user_id': userId,
+      'action': active ? 'activated' : 'deactivated',
+      'changed_by': adminId,
+      'note': note ?? '',
+      'created_at': DateTime.now().toUtc().toIso8601String(),
+    });
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getSubscriptionLogs(String userId) async {
+    return _subscriptionLogs
+        .where((l) => l['user_id'] == userId)
+        .toList()
+      ..sort((a, b) => (b['created_at'] as String).compareTo(a['created_at'] as String));
+  }
+
+  @override
+  Future<List<CloudUserProfile>> getActiveCoaches() async {
+    return _users.values
+        .where((u) => u.role == 'coach' && u.subscriptionActive)
+        .map((u) => u.toProfile())
+        .toList();
+  }
+
+  @override
+  Future<void> sendCoachRequest({
+    required String athleteId,
+    required String coachId,
+  }) async {
+    final existing = _coachRequests.where((r) =>
+        r['athlete_id'] == athleteId &&
+        r['coach_id'] == coachId &&
+        r['status'] == 'pending');
+    if (existing.isNotEmpty) {
+      throw Exception('يوجد طلب معلّق بالفعل لهذا المدرب');
+    }
+    _coachRequests.add({
+      'id': 'req-${_coachRequests.length + 1}',
+      'athlete_id': athleteId,
+      'coach_id': coachId,
+      'status': 'pending',
+      'created_at': DateTime.now().toUtc().toIso8601String(),
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    });
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getCoachRequestsForAthlete(String athleteId) async {
+    return _coachRequests.where((r) => r['athlete_id'] == athleteId).toList();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getCoachRequestsForCoach(String coachId) async {
+    return _coachRequests
+        .where((r) => r['coach_id'] == coachId && r['status'] == 'pending')
+        .toList();
+  }
+
+  @override
+  Future<void> respondToCoachRequest({
+    required String requestId,
+    required String status,
+    required String coachId,
+  }) async {
+    final reqIndex = _coachRequests.indexWhere((r) => r['id'] == requestId);
+    if (reqIndex == -1) return;
+    final req = _coachRequests[reqIndex];
+
+    if (status == 'accepted') {
+      final coach = _users.values.firstWhere((u) => u.id == coachId, orElse: () => throw Exception('المدرب غير موجود'));
+      if (!coach.subscriptionActive) {
+        throw Exception('لا يمكن قبول الطلب: اشتراك المدرب غير مفعّل');
+      }
+      for (final u in _users.values) {
+        if (u.id == req['athlete_id']) {
+          u.coachId = coachId;
+          break;
+        }
+      }
+    }
+    req['status'] = status;
+    req['updated_at'] = DateTime.now().toUtc().toIso8601String();
+  }
+
+  @override
+  Future<void> cancelCoachRequest(String requestId) async {
+    final req = _coachRequests.firstWhere((r) => r['id'] == requestId, orElse: () => {});
+    if (req.isNotEmpty) {
+      req['status'] = 'cancelled';
+      req['updated_at'] = DateTime.now().toUtc().toIso8601String();
+    }
+  }
+
+  @override
+  Future<void> removeAthleteFromCoach({
+    required String coachId,
+    required String athleteId,
+  }) async {
+    for (final u in _users.values) {
+      if (u.id == athleteId && u.coachId == coachId) {
+        u.coachId = null;
+        break;
+      }
+    }
+  }
+
+  @override
+  Future<void> updateCurveSharing({
+    required String playerId,
+    required bool shared,
+    required String byWho,
+  }) async {
+    final playersTable = _cloudTables.putIfAbsent('players', () => {});
+    for (final rec in playersTable.values) {
+      if (rec['id']?.toString() == playerId || rec['local_id']?.toString() == playerId) {
+        rec['curves_shared'] = shared ? 1 : 0;
+        rec['curves_shared_by'] = byWho;
+        rec['updated_at'] = DateTime.now().toUtc().toIso8601String();
+        return;
+      }
+    }
+    playersTable[playerId] = {
+      'id': playerId,
+      'curves_shared': shared ? 1 : 0,
+      'curves_shared_by': byWho,
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    };
+  }
+
+  @override
+  Future<List<CloudUserProfile>> getTeammates(String coachId) async {
+    return _users.values
+        .where((u) => u.coachId == coachId && u.role == 'athlete')
+        .map((u) => u.toProfile())
+        .toList();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getSharedCurveData(String playerId) async {
+    final logsTable = _cloudTables['logs'] ?? {};
+    final playersTable = _cloudTables['players'] ?? {};
+    final player = playersTable.values.firstWhere(
+      (p) => p['id']?.toString() == playerId || p['local_id']?.toString() == playerId,
+      orElse: () => {},
+    );
+    if (player.isEmpty || (player['curves_shared'] as num?)?.toInt() != 1) {
+      return [];
+    }
+    return logsTable.values
+        .where((l) => l['player_id']?.toString() == playerId)
+        .map((l) => {
+              'player_id': l['player_id'],
+              'date': l['date'],
+              'zone': l['zone'],
+              'kind': l['kind'],
+              'avg_power': l['avg_power'],
+              'ef': l['ef'],
+              'decoupling': l['decoupling'],
+              'eupnea_1': l['eupnea_1'],
+              'eupnea_2': l['eupnea_2'],
+              'eupnea_3': l['eupnea_3'],
+              'split_500': l['split_500'],
+            })
+        .toList();
+  }
+
+  @override
+  Future<String?> uploadAvatar({
+    required String userId,
+    required List<int> bytes,
+  }) async {
+    _mockAvatars[userId] = bytes;
+    for (final u in _users.values) {
+      if (u.id == userId) {
+        u.photoPath = 'avatars/$userId.jpg';
+        break;
+      }
+    }
+    return 'avatars/$userId.jpg';
+  }
+
+  @override
+  Future<List<int>?> downloadAvatar(String userId) async {
+    return _mockAvatars[userId];
   }
 }
 
@@ -684,8 +1161,10 @@ class _MockUserEntry {
   final String name;
   final String role;
   bool subscriptionActive;
-  final String? coachId;
+  String? coachId;
   final int? playerId;
+  String? photoPath;
+  DateTime createdAt;
 
   _MockUserEntry({
     required this.id,
@@ -696,7 +1175,8 @@ class _MockUserEntry {
     this.subscriptionActive = false,
     this.coachId,
     this.playerId,
-  });
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now().toUtc();
 
   CloudUserProfile toProfile() => CloudUserProfile(
         id: id,
@@ -705,6 +1185,8 @@ class _MockUserEntry {
         role: role,
         coachId: coachId,
         playerId: playerId,
+        photoPath: photoPath,
         subscriptionActive: subscriptionActive,
+        createdAt: createdAt,
       );
 }

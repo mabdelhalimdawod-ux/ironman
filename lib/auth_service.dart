@@ -644,11 +644,42 @@ class AuthService {
       whereArgs: [targetUserId],
     );
 
+    // رفع الصورة إلى باكت avatars في السحابة
+    try {
+      if (targetFile.existsSync()) {
+        final bytes = await targetFile.readAsBytes();
+        await CloudApi.instance.uploadAvatar(
+          userId: targetUserId.toString(),
+          bytes: bytes,
+        );
+      }
+    } catch (_) {}
+
     if (currentUser != null && currentUser!.id == targetUserId) {
       currentUser = currentUser!.copyWith(photoPath: newPath);
     }
 
     return newPath;
+  }
+
+  /// تنزيل صورة المستخدم من باكت avatars وتخزينها محلياً إن وجدت
+  static Future<String?> ensureAvatarDownloaded(int userId) async {
+    try {
+      final docsDir = await getApplicationDocumentsDirectory();
+      final localPath = p.join(docsDir.path, 'profile_photos', 'avatar_$userId.jpg');
+      final localFile = File(localPath);
+      if (localFile.existsSync()) return localPath;
+
+      final bytes = await CloudApi.instance.downloadAvatar(userId.toString());
+      if (bytes != null && bytes.isNotEmpty) {
+        if (!localFile.parent.existsSync()) {
+          localFile.parent.createSync(recursive: true);
+        }
+        await localFile.writeAsBytes(bytes);
+        return localPath;
+      }
+    } catch (_) {}
+    return null;
   }
 
   /// حذف صورة الملف الشخصي

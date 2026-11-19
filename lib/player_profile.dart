@@ -2,6 +2,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'app_strings.dart';
+import 'auth_service.dart';
+import 'curve_privacy_service.dart';
 import 'db.dart';
 import 'engine_rowing_ui.dart';
 import 'metrics_curve_page.dart';
@@ -26,6 +28,8 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
   List<String> alerts = [];
   Map<String, int> zonesDist = {};
   List<Map<String, dynamic>> recoveryData = [];
+  bool _curvesShared = false;
+  String _curvesSharedBy = 'coach';
 
   @override
   void initState() {
@@ -40,6 +44,12 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
     alerts = await DB.overtrainingAlerts(playerId);
     zonesDist = await DB.playerZoneDistribution(playerId);
     recoveryData = await DB.playerRecoveryData(playerId);
+    final db = await DB.db;
+    final pRows = await db.query('players', where: 'id = ?', whereArgs: [playerId], limit: 1);
+    if (pRows.isNotEmpty) {
+      _curvesShared = (pRows.first['curves_shared'] as num?)?.toInt() == 1;
+      _curvesSharedBy = pRows.first['curves_shared_by'] as String? ?? 'coach';
+    }
     if (mounted) setState(() => loading = false);
   }
 
@@ -244,8 +254,81 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                 ),
               ),
             ),
+            const SizedBox(height: 12),
+            _buildCurveSharingCard(s),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCurveSharingCard(AppStrings s) {
+    final currentUser = AuthService.currentUser;
+    final isAthleteViewingOwn =
+        currentUser != null && currentUser.isAthlete && currentUser.id == playerId;
+    final isCoach = currentUser != null && currentUser.isCoach;
+    final athleteLocked = _curvesSharedBy == 'athlete';
+    final canToggle = isAthleteViewingOwn || (isCoach && !athleteLocked);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: EngineRowingUI.equationCardFill,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: EngineRowingUI.bgGridLine),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            _curvesShared ? Icons.share_rounded : Icons.lock_outline_rounded,
+            color: _curvesShared ? EngineRowingUI.neonLime : Colors.amber,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  s.shareMyCurves,
+                  style: const TextStyle(
+                    color: EngineRowingUI.textWhite,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+                Text(
+                  (!canToggle && athleteLocked && isCoach)
+                      ? s.athleteSetPrivacy
+                      : s.shareMyCurvesSubtitle,
+                  style: TextStyle(
+                    color: (!canToggle && athleteLocked && isCoach)
+                        ? Colors.amber
+                        : EngineRowingUI.captionGrey,
+                    fontSize: 10.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: _curvesShared,
+            activeThumbColor: EngineRowingUI.neonLime,
+            onChanged: canToggle
+                ? (val) async {
+                    setState(() {
+                      _curvesShared = val;
+                      if (isAthleteViewingOwn) _curvesSharedBy = 'athlete';
+                    });
+                    await CurvePrivacyService.setCurveSharing(
+                      actor: currentUser,
+                      targetPlayerId: playerId,
+                      shared: val,
+                    );
+                  }
+                : null,
+          ),
+        ],
       ),
     );
   }

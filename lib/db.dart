@@ -318,9 +318,9 @@ class DB {
 
   static Future<Database> _open() async {
     final path = join(await getDatabasesPath(), 'rowing.db');
-    return openDatabase(path, version: 8, onCreate: (d, v) async {
+    return openDatabase(path, version: 9, onCreate: (d, v) async {
       await d.execute(
-          'CREATE TABLE players(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mhr INTEGER, active INTEGER DEFAULT 1, curves_shared INTEGER, curves_shared_by TEXT)');
+          'CREATE TABLE players(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mhr INTEGER, active INTEGER DEFAULT 1, coach_id INTEGER, curves_shared INTEGER, curves_shared_by TEXT)');
       await d.execute(
           'CREATE TABLE cycles(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, start TEXT, end TEXT)');
       await d.execute(
@@ -540,6 +540,49 @@ class DB {
             CREATE TABLE IF NOT EXISTS matrix_zone_config (
               key TEXT PRIMARY KEY,
               value TEXT
+            )
+          ''');
+      await d.execute('''
+            CREATE TABLE IF NOT EXISTS coach_requests (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              remote_id TEXT,
+              athlete_id INTEGER NOT NULL,
+              coach_id INTEGER NOT NULL,
+              status TEXT NOT NULL DEFAULT 'pending',
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL,
+              dirty INTEGER DEFAULT 0
+            )
+          ''');
+      await d.execute('''
+            CREATE TABLE IF NOT EXISTS subscription_log (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              user_id INTEGER NOT NULL,
+              admin_id INTEGER,
+              action TEXT NOT NULL,
+              note TEXT DEFAULT '',
+              created_at TEXT NOT NULL
+            )
+          ''');
+      await d.execute('''
+            CREATE TABLE IF NOT EXISTS shared_curve_cache (
+              player_id INTEGER NOT NULL,
+              date TEXT NOT NULL,
+              idx INTEGER NOT NULL,
+              split_500 REAL,
+              avg_power REAL,
+              hr INTEGER,
+              hr_max INTEGER,
+              distance INTEGER,
+              duration_seconds INTEGER,
+              zone TEXT,
+              ef REAL,
+              decoupling REAL,
+              eupnea_1 REAL,
+              eupnea_2 REAL,
+              eupnea_3 REAL,
+              cached_at TEXT,
+              PRIMARY KEY (player_id, date, idx)
             )
           ''');
       await SyncEngine.ensureDatabaseSyncSchema(d);
@@ -818,6 +861,77 @@ class DB {
             value TEXT
           )
         ''');
+        await SyncEngine.ensureDatabaseSyncSchema(d);
+      }
+      if (oldVersion < 9) {
+        await d.execute('''
+          CREATE TABLE IF NOT EXISTS coach_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            remote_id TEXT,
+            athlete_id INTEGER NOT NULL,
+            coach_id INTEGER NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            dirty INTEGER DEFAULT 0
+          )
+        ''');
+        await d.execute('''
+          CREATE TABLE IF NOT EXISTS subscription_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            admin_id INTEGER,
+            action TEXT NOT NULL,
+            note TEXT DEFAULT '',
+            created_at TEXT NOT NULL
+          )
+        ''');
+        await d.execute('''
+          CREATE TABLE IF NOT EXISTS shared_curve_cache (
+            player_id INTEGER NOT NULL,
+            date TEXT NOT NULL,
+            idx INTEGER NOT NULL,
+            split_500 REAL,
+            avg_power REAL,
+            hr INTEGER,
+            hr_max INTEGER,
+            distance INTEGER,
+            duration_seconds INTEGER,
+            zone TEXT,
+            ef REAL,
+            decoupling REAL,
+            eupnea_1 REAL,
+            eupnea_2 REAL,
+            eupnea_3 REAL,
+            cached_at TEXT,
+            PRIMARY KEY (player_id, date, idx)
+          )
+        ''');
+        final playerCols = await d.rawQuery("PRAGMA table_info('players')");
+        final playerNames = playerCols.map((c) => c['name'] as String).toSet();
+        if (!playerNames.contains('coach_id')) {
+          await d.execute("ALTER TABLE players ADD COLUMN coach_id INTEGER");
+        }
+        if (!playerNames.contains('curves_shared')) {
+          await d.execute(
+              "ALTER TABLE players ADD COLUMN curves_shared INTEGER DEFAULT 0");
+        }
+        if (!playerNames.contains('curves_shared_by')) {
+          await d.execute(
+              "ALTER TABLE players ADD COLUMN curves_shared_by TEXT DEFAULT 'coach'");
+        }
+        final userCheck = await d.rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='users'");
+        if (userCheck.isNotEmpty) {
+          final userCols = await d.rawQuery("PRAGMA table_info('users')");
+          final userNames = userCols.map((c) => c['name'] as String).toSet();
+          if (!userNames.contains('coach_id')) {
+            await d.execute("ALTER TABLE users ADD COLUMN coach_id INTEGER");
+          }
+          if (!userNames.contains('photo_path')) {
+            await d.execute("ALTER TABLE users ADD COLUMN photo_path TEXT");
+          }
+        }
         await SyncEngine.ensureDatabaseSyncSchema(d);
       }
     });

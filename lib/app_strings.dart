@@ -1019,4 +1019,32 @@ class AppStrings {
   String get serverLockRejectionNotice => isArabic
       ? 'هذه الحصة مقفولة تلقائياً بعد منتصف الليل ولا يمكن تعديلها، تم استعادة بيانات الخادم'
       : 'This session is locked after midnight and cannot be edited. Server state restored.';
+
+  // ==================== المرحلة (س3) ميزات السحابة ====================
+  String get chooseCoach => isArabic ? 'اختر مدربك' : 'Choose your coach';
+  String get chooseCoachSubtitle => isArabic
+      ? 'يمكنك اختيار مدربك لإرسال برامج التدريب ومتابعة أدائك'
+      : 'Select your coach to receive training programs and monitor performance';
+  String get pendingCoachRequest =>
+      isArabic ? 'طلب الانضمام قيد الانتظار' : 'Request Pending';
+  String get coachRequestsTitle =>
+      isArabic ? 'طلبات انضمام اللاعبين' : 'Coach Requests';
+  String get sendRequest => isArabic ? 'إرسال طلب انضمام' : 'Send Request';
+  String get cancelRequest => isArabic ? 'إلغاء الطلب' : 'Cancel Request';
+  String get accept => isArabic ? 'قبول' : 'Accept';
+  String get reject => isArabic ? 'رفض' : 'Reject';
+  String get currentCoach => isArabic ? 'مدربك الحالي' : 'Your Coach';
+  String get changeCoach => isArabic ? 'تغيير المدرب' : 'Change Coach';
+  String get shareMyCurves =>
+      isArabic ? 'مشاركة منحنياتي مع زملائي' : 'Share my curves with teammates';
+  String get shareMyCurvesSubtitle => isArabic
+      ? 'السماح لزملائك في الفريق بالاطلاع على منحنياتك التدريبية'
+      : 'Allow teammates under the same coach to view your curves';
+  String get athleteSetPrivacy =>
+      isArabic ? 'اللاعب حدد خصوصيته' : 'The athlete has set his own privacy';
+  String get curvesNotShared =>
+      isArabic ? 'منحنيات هذا اللاعب غير متاحة' : 'This athlete\'s curves are not shared';
+  String get myTeammates => isArabic ? 'زملاء الفريق' : 'Teammates';
+  String get adminDashboardTitle =>
+      isArabic ? 'لوحة الإدارة السحابية' : 'Admin Cloud Dashboard';
 }

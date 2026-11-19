@@ -80,6 +80,7 @@ class SyncEngine extends ChangeNotifier {
     SyncTableDef(name: 'coach_messages', keyColumns: ['id']),
     SyncTableDef(name: 'progress_baseline_config', keyColumns: ['key'], hasIdColumn: false),
     SyncTableDef(name: 'matrix_zone_config', keyColumns: ['key'], hasIdColumn: false),
+    SyncTableDef(name: 'coach_requests', keyColumns: ['id']),
   ];
 
   /// تهيئة جداول وتريجرات المزامنة في SQLite
