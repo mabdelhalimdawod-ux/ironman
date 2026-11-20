@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'app_strings.dart';
 import 'db.dart';
 import 'heart_rate_zones.dart';
 
@@ -576,12 +577,55 @@ class ProgressCalcs {
     'hrv': ['hrv', 'rhr', 'time'],
     'rhr': ['rhr', 'time'],
     'sleep_weight': ['sleep', 'weight', 'time'],
+    'sleep': ['sleep', 'time'],
+    'weight': ['weight', 'time'],
     'eupnea': ['eupnea', 'rhr', 'time'],
     'watts': ['watts', 'split', 'time'],
     'decoupling': ['decoupling', 'watts', 'hr', 'time'],
     'ef': ['ef', 'watts', 'hr', 'time'],
     'pmc': ['ctl', 'atl', 'tsb', 'watts', 'time'],
+    'matrix': ['watts', 'hr', 'zone', 'time'],
+    'zone_hours': ['time', 'hr', 'zone'],
+    'cp_tests': ['watts', 'time', 'split'],
   };
+
+  /// استرجاع الاسم الكامل غير المختصر لشارة المدخل من AppStrings
+  static String metricChipName(AppStrings s, String metricKey) {
+    switch (metricKey) {
+      case 'watts':
+        return s.chipWatts;
+      case 'hr':
+        return s.chipHR;
+      case 'decoupling':
+        return s.chipDecoupling;
+      case 'time':
+        return s.chipTime;
+      case 'ef':
+        return s.chipEF;
+      case 'hrv':
+        return s.chipHRV;
+      case 'rhr':
+        return s.chipRHR;
+      case 'sleep':
+        return s.chipSleep;
+      case 'weight':
+        return s.chipWeight;
+      case 'eupnea':
+        return s.chipEupnea;
+      case 'ctl':
+        return s.chipCTL;
+      case 'atl':
+        return s.chipATL;
+      case 'tsb':
+        return s.chipTSB;
+      case 'split':
+        return s.chipSplit;
+      case 'zone':
+        return s.chipZone;
+      default:
+        return metricKey;
+    }
+  }
 }
 
 /// نتيجة مزامنة جدول الكاش daily_load للاعب

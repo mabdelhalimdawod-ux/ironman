@@ -185,24 +185,24 @@ class HeartRateZones {
     return 'VO2 max';
   }
 
-  /// اسم الزون المعروض
+  /// اسم الزون المعروض "رقم الزون - الاسم الفني" المعتمد في التطبيق كله
   static String zoneDisplayName(String zone, {bool isArabic = true}) {
     final clean = normalizeZoneKey(zone);
     switch (clean) {
       case 'Z1':
-        return '(zone1 - UT3) = 55%:65%';
+        return 'Zone 1 - UT3';
       case 'Z2':
-        return '(zone2 - UT2) = 65%:75%';
+        return 'Zone 2 - UT2';
       case 'Z3':
-        return '(zone3 - UT1) = 75%:85%';
+        return 'Zone 3 - UT1';
       case 'Z4':
-        return '(zone4 - AT) = 85%:90%';
+        return 'Zone 4 - AT';
       case 'Threshold':
-        return '(Threshold - AT) = 90%:95%';
+        return 'Threshold - AT';
       case 'Z5':
-        return '(zone5 - TR) = 95%:98%';
+        return 'Zone 5 - TR';
       case 'VO2 max':
-        return '(VO2 max - AN) = 98%:105%';
+        return 'VO2 max - AN';
       default:
         return zone;
     }

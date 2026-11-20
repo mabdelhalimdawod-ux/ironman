@@ -391,6 +391,13 @@ class _ProgressPeriodFilterState extends State<ProgressPeriodFilter> {
                   ),
                 ),
               ),
+              if (selected) ...[
+                const SizedBox(width: 4),
+                const RowingTrendIndicator(
+                  direction: MetricTrendDirection.up,
+                  size: 10,
+                ),
+              ],
             ],
           ),
         ),

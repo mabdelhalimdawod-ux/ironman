@@ -44,7 +44,24 @@ String normalizeZoneKey(String rawZone) => HeartRateZones.normalizeZoneKey(rawZo
 /// تحويل مفتاح الزون إلى النص الكامل المنسدل
 String formatZoneToDetailed(String rawZone) {
   final norm = normalizeZoneKey(rawZone);
-  return HeartRateZones.zoneDisplayName(norm);
+  switch (norm) {
+    case 'Z1':
+      return kProgramZonesDetailed[0];
+    case 'Z2':
+      return kProgramZonesDetailed[1];
+    case 'Z3':
+      return kProgramZonesDetailed[2];
+    case 'Z4':
+      return kProgramZonesDetailed[3];
+    case 'Threshold':
+      return kProgramZonesDetailed[4];
+    case 'Z5':
+      return kProgramZonesDetailed[5];
+    case 'VO2 max':
+      return kProgramZonesDetailed[6];
+    default:
+      return kProgramZonesDetailed[1];
+  }
 }
 
 const List<String> kProgramWorkoutKinds = [

@@ -757,6 +757,13 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                                     : EngineRowingUI.labelSlate,
                               ),
                             ),
+                            if (isSelected) ...[
+                              const SizedBox(width: 4),
+                              const RowingTrendIndicator(
+                                direction: MetricTrendDirection.up,
+                                size: 10,
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -874,6 +881,12 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
             ProgressCurveHeader(
               curveName: s.matrixZoneTitle,
               period: _period,
+              trailing: IconButton(
+                icon: const Icon(Icons.info_outline_rounded,
+                    color: EngineRowingUI.neonLime, size: 18),
+                onPressed: () =>
+                    _showInfoDialog(s.matrixZoneTitle, s.matrixZoneDesc),
+              ),
             ),
             _buildMatrixZoneSharedChart(s),
           ],
@@ -901,6 +914,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                 unit: 'W/bpm',
                 enableMA7: false,
                 isLoading: data == null && _loadingPlayerIds.contains(pid),
+                metricKey: 'ef',
               ),
             ),
             ProgressCurveHeader(
@@ -922,6 +936,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                 unit: '%',
                 enableMA7: true,
                 isLoading: data == null && _loadingPlayerIds.contains(pid),
+                metricKey: 'decoupling',
               ),
             ),
           ],
@@ -940,6 +955,12 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
               accentColor: _selectedWattsZone != null
                   ? HeartRateZones.zoneColor(_selectedWattsZone!)
                   : EngineRowingUI.neonLime,
+              trailing: IconButton(
+                icon: const Icon(Icons.info_outline_rounded,
+                    color: EngineRowingUI.neonLime, size: 18),
+                onPressed: () =>
+                    _showInfoDialog(s.wattsCurveTitle, s.wattsCurveDesc),
+              ),
             ),
             ..._buildStackedAthleteBlocks(
               builder: (pid, data, color) {
@@ -957,6 +978,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                   unit: 'W',
                   enableMA7: true,
                   isLoading: data == null && _loadingPlayerIds.contains(pid),
+                  metricKey: 'watts',
                 );
               },
             ),
@@ -1013,6 +1035,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                 unit: 'ms',
                 enableMA7: true,
                 isLoading: data == null && _loadingPlayerIds.contains(pid),
+                metricKey: 'hrv',
               ),
             ),
             // 2. RHR
@@ -1035,12 +1058,19 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                 unit: 'bpm',
                 enableMA7: true,
                 isLoading: data == null && _loadingPlayerIds.contains(pid),
+                metricKey: 'rhr',
               ),
             ),
             // 3. Sleep
             ProgressCurveHeader(
               curveName: s.chipSleep,
               period: _period,
+              trailing: IconButton(
+                icon: const Icon(Icons.info_outline_rounded,
+                    color: EngineRowingUI.neonLime, size: 18),
+                onPressed: () =>
+                    _showInfoDialog(s.chipSleep, s.sleepWeightExplanation),
+              ),
             ),
             ..._buildStackedAthleteBlocks(
               builder: (pid, data, color) => _buildAthleteLineBlock(
@@ -1051,12 +1081,19 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                 unit: 'hrs',
                 enableMA7: true,
                 isLoading: data == null && _loadingPlayerIds.contains(pid),
+                metricKey: 'sleep',
               ),
             ),
             // 4. Weight
             ProgressCurveHeader(
               curveName: s.chipWeight,
               period: _period,
+              trailing: IconButton(
+                icon: const Icon(Icons.info_outline_rounded,
+                    color: EngineRowingUI.neonLime, size: 18),
+                onPressed: () =>
+                    _showInfoDialog(s.chipWeight, s.sleepWeightExplanation),
+              ),
             ),
             ..._buildStackedAthleteBlocks(
               builder: (pid, data, color) => _buildAthleteLineBlock(
@@ -1067,6 +1104,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                 unit: 'kg',
                 enableMA7: true,
                 isLoading: data == null && _loadingPlayerIds.contains(pid),
+                metricKey: 'weight',
               ),
             ),
             // 5. + Eupnea
@@ -1089,6 +1127,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                 unit: 'br/min',
                 enableMA7: true,
                 isLoading: data == null && _loadingPlayerIds.contains(pid),
+                metricKey: 'eupnea',
               ),
             ),
           ],
@@ -1101,6 +1140,12 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
             ProgressCurveHeader(
               curveName: s.zoneHoursTitle,
               period: _period,
+              trailing: IconButton(
+                icon: const Icon(Icons.info_outline_rounded,
+                    color: EngineRowingUI.neonLime, size: 18),
+                onPressed: () =>
+                    _showInfoDialog(s.zoneHoursTitle, s.zoneHoursDesc),
+              ),
             ),
             ..._buildStackedAthleteBlocks(
               builder: (pid, data, color) => _buildAthleteZoneHoursBlock(
@@ -1121,6 +1166,12 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
             ProgressCurveHeader(
               curveName: s.cpTestsCurveTitle,
               period: _period,
+              trailing: IconButton(
+                icon: const Icon(Icons.info_outline_rounded,
+                    color: EngineRowingUI.neonLime, size: 18),
+                onPressed: () =>
+                    _showInfoDialog(s.cpTestsCurveTitle, s.cpTestsCurveDesc),
+              ),
             ),
             ..._buildStackedAthleteBlocks(
               builder: (pid, data, color) => _buildAthleteCpTestsBlock(
@@ -1343,6 +1394,66 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
               fontSize: 10.5,
             ),
           ),
+          _buildCurveFooterChipsAndNotice(s, 'matrix'),
+        ],
+      ),
+    );
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // صف شارات المدخلات المشاركة فعلياً في الحساب + النص الثابت "منحنى تقديري فقط"
+  // ════════════════════════════════════════════════════════════════
+  Widget _buildCurveFooterChipsAndNotice(AppStrings s, String metricKey) {
+    final metrics = ProgressCalcs.curveInvolvedMetrics[metricKey] ?? const [];
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (metrics.isNotEmpty)
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: metrics.map((m) {
+                  final label = ProgressCalcs.metricChipName(s, m);
+                  return Container(
+                    margin: const EdgeInsetsDirectional.only(end: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: EngineRowingUI.equationCardFill,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: EngineRowingUI.neonLime.withValues(alpha: 0.35),
+                        width: 0.8,
+                      ),
+                    ),
+                    child: Text(
+                      label,
+                      style: const TextStyle(
+                        color: EngineRowingUI.neonLime,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          const SizedBox(height: 5),
+          Directionality(
+            textDirection: s.isArabic ? TextDirection.rtl : TextDirection.ltr,
+            child: Text(
+              s.estimatedCurveNotice,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: EngineRowingUI.captionGrey,
+                fontSize: 10,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -1359,6 +1470,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
     required String unit,
     required bool enableMA7,
     required bool isLoading,
+    required String metricKey,
   }) {
     final maPoints = enableMA7
         ? ProgressCalcs.movingAverage7(points)
@@ -1388,6 +1500,13 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
           left: BorderSide(color: athleteColor, width: 3.0),
           bottom: const BorderSide(color: EngineRowingUI.bgGridLine, width: 1.0),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: EngineRowingUI.neonLime.withValues(alpha: 0.10),
+            blurRadius: 6.0,
+            spreadRadius: 0.0,
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1519,13 +1638,19 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                         barWidth: 2.2,
                         dotData: FlDotData(
                           show: true,
-                          getDotPainter: (spot, percent, bar, index) =>
-                              FlDotCirclePainter(
-                            radius: points.length == 1 ? 4.2 : 2.6,
-                            color: athleteColor,
-                            strokeColor: Colors.white,
-                            strokeWidth: 0.9,
-                          ),
+                          getDotPainter: (spot, percent, bar, index) {
+                            final isLast = index == points.length - 1;
+                            return FlDotCirclePainter(
+                              radius: isLast
+                                  ? 4.6
+                                  : (points.length == 1 ? 4.2 : 2.6),
+                              color: isLast
+                                  ? const Color(0xFFB8F229)
+                                  : athleteColor,
+                              strokeColor: Colors.white,
+                              strokeWidth: isLast ? 1.4 : 0.9,
+                            );
+                          },
                         ),
                       ),
                       if (maPoints.any((p) => p.value != null))
@@ -1546,6 +1671,31 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                 ),
               ),
             ),
+          if (enableMA7 && maPoints.any((p) => p.value != null)) ...[
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Container(
+                  width: 14,
+                  height: 2,
+                  decoration: BoxDecoration(
+                    color: athleteColor.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(1),
+                  ),
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  s.movingAverage7Legend,
+                  style: TextStyle(
+                    color: athleteColor.withValues(alpha: 0.85),
+                    fontSize: 9.5,
+                  ),
+                ),
+              ],
+            ),
+          ],
+          _buildCurveFooterChipsAndNotice(s, metricKey),
         ],
       ),
     );
@@ -1742,6 +1892,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                 ],
               ),
             ),
+          _buildCurveFooterChipsAndNotice(s, 'zone_hours'),
         ],
       ),
     );
@@ -2180,6 +2331,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
               },
             ),
           ],
+          _buildCurveFooterChipsAndNotice(s, 'pmc'),
         ],
       ),
     );
@@ -2448,6 +2600,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                 ),
               ),
           ],
+          _buildCurveFooterChipsAndNotice(s, 'cp_tests'),
         ],
       ),
     );

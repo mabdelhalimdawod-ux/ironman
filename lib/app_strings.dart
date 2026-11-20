@@ -805,6 +805,7 @@ class AppStrings {
       isArabic ? 'مؤشر الجاهزية (TSB)' : 'Form / Balance (TSB)';
   String get estimatedCurveOnly =>
       isArabic ? 'منحنى تقديري فقط' : 'Estimated curve only';
+  String get estimatedCurveNotice => estimatedCurveOnly;
   String get zoneBaselinesTitle => isArabic
       ? 'مراقبة مناطق التدريب وخط الأساس (Personal Best)'
       : 'Zone Baselines & Progress Tracking';
