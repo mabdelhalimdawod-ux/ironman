@@ -552,6 +552,47 @@ void main() {
 
       expect(find.byType(ProgressCurveHeader), findsNWidgets(5));
     });
+
+    testWidgets('Progress tab for athlete is locked strictly to their own playerId and does not expose others', (tester) async {
+      await AppLanguage.instance.setLocale(const Locale('ar'));
+
+      const athleteUser = AppUser(
+        id: 201,
+        playerId: 201,
+        email: 'youssef@test.com',
+        name: 'اللاعب يوسف',
+        role: 'athlete',
+        subscriptionActive: true,
+      );
+
+      await tester.runAsync(() async {
+        final database = await DB.db;
+        await database.delete('players');
+        await database.insert('players', {'id': 201, 'name': 'اللاعب يوسف', 'mhr': 190, 'active': 1});
+        await database.insert('players', {'id': 202, 'name': 'اللاعب طارق', 'mhr': 192, 'active': 1});
+
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: ProgressCurvePage(
+              curveType: ProgressCurveType.matrixZone,
+              user: athleteUser,
+            ),
+          ),
+        );
+
+        for (int i = 0; i < 20; i++) {
+          await Future.delayed(const Duration(milliseconds: 25));
+          await tester.pump();
+        }
+      });
+      await tester.pump();
+
+      // Athlete sees their own name
+      expect(find.text('اللاعب يوسف'), findsWidgets);
+
+      // Athlete cannot see or toggle teammate 'اللاعب طارق'
+      expect(find.text('اللاعب طارق'), findsNothing);
+    });
   });
 
   tearDownAll(() async {

@@ -86,7 +86,6 @@ class _TodayWorkoutPageState extends State<TodayWorkoutPage> {
   }
 
   Future<void> _pickDate({required bool isStart}) async {
-    final s = AppStrings.of(context);
     final initial = isStart ? _startDate : _endDate;
     final picked = await showDatePicker(
       context: context,
@@ -107,6 +106,12 @@ class _TodayWorkoutPageState extends State<TodayWorkoutPage> {
     );
 
     if (picked == null) return;
+    await updateDateSelection(picked, isStart: isStart);
+  }
+
+  @visibleForTesting
+  Future<void> updateDateSelection(DateTime picked, {required bool isStart}) async {
+    final s = AppStrings.of(context);
     final cleanPicked = DateTime(picked.year, picked.month, picked.day);
 
     DateTime nextStart = isStart ? cleanPicked : _startDate;
@@ -145,6 +150,12 @@ class _TodayWorkoutPageState extends State<TodayWorkoutPage> {
     await _loadAthleteSessions();
     if (mounted) setState(() {});
   }
+
+  @visibleForTesting
+  DateTime get startDate => _startDate;
+
+  @visibleForTesting
+  DateTime get endDate => _endDate;
 
   void _openSessionReadOnly(ProgramDaySession session) {
     Navigator.of(context).push(
@@ -469,29 +480,32 @@ class _TodayWorkoutPageState extends State<TodayWorkoutPage> {
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: EngineRowingUI.bgGridLine),
           ),
-          child: ListTile(
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-            leading: UserAvatarWidget(
-              photoPath: athlete['photo_path'] as String?,
-              radius: 20,
-            ),
-            title: Text(
-              name,
-              style: const TextStyle(
-                color: EngineRowingUI.textWhite,
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
+          child: Material(
+            color: Colors.transparent,
+            child: ListTile(
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+              leading: UserAvatarWidget(
+                photoPath: athlete['photo_path'] as String?,
+                radius: 20,
               ),
+              title: Text(
+                name,
+                style: const TextStyle(
+                  color: EngineRowingUI.textWhite,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+              subtitle: Text(
+                s.tapPlayerToLog,
+                style: const TextStyle(
+                    color: EngineRowingUI.labelSlate, fontSize: 11.5),
+              ),
+              trailing: const Icon(Icons.chevron_left_rounded,
+                  color: EngineRowingUI.labelSlate),
+              onTap: () => _openCoachAthleteWorkout(athlete),
             ),
-            subtitle: Text(
-              s.tapPlayerToLog,
-              style: const TextStyle(
-                  color: EngineRowingUI.labelSlate, fontSize: 11.5),
-            ),
-            trailing: const Icon(Icons.chevron_left_rounded,
-                color: EngineRowingUI.labelSlate),
-            onTap: () => _openCoachAthleteWorkout(athlete),
           ),
         );
       },
@@ -638,39 +652,42 @@ class _TodayWorkoutPageState extends State<TodayWorkoutPage> {
                   ),
                   ...sessions.map((sess) {
                     final workoutsCount = sess.workouts.length;
-                    return ListTile(
-                      title: Text(
-                        sess.name,
-                        style: const TextStyle(
-                          color: EngineRowingUI.textWhite,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14.5,
-                        ),
-                      ),
-                      subtitle: Text(
-                        '${s.sessionTime}: ${sess.time} • $workoutsCount ${s.workout}',
-                        style: const TextStyle(
-                            color: EngineRowingUI.labelSlate, fontSize: 12),
-                      ),
-                      trailing: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: EngineRowingUI.neonLime.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                              color: EngineRowingUI.neonLime.withValues(alpha: 0.4)),
-                        ),
-                        child: Text(
-                          s.readOnlyNotice,
+                    return Material(
+                      color: Colors.transparent,
+                      child: ListTile(
+                        title: Text(
+                          sess.name,
                           style: const TextStyle(
-                            color: EngineRowingUI.neonLime,
-                            fontSize: 11,
+                            color: EngineRowingUI.textWhite,
                             fontWeight: FontWeight.bold,
+                            fontSize: 14.5,
                           ),
                         ),
+                        subtitle: Text(
+                          '${s.sessionTime}: ${sess.time} • $workoutsCount ${s.workout}',
+                          style: const TextStyle(
+                              color: EngineRowingUI.labelSlate, fontSize: 12),
+                        ),
+                        trailing: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: EngineRowingUI.neonLime.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                                color: EngineRowingUI.neonLime.withValues(alpha: 0.4)),
+                          ),
+                          child: Text(
+                            s.readOnlyNotice,
+                            style: const TextStyle(
+                              color: EngineRowingUI.neonLime,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        onTap: () => _openSessionReadOnly(sess),
                       ),
-                      onTap: () => _openSessionReadOnly(sess),
                     );
                   }),
                 ],

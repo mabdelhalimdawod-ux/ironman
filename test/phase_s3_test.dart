@@ -12,6 +12,7 @@ import 'package:rowing_app/curve_privacy_service.dart';
 import 'package:rowing_app/dashboard_tab.dart';
 import 'package:rowing_app/db.dart';
 import 'package:rowing_app/program_service.dart';
+import 'package:rowing_app/today_workout_page.dart';
 
 void main() {
   late MockCloudApi mockCloud;
@@ -317,6 +318,188 @@ void main() {
       final downloaded = await mockCloud.downloadAvatar('user-77');
       expect(downloaded, dummyBytes);
     });
+
+    test('9. Coach Per-Athlete Daily Workout Customization Isolation: Original template and other athletes/days remain untouched', () async {
+      final db = await DB.db;
+      await db.delete('players');
+      await db.delete('athlete_custom_sessions');
+      await db.delete('athlete_custom_workout_items');
+      await db.delete('program_cycles');
+      await db.delete('program_sessions');
+      await db.delete('program_workout_items');
+
+      await db.insert('players', {'id': 501, 'name': 'اللاعب طارق', 'mhr': 190, 'active': 1});
+      await db.insert('players', {'id': 502, 'name': 'اللاعب سليم', 'mhr': 195, 'active': 1});
+
+      final cycle = await ProgramService.addProgramCycle();
+      await db.update(
+        'program_cycles',
+        {'start_date': '2026-11-01', 'end_date': '2026-11-30'},
+        where: 'id = ?',
+        whereArgs: [cycle.id],
+      );
+      await db.delete('program_sessions', where: 'cycle_id = ?', whereArgs: [cycle.id]);
+      await db.delete('program_workout_items');
+
+      final targetDate = DateTime(2026, 11, 25);
+      final dayOfWeek = ProgramService.getWeekdayIndex(targetDate);
+      final createdSession = await ProgramService.addDaySessionDetailed(cycle.id, 'basic', dayOfWeek);
+      final templateSession = ProgramDaySession(
+        id: createdSession.id,
+        cycleId: createdSession.cycleId,
+        cycleType: createdSession.cycleType,
+        dayOfWeek: createdSession.dayOfWeek,
+        sessionIdx: createdSession.sessionIdx,
+        name: 'حصة القالب الأصلية',
+        time: '08:00',
+        workouts: [
+          ProgramWorkoutItem(
+            sessionId: createdSession.id!,
+            section: 'main',
+            itemIdx: 0,
+            durationSeconds: 3000,
+            kind: 'Erg',
+            zone: 'Z2',
+            details: 'تمرين القالب العام 10 كم',
+          ),
+        ],
+      );
+      await ProgramService.saveDaySessionDetailed(templateSession);
+
+      // Verify template is present
+      final originalTemplates = await ProgramService.getTemplateSessionsForDate(targetDate);
+      expect(originalTemplates.isNotEmpty, isTrue);
+      expect(originalTemplates.first.name, 'حصة القالب الأصلية');
+
+      // Coach customizes workout for Athlete 501 ONLY on 2026-11-25
+      final customFor501 = ProgramDaySession(
+        cycleId: cycle.id,
+        cycleType: 'custom',
+        dayOfWeek: dayOfWeek,
+        sessionIdx: 0,
+        name: 'تعديل خاص باللاعب طارق فقط',
+        time: '09:30',
+        workouts: [
+          ProgramWorkoutItem(
+            sessionId: 0,
+            section: 'main',
+            itemIdx: 0,
+            durationSeconds: 1800,
+            kind: 'Erg',
+            zone: 'Threshold',
+            details: 'فارتلك خاص بالبطل طارق',
+          ),
+        ],
+      );
+
+      await ProgramService.saveAthleteCustomSession(
+        playerId: 501,
+        date: dstr(targetDate),
+        session: customFor501,
+      );
+
+      // Verify Athlete 501 on 2026-11-25 sees Coach's customization
+      final sessionsFor501 = await ProgramService.getSessionsForAthleteAndDate(
+        playerId: 501,
+        date: targetDate,
+      );
+      expect(sessionsFor501.length, 1);
+      expect(sessionsFor501.first.name, 'تعديل خاص باللاعب طارق فقط');
+      expect(sessionsFor501.first.workouts.first.details, 'فارتلك خاص بالبطل طارق');
+
+      // Verify Original Template is completely UNCHANGED
+      final templateCheck = await ProgramService.getTemplateSessionsForDate(targetDate);
+      expect(templateCheck.first.name, 'حصة القالب الأصلية');
+      expect(templateCheck.first.workouts.first.details, 'تمرين القالب العام 10 كم');
+
+      // Verify Athlete 502 on same date (2026-11-25) sees Original Template, NOT Athlete 501's edit
+      final sessionsFor502 = await ProgramService.getSessionsForAthleteAndDate(
+        playerId: 502,
+        date: targetDate,
+      );
+      expect(sessionsFor502.length, 1);
+      expect(sessionsFor502.first.name, 'حصة القالب الأصلية');
+      expect(sessionsFor502.first.workouts.first.details, 'تمرين القالب العام 10 كم');
+
+      // Verify Athlete 501 on a DIFFERENT date (2026-11-26) sees the template, NOT the custom workout
+      final otherDate = DateTime(2026, 11, 26);
+      final sessionsFor501NextDay = await ProgramService.getSessionsForAthleteAndDate(
+        playerId: 501,
+        date: otherDate,
+      );
+      if (sessionsFor501NextDay.isNotEmpty) {
+        expect(sessionsFor501NextDay.first.name, isNot('تعديل خاص باللاعب طارق فقط'));
+      }
+    }, timeout: const Timeout(Duration(seconds: 60)));
+
+    testWidgets('10. TodayWorkoutPage 7-Day Window Maximum Constraint: Date range clamped to 7 days', (tester) async {
+      await AppLanguage.instance.setLocale(const Locale('ar'));
+
+      const athleteUser = AppUser(
+        id: 301,
+        playerId: 301,
+        email: 'athlete301@test.com',
+        name: 'اللاعب عمر',
+        role: 'athlete',
+        subscriptionActive: true,
+      );
+
+      final anchorDate = DateTime(2026, 11, 20);
+
+      await tester.runAsync(() async {
+        final db = await DB.db;
+        await db.delete('players');
+        await db.insert('players', {'id': 301, 'name': 'اللاعب عمر', 'mhr': 190, 'active': 1});
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('ar'),
+          home: TodayWorkoutPage(
+            user: athleteUser,
+            initialDate: anchorDate,
+          ),
+        ),
+      );
+
+      for (int i = 0; i < 50; i++) {
+        if (find.byType(CircularProgressIndicator).evaluate().isEmpty) {
+          break;
+        }
+        await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 30)));
+        await tester.pump();
+      }
+      await tester.pump();
+
+      expect(find.textContaining('2026-11-20'), findsWidgets);
+
+      final dynamic state = tester.state(find.byType(TodayWorkoutPage));
+
+      // Selecting 2026-11-28 for end date while start is 2026-11-20 (9 days -> exceeds 7 days limit)
+      await tester.runAsync(() async {
+        await state.updateDateSelection(
+          DateTime(2026, 11, 28),
+          isStart: false,
+        );
+      });
+      await tester.pump();
+
+      final s = AppStrings.of(tester.element(find.byType(TodayWorkoutPage)));
+      expect(find.text(s.maxSevenDaysNotice), findsOneWidget);
+      expect(state.endDate, DateTime(2026, 11, 28));
+      expect(state.startDate, DateTime(2026, 11, 22));
+
+      // Valid range <= 7 days succeeds
+      await tester.runAsync(() async {
+        await state.updateDateSelection(
+          DateTime(2026, 11, 26),
+          isStart: false,
+        );
+      });
+      await tester.pump();
+      expect(state.startDate, DateTime(2026, 11, 22));
+      expect(state.endDate, DateTime(2026, 11, 26));
+    }, timeout: const Timeout(Duration(seconds: 60)));
   });
 
   group('Phase S3 Responsive Multi-Size & Multi-Language UI Tests', () {
