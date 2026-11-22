@@ -9,8 +9,10 @@ import 'db.dart';
 import 'engine_rowing_ui.dart';
 import 'heart_rate_zones.dart';
 import 'power_calculations.dart';
+import 'program_service.dart';
 import 'progress_calcs.dart';
 import 'progress_curve_header.dart';
+import 'progress_panel.dart';
 import 'progress_period_filter.dart';
 
 /// أنواع الشاشات والمنحنيات السبعة داخل تبويب Progress
@@ -60,6 +62,10 @@ class _AthleteCurveData {
   final double? latestCp;
   final double? latestWPrime;
 
+  // نتيجة Matrix Zone ومنحنى القدرة وسجلات التمارين الخام
+  final MatrixZoneAthleteResult? matrixZoneResult;
+  final List<Map<String, Object?>> rawLogs;
+
   const _AthleteCurveData({
     required this.playerId,
     required this.name,
@@ -84,6 +90,8 @@ class _AthleteCurveData {
     required this.cpTestRows,
     required this.latestCp,
     required this.latestWPrime,
+    this.matrixZoneResult,
+    this.rawLogs = const [],
   });
 }
 
@@ -134,6 +142,10 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
 
   late ProgressPeriodSelection _period;
   String? _selectedWattsZone; // null = جميع الزونات
+  String _selectedMatrixKind = 'Erg';
+  String _selectedZoneHoursKind = 'ALL';
+  List<MatrixZoneIndicatorConfig> _matrixConfigs =
+      ProgressCalcs.defaultMatrixIndicators;
 
   @override
   void initState() {
@@ -170,14 +182,14 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
     setState(() => _loadingRoster = true);
     try {
       await DB.db;
+      _matrixConfigs = await ProgressCalcs.loadMatrixZoneConfig();
       final players = await DB.players();
       _players = players;
 
       // تعيين لون ثابت لكل لاعب بناءً على ترتيبه بالـ id لضمان عدم تغيّر اللون أبداً
       final byId = List<Map<String, Object?>>.from(players)
-        ..sort((a, b) =>
-            ((a['id'] as num?)?.toInt() ?? 0)
-                .compareTo((b['id'] as num?)?.toInt() ?? 0));
+        ..sort((a, b) => ((a['id'] as num?)?.toInt() ?? 0)
+            .compareTo((b['id'] as num?)?.toInt() ?? 0));
       _athleteColors.clear();
       for (int i = 0; i < byId.length; i++) {
         final pid = (byId[i]['id'] as num?)?.toInt();
@@ -189,18 +201,9 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
       final isAthlete = widget.user?.isAthlete == true;
       final athletePlayerId = widget.user?.playerId ?? widget.user?.id;
       if (isAthlete && athletePlayerId != null) {
-        // اللاعب يرى نفسه وزملاء الفريق الذين وافقوا على مشاركة منحنياتهم فقط
-        final allowedTeammateIds = <int>{};
-        for (final p in players) {
-          final pid = (p['id'] as num?)?.toInt();
-          if (pid != null &&
-              (pid == athletePlayerId ||
-                  (p['curves_shared'] as num?)?.toInt() == 1)) {
-            allowedTeammateIds.add(pid);
-          }
-        }
+        // تبويب Progress مقفول على حساب اللاعب نفسه فقط
         _players = _players
-            .where((p) => allowedTeammateIds.contains((p['id'] as num?)?.toInt()))
+            .where((p) => (p['id'] as num?)?.toInt() == athletePlayerId)
             .toList();
         if (_players.isEmpty) {
           _players = [
@@ -213,9 +216,8 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
         final userId = widget.user?.id;
         final matchesUser = userId != null &&
             _players.any((p) => (p['id'] as num?)?.toInt() == userId);
-        final firstId = matchesUser
-            ? userId
-            : (_players.first['id'] as num?)?.toInt();
+        final firstId =
+            matchesUser ? userId : (_players.first['id'] as num?)?.toInt();
         if (firstId != null) {
           _selectedPlayerIds.add(firstId);
         }
@@ -284,7 +286,8 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
       } catch (_) {}
     }
 
-    final match = RegExp(r'decoupling:\s*([0-9]+(?:\.[0-9]+)?)').firstMatch(notes);
+    final match =
+        RegExp(r'decoupling:\s*([0-9]+(?:\.[0-9]+)?)').firstMatch(notes);
     if (match != null) {
       return double.tryParse(match.group(1)!);
     }
@@ -357,25 +360,30 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
       final isTeammate = widget.user?.isAthlete == true &&
           (widget.user?.playerId ?? widget.user?.id) != playerId;
 
-      final List<Map<String, Object?>> logRows;
+      final List<Map<String, Object?>> allAthleteLogs;
       if (isTeammate) {
-        logRows = await DB.q('''
-          SELECT c.*, p.mhr as player_mhr, '' as session_zone
+        allAthleteLogs = await DB.q('''
+          SELECT c.*, p.mhr as player_mhr, '' as session_zone, '' as session_kind
           FROM shared_curve_cache c
           LEFT JOIN players p ON c.player_id = p.id
-          WHERE c.player_id = ? AND c.date >= ? AND c.date <= ?
+          WHERE c.player_id = ?
           ORDER BY c.date ASC, c.idx ASC
-        ''', [playerId, startStr, endStr]);
+        ''', [playerId]);
       } else {
-        logRows = await DB.q('''
-          SELECT l.*, p.mhr as player_mhr, s.zone as session_zone
+        allAthleteLogs = await DB.q('''
+          SELECT l.*, p.mhr as player_mhr, s.zone as session_zone, s.kind as session_kind
           FROM logs l
           JOIN players p ON l.player_id = p.id
           LEFT JOIN sessions s ON l.date = s.date AND l.idx = s.idx
-          WHERE l.player_id = ? AND l.date >= ? AND l.date <= ?
+          WHERE l.player_id = ?
           ORDER BY l.date ASC, l.idx ASC
-        ''', [playerId, startStr, endStr]);
+        ''', [playerId]);
       }
+
+      final logRows = allAthleteLogs.where((l) {
+        final dStr = (l['date'] as String?) ?? '';
+        return dStr.compareTo(startStr) >= 0 && dStr.compareTo(endStr) <= 0;
+      }).toList();
 
       final hrvByDate = <String, List<double>>{};
       final rhrByDate = <String, List<double>>{};
@@ -469,23 +477,34 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
         }
       }
 
-      // ساعات الزونات
+      // ساعات الزونات مع فلتر نوع التمرين (نوع محدد أو الكل)
+      final zoneHoursLogs = logRows.where((l) {
+        if (_selectedZoneHoursKind == 'ALL') return true;
+        final k =
+            (l['kind'] as String?) ?? (l['session_kind'] as String?) ?? '';
+        return k.toLowerCase() == _selectedZoneHoursKind.toLowerCase();
+      }).toList();
       final zoneHours = ProgressCalcs.computeZoneHours(
-        logRows.map((r) => Map<String, dynamic>.from(r)).toList(),
+        zoneHoursLogs.map((r) => Map<String, dynamic>.from(r)).toList(),
         defaultMhr: mhr,
         defaultRhr: effectiveRhr,
       );
 
-      // حسابات PMC والكاش
+      // حسابات PMC والكاش مع فترة إحماء 42 يوماً على الأقل قبل الفترة المعروضة
       List<DailyLoadEntry> pmcEntries = const [];
       DailyLoadEntry? todayLoad;
       int missingCpCount = 0;
       List<String> missingCpDates = const [];
       if (widget.curveType == ProgressCurveType.pmcLoad) {
-        final syncRes = await ProgressLoadCache.syncForPlayer(playerId);
+        final warmupDate = _period.start.subtract(const Duration(days: 42));
+        final syncRes = await ProgressLoadCache.syncForPlayer(
+          playerId,
+          forceFromDate: dstr(warmupDate),
+        );
         pmcEntries = syncRes.allEntries
             .where((e) =>
-                e.date.compareTo(startStr) >= 0 && e.date.compareTo(endStr) <= 0)
+                e.date.compareTo(startStr) >= 0 &&
+                e.date.compareTo(endStr) <= 0)
             .toList();
         final todayKey = dstr(DateTime.now());
         todayLoad = syncRes.allEntries
@@ -494,11 +513,23 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
         todayLoad ??=
             syncRes.allEntries.isNotEmpty ? syncRes.allEntries.last : null;
         missingCpDates = syncRes.missingCpDates
-            .where((d) => d.compareTo(startStr) >= 0 && d.compareTo(endStr) <= 0)
+            .where(
+                (d) => d.compareTo(startStr) >= 0 && d.compareTo(endStr) <= 0)
             .toList()
           ..sort();
         missingCpCount = missingCpDates.length;
       }
+
+      // حساب مقاييس Matrix Zone ومنحنى القدرة
+      final matrixResult = ProgressCalcs.computeMatrixZoneForAthlete(
+        playerId: playerId,
+        athleteName: name,
+        workoutKind: _selectedMatrixKind,
+        allAthleteLogs: allAthleteLogs,
+        periodStart: _period.start,
+        periodEnd: _period.end,
+        indicatorConfigs: _matrixConfigs,
+      );
 
       // اختبارات CP
       List<DateValuePoint> cpValuePoints = const [];
@@ -567,6 +598,8 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
         cpTestRows: cpTestRows,
         latestCp: latestCp,
         latestWPrime: latestWPrime,
+        matrixZoneResult: matrixResult,
+        rawLogs: allAthleteLogs,
       );
 
       if (mounted) {
@@ -652,7 +685,11 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
             // 2. قائمة أسماء كل لاعبي الفريق تحت الفلتر مباشرة
             _buildTeamRosterBar(s),
 
-            // 3. شريط اختيار الزون الفرعي لشاشة الواط فقط
+            // 3. أشرطة اختيار الأنواع والزونات المتخصصة حسب نوع المنحنى
+            if (widget.curveType == ProgressCurveType.matrixZone)
+              _buildMatrixZoneKindSelectorBar(s),
+            if (widget.curveType == ProgressCurveType.zoneHours)
+              _buildZoneHoursKindSelectorBar(s),
             if (widget.curveType == ProgressCurveType.watts)
               _buildWattsZoneSelectorBar(s),
 
@@ -729,7 +766,8 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                               : EngineRowingUI.equationCardFill,
                           borderRadius: BorderRadius.circular(18),
                           border: Border.all(
-                            color: isSelected ? color : EngineRowingUI.bgGridLine,
+                            color:
+                                isSelected ? color : EngineRowingUI.bgGridLine,
                             width: isSelected ? 1.5 : 1.0,
                           ),
                         ),
@@ -775,6 +813,88 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
         ],
       ),
     );
+  }
+
+  Widget _buildMatrixZoneKindSelectorBar(AppStrings s) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: const BoxDecoration(
+        color: EngineRowingUI.equationCardFill,
+        border: Border(
+          bottom: BorderSide(color: EngineRowingUI.bgGridLine, width: 1.0),
+        ),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (final kind in kProgramWorkoutKinds)
+              _buildZoneChip(
+                label: kind,
+                color: EngineRowingUI.neonLime,
+                selected:
+                    _selectedMatrixKind.toLowerCase() == kind.toLowerCase(),
+                onTap: () => _onMatrixKindChanged(kind),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildZoneHoursKindSelectorBar(AppStrings s) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: const BoxDecoration(
+        color: EngineRowingUI.equationCardFill,
+        border: Border(
+          bottom: BorderSide(color: EngineRowingUI.bgGridLine, width: 1.0),
+        ),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _buildZoneChip(
+              label: s.allWorkoutsKind,
+              color: EngineRowingUI.neonLime,
+              selected: _selectedZoneHoursKind == 'ALL',
+              onTap: () => _onZoneHoursKindChanged('ALL'),
+            ),
+            for (final kind in kProgramWorkoutKinds)
+              _buildZoneChip(
+                label: kind,
+                color: EngineRowingUI.zone2Color,
+                selected:
+                    _selectedZoneHoursKind.toLowerCase() == kind.toLowerCase(),
+                onTap: () => _onZoneHoursKindChanged(kind),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _onMatrixKindChanged(String kind) {
+    if (_selectedMatrixKind.toLowerCase() == kind.toLowerCase()) return;
+    setState(() {
+      _selectedMatrixKind = kind;
+      _athleteCache.clear();
+    });
+    for (final pid in _selectedPlayerIds) {
+      _fetchSingleAthlete(pid);
+    }
+  }
+
+  void _onZoneHoursKindChanged(String kind) {
+    if (_selectedZoneHoursKind.toLowerCase() == kind.toLowerCase()) return;
+    setState(() {
+      _selectedZoneHoursKind = kind;
+      _athleteCache.clear();
+    });
+    for (final pid in _selectedPlayerIds) {
+      _fetchSingleAthlete(pid);
+    }
   }
 
   Widget _buildWattsZoneSelectorBar(AppStrings s) {
@@ -923,8 +1043,8 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
               trailing: IconButton(
                 icon: const Icon(Icons.info_outline_rounded,
                     color: EngineRowingUI.neonLime, size: 18),
-                onPressed: () => _showInfoDialog(
-                    s.decouplingTitle, s.decouplingExplanation),
+                onPressed: () =>
+                    _showInfoDialog(s.decouplingTitle, s.decouplingExplanation),
               ),
             ),
             ..._buildStackedAthleteBlocks(
@@ -995,8 +1115,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
               trailing: IconButton(
                 icon: const Icon(Icons.info_outline_rounded,
                     color: EngineRowingUI.neonLime, size: 18),
-                onPressed: () =>
-                    _showInfoDialog(s.pmcTitle, s.pmcExplanation),
+                onPressed: () => _showInfoDialog(s.pmcTitle, s.pmcExplanation),
               ),
             ),
             ..._buildStackedAthleteBlocks(
@@ -1022,8 +1141,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
               trailing: IconButton(
                 icon: const Icon(Icons.info_outline_rounded,
                     color: EngineRowingUI.neonLime, size: 18),
-                onPressed: () =>
-                    _showInfoDialog(s.hrvTitle, s.hrvExplanation),
+                onPressed: () => _showInfoDialog(s.hrvTitle, s.hrvExplanation),
               ),
             ),
             ..._buildStackedAthleteBlocks(
@@ -1045,8 +1163,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
               trailing: IconButton(
                 icon: const Icon(Icons.info_outline_rounded,
                     color: EngineRowingUI.neonLime, size: 18),
-                onPressed: () =>
-                    _showInfoDialog(s.rhrTitle, s.rhrExplanation),
+                onPressed: () => _showInfoDialog(s.rhrTitle, s.rhrExplanation),
               ),
             ),
             ..._buildStackedAthleteBlocks(
@@ -1206,62 +1323,66 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
   }
 
   // ════════════════════════════════════════════════════════════════
-  // Matrix Zone: عرض خاص مشترك — رسم واحد بمحورين مشتركين لكل اللاعبين المختارين
+  // Matrix Zone: منحنى Matrix Zone مع المقارنة بين اللاعبين ومنحنى القدرة (Capacity Curve)
   // ════════════════════════════════════════════════════════════════
   Widget _buildMatrixZoneSharedChart(AppStrings s) {
-    final series = <LineChartBarData>[];
-    double minX = 50.0, maxX = 110.0;
-    double minY = 50.0, maxY = 400.0;
-    bool hasAnyPoints = false;
+    // التحقق من مجموع نسب المؤشرات
+    final currentWeightSum = _matrixConfigs.fold<double>(
+      0.0,
+      (acc, c) => acc + c.weight,
+    );
+    final isWeightSumValid = (currentWeightSum - 100.0).abs() < 0.01;
 
-    final allPts = <({double hrrPct, double watts})>[];
+    // استخراج أقصى واط عبر كل اللاعبين لتطبيع ارتفاع الشرايط
+    double maxWattsAcrossAll = 350.0;
     for (final pid in _selectedPlayerIds) {
-      final data = _athleteCache[pid];
-      if (data == null || data.matrixPoints.isEmpty) continue;
-      hasAnyPoints = true;
-      final color = _colorForAthlete(pid);
-      final sorted = List.of(data.matrixPoints)
-        ..sort((a, b) => a.hrrPct.compareTo(b.hrrPct));
-      allPts.addAll(sorted.map((e) => (hrrPct: e.hrrPct, watts: e.watts)));
-
-      series.add(
-        LineChartBarData(
-          spots: sorted.map((p) => FlSpot(p.hrrPct, p.watts)).toList(),
-          isCurved: false,
-          color: color,
-          barWidth: 2.2,
-          dotData: FlDotData(
-            show: true,
-            getDotPainter: (spot, percent, bar, idx) => FlDotCirclePainter(
-              radius: 4.0,
-              color: color,
-              strokeColor: Colors.white,
-              strokeWidth: 1.0,
-            ),
-          ),
-        ),
-      );
+      final res = _athleteCache[pid]?.matrixZoneResult;
+      if (res != null) {
+        for (final d in res.detailsByZone.values) {
+          if (d.bestWatts != null && d.bestWatts! > maxWattsAcrossAll) {
+            maxWattsAcrossAll = d.bestWatts!;
+          }
+        }
+      }
     }
+    maxWattsAcrossAll = max(maxWattsAcrossAll + 30.0, 300.0);
 
-    if (hasAnyPoints) {
-      minX = (allPts.map((e) => e.hrrPct).reduce(min) - 5).clamp(0.0, 100.0);
-      maxX = max(allPts.map((e) => e.hrrPct).reduce(max) + 5, minX + 10);
-      minY = max(0.0, allPts.map((e) => e.watts).reduce(min) - 20);
-      maxY = max(allPts.map((e) => e.watts).reduce(max) + 20, minY + 30);
-    }
-
-    return Container(
+    return ProgressPanel(
       margin: EdgeInsets.zero,
       padding: const EdgeInsets.all(12),
-      decoration: const BoxDecoration(
-        color: EngineRowingUI.cardFill,
-        border: Border(
-          bottom: BorderSide(color: EngineRowingUI.bgGridLine, width: 1.0),
-        ),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // 1. ترويسة اللوحة المشتركة مع زر (i) لمنحنى القدرة
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  s.matrixZoneTitle,
+                  style: const TextStyle(
+                    color: EngineRowingUI.textWhite,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.info_outline_rounded,
+                  color: EngineRowingUI.neonLime,
+                  size: 20,
+                ),
+                tooltip: s.capacityCurveTitle,
+                onPressed: () => _showInfoDialog(
+                  s.capacityCurveTitle,
+                  s.capacityCurveExplanation,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+
+          // شريط أسماء اللاعبين المختارين
           Wrap(
             spacing: 10,
             runSpacing: 6,
@@ -1282,7 +1403,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                     name,
                     style: TextStyle(
                       color: color,
-                      fontSize: 11.5,
+                      fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -1290,111 +1411,807 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
               );
             }).toList(),
           ),
-          const SizedBox(height: 8),
-          if (!hasAnyPoints)
+          const SizedBox(height: 14),
+
+          // تنبيه مجموع الأوزان إن لم يكن 100%
+          if (!isWeightSumValid)
             Container(
-              height: 180,
-              alignment: Alignment.center,
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: EngineRowingUI.equationCardFill,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: EngineRowingUI.bgGridLine),
+                color: Colors.red.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+                border:
+                    Border.all(color: Colors.redAccent.withValues(alpha: 0.6)),
               ),
-              child: Text(
-                s.notEnoughData,
-                style: const TextStyle(
-                  color: EngineRowingUI.captionGrey,
-                  fontSize: 13,
-                ),
+              child: Row(
+                children: [
+                  const Icon(Icons.warning_amber_rounded,
+                      color: Colors.redAccent, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      s.weightsSumMustBe100(currentWeightSum.round()),
+                      style: const TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // لو حذف المدرب كل المؤشرات
+          if (_matrixConfigs.isEmpty)
+            Container(
+              height: 160,
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    s.addIndicatorToShowCurve,
+                    style: const TextStyle(
+                      color: EngineRowingUI.captionGrey,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.add, size: 16),
+                    label: Text(s.addIndicator),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: EngineRowingUI.neonLime,
+                      foregroundColor: EngineRowingUI.bgNavy,
+                    ),
+                    onPressed: () => _showAddIndicatorDialog(s),
+                  ),
+                ],
               ),
             )
-          else
-            SizedBox(
-              height: 230,
-              child: Directionality(
-                textDirection: TextDirection.ltr,
-                child: LineChart(
-                  LineChartData(
-                    minX: minX,
-                    maxX: maxX,
-                    minY: minY,
-                    maxY: maxY,
-                    gridData: FlGridData(
-                      show: true,
-                      drawVerticalLine: true,
-                      getDrawingHorizontalLine: (_) => const FlLine(
-                        color: EngineRowingUI.bgGridLine,
-                        strokeWidth: 0.8,
-                      ),
-                      getDrawingVerticalLine: (_) => const FlLine(
-                        color: EngineRowingUI.bgGridLine,
-                        strokeWidth: 0.8,
-                      ),
-                    ),
-                    titlesData: FlTitlesData(
-                      leftTitles: AxisTitles(
-                        axisNameWidget: Text(
-                          s.chipWatts,
-                          style: const TextStyle(
-                            color: EngineRowingUI.labelSlate,
-                            fontSize: 10,
-                          ),
+          else ...[
+            // 2. رسم المقارنة: صفوف اللاعبين فوق بعض مع 7 شرايط ومنحنى القدرة لكل لاعب
+            ..._selectedPlayerIds.map((pid) {
+              final color = _colorForAthlete(pid);
+              final athleteData = _athleteCache[pid];
+              final athleteRes = athleteData?.matrixZoneResult;
+              final athleteName = athleteData?.name ?? _nameForId(pid);
+
+              return _buildMatrixZoneAthleteRow(
+                s: s,
+                playerId: pid,
+                athleteName: athleteName,
+                athleteColor: color,
+                result: athleteRes,
+                maxWatts: maxWattsAcrossAll,
+              );
+            }),
+          ],
+
+          const SizedBox(height: 16),
+
+          // 3. لوحة إعداد المؤشرات وتوزيع النسب
+          _buildMatrixZoneIndicatorsConfigPanel(s, currentWeightSum),
+
+          const SizedBox(height: 16),
+
+          // 4. قسم المدخلات المتاحة وجدول نبض الراحة ومصدره
+          _buildAvailableInputsAndHeartRateTable(s),
+
+          const SizedBox(height: 8),
+          _buildCurveFooterChipsAndNotice(s, 'matrix'),
+        ],
+      ),
+    );
+  }
+
+  /// صف لاعب واحد في Matrix Zone (الشرايط السبعة + منحنى القدرة)
+  Widget _buildMatrixZoneAthleteRow({
+    required AppStrings s,
+    required int playerId,
+    required String athleteName,
+    required Color athleteColor,
+    required MatrixZoneAthleteResult? result,
+    required double maxWatts,
+  }) {
+    final orderedZones = HeartRateZones.orderedZones;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: EngineRowingUI.equationCardFill,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: athleteColor.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // عنوان اللاعب
+          Row(
+            children: [
+              Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                      color: athleteColor, shape: BoxShape.circle)),
+              const SizedBox(width: 6),
+              Text(
+                athleteName,
+                style: TextStyle(
+                  color: athleteColor,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Spacer(),
+              if (result == null || !result.hasData)
+                Text(
+                  s.notEnoughData,
+                  style: const TextStyle(
+                      color: EngineRowingUI.captionGrey, fontSize: 11),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // الشرايط السبعة للمناطق
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: orderedZones.map((z) {
+                final detail = result?.detailsByZone[z];
+                final zColor = HeartRateZones.zoneColor(z);
+                final bestWatts = detail?.bestWatts;
+                final barWidth = detail?.barWidth ?? 16.0;
+                final baselineStart = detail?.startBaselineWatts;
+                final baselineCurrent = detail?.currentBaselineWatts;
+
+                // الارتفاع المنسوب للواط (أقصى ارتفاع 140px)
+                final barHeight = bestWatts != null && bestWatts > 0
+                    ? ((bestWatts / maxWatts) * 140.0).clamp(8.0, 140.0)
+                    : 0.0;
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // رقم الواط أو تنبيه لا توجد بيانات
+                      Text(
+                        bestWatts != null ? '${bestWatts.round()} W' : '--',
+                        style: TextStyle(
+                          color: bestWatts != null
+                              ? EngineRowingUI.textWhite
+                              : EngineRowingUI.captionGrey,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
                         ),
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          reservedSize: 38,
-                          getTitlesWidget: (v, _) => Text(
-                            v.toInt().toString(),
-                            style: const TextStyle(
-                              color: EngineRowingUI.captionGrey,
-                              fontSize: 10,
+                      ),
+                      const SizedBox(height: 4),
+
+                      // الشريط الملون بعرض يطابق درجة التحسن
+                      Stack(
+                        alignment: Alignment.bottomCenter,
+                        children: [
+                          Container(
+                            width: barWidth,
+                            height: 140,
+                            alignment: Alignment.bottomCenter,
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(4),
                             ),
+                            child: bestWatts != null && bestWatts > 0
+                                ? Container(
+                                    width: barWidth,
+                                    height: barHeight,
+                                    decoration: BoxDecoration(
+                                      color: zColor,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  )
+                                : Container(
+                                    width: barWidth,
+                                    height: 4,
+                                    decoration: BoxDecoration(
+                                      color: Colors.transparent,
+                                      border: Border.all(
+                                          color: Colors.grey.shade700,
+                                          width: 1.0),
+                                    ),
+                                  ),
                           ),
-                        ),
+
+                          // خط الأساس المرجعي المنقط على الشريط
+                          if (baselineStart != null && baselineStart > 0)
+                            Positioned(
+                              bottom: ((baselineStart / maxWatts) * 140.0)
+                                  .clamp(0.0, 140.0),
+                              child: Tooltip(
+                                message:
+                                    '${s.baselineStartLabel}: ${baselineStart.round()} W, ${s.currentBaselineLabel}: ${baselineCurrent?.round() ?? baselineStart.round()} W',
+                                child: Container(
+                                  width: barWidth + 8,
+                                  height: 2.5,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    boxShadow: [
+                                      BoxShadow(
+                                          color: Colors.black
+                                              .withValues(alpha: 0.5),
+                                          blurRadius: 2),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
-                      bottomTitles: AxisTitles(
-                        axisNameWidget: const Text(
-                          '% HRR',
+                      const SizedBox(height: 6),
+
+                      // اسم المنطقة
+                      SizedBox(
+                        width: max(barWidth + 10, 48),
+                        child: Text(
+                          HeartRateZones.zoneDisplayName(z, isArabic: false),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: EngineRowingUI.labelSlate,
-                            fontSize: 10,
-                          ),
-                        ),
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          reservedSize: 22,
-                          getTitlesWidget: (v, _) => Text(
-                            '${v.toInt()}%',
-                            style: const TextStyle(
-                              color: EngineRowingUI.captionGrey,
-                              fontSize: 10,
-                            ),
+                            color: zColor,
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
-                      rightTitles: const AxisTitles(
-                          sideTitles: SideTitles(showTitles: false)),
-                      topTitles: const AxisTitles(
-                          sideTitles: SideTitles(showTitles: false)),
-                    ),
-                    borderData: FlBorderData(
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // منحنى القدرة (Capacity Curve) مع علامات LT1 و LT2
+          if (result != null && result.hasData)
+            _buildCapacityCurveChart(
+              s: s,
+              athleteColor: athleteColor,
+              result: result,
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// رسم منحنى القدرة (Capacity Curve) للاعب
+  Widget _buildCapacityCurveChart({
+    required AppStrings s,
+    required Color athleteColor,
+    required MatrixZoneAthleteResult result,
+  }) {
+    final spots = <FlSpot>[];
+    final orderedZones = HeartRateZones.orderedZones;
+
+    for (int i = 0; i < orderedZones.length; i++) {
+      final z = orderedZones[i];
+      final val = result.detailsByZone[z]?.capacityCurveValue;
+      if (val != null) {
+        spots.add(FlSpot(i.toDouble(), val));
+      }
+    }
+
+    if (spots.length < 2) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Text(
+              s.capacityCurveTitle,
+              style: TextStyle(
+                color: athleteColor,
+                fontSize: 11.5,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(width: 8),
+            // شارة LT1
+            if (result.lt1Point != null)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                decoration: BoxDecoration(
+                  color: EngineRowingUI.bgNavy,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                      color: HeartRateZones.zoneColor('Z2'), width: 1.0),
+                ),
+                child: const Text(
+                  'LT1 (تقديري)',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold),
+                ),
+              ),
+            const SizedBox(width: 6),
+            // شارة LT2
+            if (result.lt2Point != null)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                decoration: BoxDecoration(
+                  color: EngineRowingUI.bgNavy,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                      color: HeartRateZones.zoneColor('Threshold'), width: 1.0),
+                ),
+                child: const Text(
+                  'LT2 (تقديري)',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          height: 100,
+          child: Directionality(
+            textDirection: TextDirection.ltr,
+            child: LineChart(
+              LineChartData(
+                minX: 0,
+                maxX: 6,
+                minY: 60,
+                maxY: 420,
+                gridData: const FlGridData(show: false),
+                titlesData: const FlTitlesData(show: false),
+                borderData: FlBorderData(show: false),
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: spots,
+                    isCurved: true,
+                    curveSmoothness: 0.35,
+                    color: athleteColor,
+                    barWidth: 2.4,
+                    dotData: FlDotData(
                       show: true,
-                      border: Border.all(color: EngineRowingUI.bgGridLine),
+                      getDotPainter: (spot, percent, bar, index) =>
+                          FlDotCirclePainter(
+                        radius: 3.5,
+                        color: athleteColor,
+                        strokeColor: Colors.white,
+                        strokeWidth: 1.0,
+                      ),
                     ),
-                    lineBarsData: series,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// لوحة إعداد المؤشرات الأربعة وإضافة أو حذف مؤشرات
+  Widget _buildMatrixZoneIndicatorsConfigPanel(
+      AppStrings s, double currentSum) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: EngineRowingUI.equationCardFill,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: EngineRowingUI.bgGridLine),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.tune_rounded,
+                  color: EngineRowingUI.neonLime, size: 18),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  s.isArabic
+                      ? 'إعداد نسب المؤشرات (لكل اللاعبين)'
+                      : 'Indicator Weights (Global)',
+                  style: const TextStyle(
+                    color: EngineRowingUI.textWhite,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-            ),
+              const SizedBox(width: 6),
+              Text(
+                '${s.isArabic ? 'المجموع' : 'Total'}: ${currentSum.round()}%',
+                style: TextStyle(
+                  color: (currentSum - 100.0).abs() < 0.01
+                      ? EngineRowingUI.neonLime
+                      : Colors.redAccent,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 4),
+              IconButton(
+                icon: const Icon(Icons.add_circle_outline,
+                    color: EngineRowingUI.neonLime, size: 20),
+                tooltip: s.addIndicator,
+                onPressed: () => _showAddIndicatorDialog(s),
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
+
+          // قائمة المؤشرات الحالية
+          ..._matrixConfigs.map((cfg) {
+            final name = ProgressCalcs.metricChipName(s, cfg.key);
+            return Container(
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: EngineRowingUI.cardFill,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      name,
+                      style: const TextStyle(
+                          color: EngineRowingUI.textWhite, fontSize: 12),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 70,
+                    child: TextFormField(
+                      initialValue: cfg.weight.round().toString(),
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          color: EngineRowingUI.neonLime,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold),
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                        suffixText: '%',
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (val) {
+                        final parsed = double.tryParse(val);
+                        if (parsed != null && parsed >= 0) {
+                          _updateIndicatorWeight(cfg.key, parsed);
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline,
+                        color: Colors.redAccent, size: 18),
+                    tooltip: s.isArabic ? 'حذف' : 'Delete',
+                    onPressed: () => _confirmDeleteIndicator(s, cfg.key),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  void _updateIndicatorWeight(String key, double newWeight) async {
+    final idx = _matrixConfigs.indexWhere((c) => c.key == key);
+    if (idx < 0) return;
+
+    final updated = List<MatrixZoneIndicatorConfig>.from(_matrixConfigs);
+    updated[idx] = MatrixZoneIndicatorConfig(
+      key: key,
+      weight: newWeight,
+      direction: updated[idx].direction,
+      sortOrder: updated[idx].sortOrder,
+    );
+
+    setState(() {
+      _matrixConfigs = updated;
+    });
+
+    final sum = updated.fold<double>(0.0, (acc, c) => acc + c.weight);
+    if ((sum - 100.0).abs() < 0.01) {
+      await ProgressCalcs.saveMatrixZoneConfig(updated);
+      _athleteCache.clear();
+      for (final pid in List<int>.from(_selectedPlayerIds)) {
+        _fetchSingleAthlete(pid);
+      }
+    }
+  }
+
+  void _confirmDeleteIndicator(AppStrings s, String key) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: EngineRowingUI.cardFill,
+        title: Text(
+          s.confirmDeleteIndicator,
+          style: const TextStyle(color: EngineRowingUI.textWhite, fontSize: 15),
+        ),
+        actions: [
+          TextButton(
+            child: Text(s.cancel,
+                style: const TextStyle(color: EngineRowingUI.captionGrey)),
+            onPressed: () => Navigator.of(ctx).pop(),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            child: Text(s.isArabic ? 'تأكيد الحذف' : 'Confirm Delete',
+                style: const TextStyle(color: Colors.white)),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final updated =
+                  _matrixConfigs.where((c) => c.key != key).toList();
+              setState(() {
+                _matrixConfigs = updated;
+              });
+              final sum = updated.fold<double>(0.0, (acc, c) => acc + c.weight);
+              if ((sum - 100.0).abs() < 0.01) {
+                await ProgressCalcs.saveMatrixZoneConfig(updated);
+                _athleteCache.clear();
+                for (final pid in List<int>.from(_selectedPlayerIds)) {
+                  _fetchSingleAthlete(pid);
+                }
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddIndicatorDialog(AppStrings s) {
+    String selectedField = 'hr';
+    String selectedDir = 'up';
+    double weight = 10.0;
+
+    final availableFields = [
+      'hr',
+      'hr_max',
+      'hr_post',
+      'hr_1min',
+      'rhr',
+      'hrv',
+      'weight',
+      'fatigue',
+      'sleep_hours',
+      'avg_power',
+      'distance',
+      'split_500',
+      'ef',
+      'decoupling',
+      'eupnea_1',
+      'player_notes',
+    ];
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDlgState) {
+          final isTextField = selectedField == 'player_notes';
+          return AlertDialog(
+            backgroundColor: EngineRowingUI.cardFill,
+            title: Text(
+              s.addIndicator,
+              style: const TextStyle(
+                  color: EngineRowingUI.textWhite, fontSize: 16),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                DropdownButtonFormField<String>(
+                  initialValue: selectedField,
+                  dropdownColor: EngineRowingUI.cardFill,
+                  decoration: InputDecoration(
+                    labelText: s.isArabic ? 'الحقل' : 'Field',
+                    border: const OutlineInputBorder(),
+                  ),
+                  items: availableFields.map((f) {
+                    return DropdownMenuItem<String>(
+                      value: f,
+                      child: Text(
+                        f,
+                        style: const TextStyle(color: EngineRowingUI.textWhite),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    if (val != null) {
+                      setDlgState(() => selectedField = val);
+                    }
+                  },
+                ),
+                if (isTextField) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    s.textFieldNotCalculatedWarning,
+                    style: const TextStyle(color: Colors.amber, fontSize: 11),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        initialValue: selectedDir,
+                        dropdownColor: EngineRowingUI.cardFill,
+                        decoration: InputDecoration(
+                          labelText: s.isArabic ? 'اتجاه التحسن' : 'Direction',
+                          border: const OutlineInputBorder(),
+                        ),
+                        items: [
+                          DropdownMenuItem(
+                            value: 'up',
+                            child: Text(
+                                s.isArabic ? 'الأعلى أفضل' : 'Higher is better',
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 12)),
+                          ),
+                          DropdownMenuItem(
+                            value: 'down',
+                            child: Text(
+                                s.isArabic ? 'الأقل أفضل' : 'Lower is better',
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 12)),
+                          ),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) setDlgState(() => selectedDir = val);
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: 80,
+                      child: TextFormField(
+                        initialValue: weight.round().toString(),
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: s.isArabic ? 'النسبة' : 'Weight',
+                          suffixText: '%',
+                          border: const OutlineInputBorder(),
+                        ),
+                        style: const TextStyle(color: Colors.white),
+                        onChanged: (val) {
+                          final p = double.tryParse(val);
+                          if (p != null) weight = p;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                child: Text(s.cancel,
+                    style: const TextStyle(color: EngineRowingUI.captionGrey)),
+                onPressed: () => Navigator.of(ctx).pop(),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: EngineRowingUI.neonLime),
+                child: Text(s.isArabic ? 'إضافة' : 'Add',
+                    style: const TextStyle(color: EngineRowingUI.bgNavy)),
+                onPressed: () async {
+                  Navigator.of(ctx).pop();
+                  final updated =
+                      List<MatrixZoneIndicatorConfig>.from(_matrixConfigs);
+                  updated.add(MatrixZoneIndicatorConfig(
+                    key: selectedField,
+                    weight: weight,
+                    direction: selectedDir,
+                    sortOrder: updated.length,
+                  ));
+                  setState(() => _matrixConfigs = updated);
+                  final sum =
+                      updated.fold<double>(0.0, (acc, c) => acc + c.weight);
+                  if ((sum - 100.0).abs() < 0.01) {
+                    await ProgressCalcs.saveMatrixZoneConfig(updated);
+                    _athleteCache.clear();
+                    for (final pid in List<int>.from(_selectedPlayerIds)) {
+                      _fetchSingleAthlete(pid);
+                    }
+                  }
+                },
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// قسم المدخلات المتاحة وجدول نبض الراحة الأقصى ومصدرهما
+  Widget _buildAvailableInputsAndHeartRateTable(AppStrings s) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: EngineRowingUI.equationCardFill,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: EngineRowingUI.bgGridLine),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
           Text(
-            s.matrixZoneComparisonNote,
+            s.maxHrRhrSourceTitle,
             style: const TextStyle(
-              color: EngineRowingUI.captionGrey,
-              fontSize: 10.5,
+              color: EngineRowingUI.textWhite,
+              fontSize: 12.5,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          _buildCurveFooterChipsAndNotice(s, 'matrix'),
+          const SizedBox(height: 8),
+          ..._selectedPlayerIds.map((pid) {
+            final data = _athleteCache[pid];
+            final name = data?.name ?? _nameForId(pid);
+            final mhr = data?.mhr ?? 190;
+            final rhr = data?.effectiveRhr ?? 0;
+            final rhrText = rhr > 0 ? '$rhr bpm' : s.logMorningRhrPrompt;
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                color: EngineRowingUI.cardFill,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  Text(
+                    name,
+                    style: TextStyle(
+                      color: _colorForAthlete(pid),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'Max HR: $mhr bpm (${s.isArabic ? 'البروفايل' : 'Profile'})',
+                    style: const TextStyle(
+                        color: EngineRowingUI.captionGrey, fontSize: 10.5),
+                  ),
+                  Text(
+                    'RHR: $rhrText',
+                    style: TextStyle(
+                      color: rhr > 0 ? EngineRowingUI.neonLime : Colors.amber,
+                      fontSize: 10.5,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -1478,10 +2295,8 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
 
     double? minY;
     double? maxY;
-    final nonNullVals = points
-        .where((p) => p.value != null)
-        .map((p) => p.value!)
-        .toList();
+    final nonNullVals =
+        points.where((p) => p.value != null).map((p) => p.value!).toList();
     if (nonNullVals.isNotEmpty) {
       final low = nonNullVals.reduce(min);
       final high = nonNullVals.reduce(max);
@@ -1498,7 +2313,8 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
         color: EngineRowingUI.cardFill,
         border: Border(
           left: BorderSide(color: athleteColor, width: 3.0),
-          bottom: const BorderSide(color: EngineRowingUI.bgGridLine, width: 1.0),
+          bottom:
+              const BorderSide(color: EngineRowingUI.bgGridLine, width: 1.0),
         ),
         boxShadow: [
           BoxShadow(
@@ -1788,7 +2604,8 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
         color: EngineRowingUI.cardFill,
         border: Border(
           left: BorderSide(color: athleteColor, width: 3.0),
-          bottom: const BorderSide(color: EngineRowingUI.bgGridLine, width: 1.0),
+          bottom:
+              const BorderSide(color: EngineRowingUI.bgGridLine, width: 1.0),
         ),
       ),
       child: Column(
@@ -1887,8 +2704,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                       ],
                     ),
                   ),
-                  for (final entry in rows)
-                    _buildZoneHoursRow(s, entry),
+                  for (final entry in rows) _buildZoneHoursRow(s, entry),
                 ],
               ),
             ),
@@ -2034,7 +2850,8 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
         color: EngineRowingUI.cardFill,
         border: Border(
           left: BorderSide(color: athleteColor, width: 3.0),
-          bottom: const BorderSide(color: EngineRowingUI.bgGridLine, width: 1.0),
+          bottom:
+              const BorderSide(color: EngineRowingUI.bgGridLine, width: 1.0),
         ),
       ),
       child: Column(
@@ -2110,7 +2927,10 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                 color: EngineRowingUI.equationCardFill,
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                    color: Theme.of(context).colorScheme.error.withValues(alpha: 0.5)),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .error
+                        .withValues(alpha: 0.5)),
               ),
               child: Text(
                 '${s.missingCpNotice} (${data!.missingCpDates.join(', ')})',
@@ -2399,7 +3219,8 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
         color: EngineRowingUI.cardFill,
         border: Border(
           left: BorderSide(color: athleteColor, width: 3.0),
-          bottom: const BorderSide(color: EngineRowingUI.bgGridLine, width: 1.0),
+          bottom:
+              const BorderSide(color: EngineRowingUI.bgGridLine, width: 1.0),
         ),
       ),
       child: Column(
@@ -2564,8 +3385,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
             for (final t in tests)
               Container(
                 margin: const EdgeInsets.only(bottom: 4),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 decoration: BoxDecoration(
                   color: EngineRowingUI.equationCardFill,
                   borderRadius: BorderRadius.circular(6),

@@ -896,6 +896,41 @@ class AppStrings {
   String get periodFilterWeek => isArabic ? 'أسبوع' : 'Week';
   String get periodFilterCycle => isArabic ? 'الدورة المرحلية' : 'Cycle';
 
+  // ==================== Matrix Zone & Capacity Curve (Batch 2) ====================
+  String get capacityCurveTitle =>
+      isArabic ? 'منحنى القدرة' : 'Capacity Curve';
+  String get capacityCurveExplanation => isArabic
+      ? 'كل ما انخفض المنحنى عند منطقة تدريبية، زادت سيطرة اللاعب على قدرته في تلك المنطقة.'
+      : 'The lower the curve at a zone, the greater the athlete\'s capacity control in that zone.';
+  String get noBaselineYet =>
+      isArabic ? 'لا يوجد أساس بعد' : 'No baseline yet';
+  String get baselineStartLabel =>
+      isArabic ? 'أساس بداية الفترة' : 'Start baseline';
+  String get currentBaselineLabel =>
+      isArabic ? 'الأساس الحالي' : 'Current baseline';
+  String get availableInputsTitle =>
+      isArabic ? 'المدخلات المتاحة' : 'Available Inputs';
+  String get maxHrRhrSourceTitle =>
+      isArabic ? 'بيانات النبض والمصدر' : 'HR & Baseline Sources';
+  String get logMorningRhrPrompt =>
+      isArabic ? 'سجّل نبض الراحة الصباحي' : 'Log morning RHR';
+  String get addIndicator =>
+      isArabic ? 'إضافة مؤشر' : 'Add indicator';
+  String get addIndicatorToShowCurve => isArabic
+      ? 'أضف مؤشرًا لعرض المنحنى'
+      : 'Add an indicator to show the curve';
+  String get confirmDeleteIndicator => isArabic
+      ? 'هل أنت متأكد من حذف المؤشر؟'
+      : 'Are you sure you want to delete this indicator?';
+  String weightsSumMustBe100(int sum) => isArabic
+      ? 'مجموع النسب $sum% ولازم يكون 100%'
+      : 'Total weights sum is $sum% and must equal 100%';
+  String get textFieldNotCalculatedWarning => isArabic
+      ? 'هذا الحقل نصي ولا يدخل في الحساب'
+      : 'This field is text and is not included in calculation';
+  String get allWorkoutsKind =>
+      isArabic ? 'كل أنواع التمارين' : 'All workout types';
+
   // ==================== Workouts Tab & Athlete Entry ====================
   String get athleteWorkoutTitle =>
       isArabic ? 'تماريني اليومية' : 'My Daily Workouts';

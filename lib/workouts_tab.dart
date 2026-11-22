@@ -51,14 +51,17 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
     _todayWorkouts = await ProgramService.getTodayWorkouts(_selectedDate);
 
     // 2. جلب جميع حصص البرنامج لحساب حالة القفل
-    final sessionRows = await DB.q('SELECT date, idx, kind, zone, time FROM sessions ORDER BY date ASC, idx ASC');
-    _allScheduledSessions = sessionRows.map((r) => ScheduledSessionInfo(
-      date: r['date'] as String? ?? dateStr,
-      idx: (r['idx'] as num?)?.toInt() ?? 0,
-      time: (r['time'] as String?) ?? '07:00',
-      kind: (r['kind'] as String?) ?? 'Erg',
-      zone: (r['zone'] as String?) ?? 'Z2',
-    )).toList();
+    final sessionRows = await DB.q(
+        'SELECT date, idx, kind, zone, time FROM sessions ORDER BY date ASC, idx ASC');
+    _allScheduledSessions = sessionRows
+        .map((r) => ScheduledSessionInfo(
+              date: r['date'] as String? ?? dateStr,
+              idx: (r['idx'] as num?)?.toInt() ?? 0,
+              time: (r['time'] as String?) ?? '07:00',
+              kind: (r['kind'] as String?) ?? 'Erg',
+              zone: (r['zone'] as String?) ?? 'Z2',
+            ))
+        .toList();
 
     final isAthlete = widget.user?.isAthlete == true;
 
@@ -87,18 +90,21 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
             WHERE p.name = ? LIMIT 1
           ''', [widget.user!.name]);
         } catch (_) {
-          _players = await DB.q('SELECT * FROM players WHERE name = ? LIMIT 1', [widget.user!.name]);
+          _players = await DB.q('SELECT * FROM players WHERE name = ? LIMIT 1',
+              [widget.user!.name]);
         }
       }
 
-      final activePlayerId = _players.isNotEmpty ? (_players.first['id'] as int) : -1;
+      final activePlayerId =
+          _players.isNotEmpty ? (_players.first['id'] as int) : -1;
       _athleteTodayLogs = await DB.q(
         'SELECT * FROM logs WHERE player_id = ?',
         [activePlayerId],
       );
 
       _playerCompletedCounts.clear();
-      final todayCount = _athleteTodayLogs.where((l) => l['date'] == dateStr).length;
+      final todayCount =
+          _athleteTodayLogs.where((l) => l['date'] == dateStr).length;
       if (activePlayerId > 0) {
         _playerCompletedCounts[activePlayerId] = todayCount;
       }
@@ -113,7 +119,8 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
           ORDER BY p.name ASC
         ''');
       } catch (_) {
-        _players = await DB.q('SELECT * FROM players WHERE active=1 ORDER BY name');
+        _players =
+            await DB.q('SELECT * FROM players WHERE active=1 ORDER BY name');
       }
 
       _playerCompletedCounts.clear();
@@ -133,11 +140,23 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
   }
 
   Future<void> _pickDate() async {
+    final isAthlete = widget.user?.isAthlete == true;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final minDate =
+        isAthlete ? today.subtract(const Duration(days: 7)) : DateTime(2024);
+    final maxDate =
+        isAthlete ? today.add(const Duration(days: 7)) : DateTime(2035);
+
+    DateTime initial = _selectedDate;
+    if (initial.isBefore(minDate)) initial = minDate;
+    if (initial.isAfter(maxDate)) initial = maxDate;
+
     final picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2024),
-      lastDate: DateTime(2035),
+      initialDate: initial,
+      firstDate: minDate,
+      lastDate: maxDate,
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -245,13 +264,15 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
             ),
             child: Column(
               children: [
-                const Icon(Icons.person_off_rounded, color: EngineRowingUI.labelSlate, size: 40),
+                const Icon(Icons.person_off_rounded,
+                    color: EngineRowingUI.labelSlate, size: 40),
                 const SizedBox(height: 12),
                 Text(
                   s.isArabic
                       ? 'لم يتم ربط حسابك بملف لاعب بعد. يرجى مراجعة المدرب.'
                       : 'No athlete profile linked to your account. Please consult your coach.',
-                  style: const TextStyle(color: EngineRowingUI.labelSlate, fontSize: 14),
+                  style: const TextStyle(
+                      color: EngineRowingUI.labelSlate, fontSize: 14),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -293,7 +314,8 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                   final infoRow = Row(
                     children: [
                       UserAvatarWidget(
-                        photoPath: (athlete['photo_path'] as String?) ?? widget.user?.photoPath,
+                        photoPath: (athlete['photo_path'] as String?) ??
+                            widget.user?.photoPath,
                         radius: 22,
                       ),
                       const SizedBox(width: 12),
@@ -302,7 +324,10 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              athlete['name'] as String? ?? (s.isArabic ? 'بطل التجديف' : 'Rowing Athlete'),
+                              athlete['name'] as String? ??
+                                  (s.isArabic
+                                      ? 'بطل التجديف'
+                                      : 'Rowing Athlete'),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
@@ -316,7 +341,9 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                               s.athleteWorkoutTitle,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 12, color: EngineRowingUI.labelSlate),
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  color: EngineRowingUI.labelSlate),
                             ),
                           ],
                         ),
@@ -328,14 +355,17 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _gold,
                       foregroundColor: _navy,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
                       elevation: 2,
                     ),
                     icon: const Icon(Icons.edit_note_rounded, size: 18),
                     label: Text(
                       s.isArabic ? 'تسجيل الأرقام' : 'Log Workout',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                     onPressed: () => _openAthleteEntry(athlete),
                   );
@@ -372,7 +402,9 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                s.isArabic ? 'حصص اليوم التدريبية وحالة القفل:' : "Today's Sessions & Lock Status:",
+                s.isArabic
+                    ? 'حصص اليوم التدريبية وحالة القفل:'
+                    : "Today's Sessions & Lock Status:",
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
@@ -396,7 +428,8 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
             ),
             child: Text(
               s.noScheduledSessionsForDate,
-              style: const TextStyle(color: EngineRowingUI.labelSlate, fontSize: 13),
+              style: const TextStyle(
+                  color: EngineRowingUI.labelSlate, fontSize: 13),
             ),
           )
         else
@@ -455,7 +488,8 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: EngineRowingUI.equationCardFill,
                       borderRadius: BorderRadius.circular(8),
@@ -513,12 +547,16 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                   ),
                   IconButton(
                     icon: Icon(
-                      isLocked ? Icons.visibility_rounded : Icons.edit_note_rounded,
+                      isLocked
+                          ? Icons.visibility_rounded
+                          : Icons.edit_note_rounded,
                       color: isLocked ? EngineRowingUI.labelSlate : _gold,
                       size: 22,
                     ),
                     tooltip: isLocked
-                        ? (s.isArabic ? 'عرض الأرقام (قراءة فقط)' : 'View numbers (Read-only)')
+                        ? (s.isArabic
+                            ? 'عرض الأرقام (قراءة فقط)'
+                            : 'View numbers (Read-only)')
                         : (s.isArabic ? 'تسجيل أرقام الحصة' : 'Log session'),
                     onPressed: () => _openAthleteEntry(athlete),
                   ),
@@ -566,7 +604,8 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
           const SizedBox(height: 4),
           Text(
             s.todaysWorkoutsSubtitle,
-            style: const TextStyle(fontSize: 14, color: EngineRowingUI.labelSlate),
+            style:
+                const TextStyle(fontSize: 14, color: EngineRowingUI.labelSlate),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -581,7 +620,8 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                 onTap: _pickDate,
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: EngineRowingUI.equationCardFill,
                     borderRadius: BorderRadius.circular(8),
@@ -620,7 +660,8 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                 },
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: _gold.withAlpha(35),
                     borderRadius: BorderRadius.circular(8),
@@ -629,7 +670,8 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.auto_graph_rounded, color: _gold, size: 18),
+                      const Icon(Icons.auto_graph_rounded,
+                          color: _gold, size: 18),
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
@@ -667,7 +709,8 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                   Expanded(
                     child: Text(
                       s.noWorkoutsToday,
-                      style: const TextStyle(color: EngineRowingUI.textWhite, fontSize: 13),
+                      style: const TextStyle(
+                          color: EngineRowingUI.textWhite, fontSize: 13),
                     ),
                   ),
                 ],
@@ -684,7 +727,8 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                 final zone = session['zone'] as String? ?? 'Z2';
 
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: EngineRowingUI.equationCardFill,
                     borderRadius: BorderRadius.circular(10),
@@ -761,7 +805,8 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
       }
     }
 
-    final isAllDone = fullyCompletedCount == _players.length && _players.isNotEmpty;
+    final isAllDone =
+        fullyCompletedCount == _players.length && _players.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -811,14 +856,16 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
           s.tapAthleteToLogMulti,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 14, color: EngineRowingUI.labelSlate),
+          style:
+              const TextStyle(fontSize: 14, color: EngineRowingUI.labelSlate),
         ),
       ],
     );
   }
 
   /// عنصر اللاعب في القائمة - يتغير لونه بالكامل عند إكمال تسجيل جميع تمارين اليوم
-  Widget _buildPlayerItem(AppStrings s, Map<String, Object?> player, int totalSessions) {
+  Widget _buildPlayerItem(
+      AppStrings s, Map<String, Object?> player, int totalSessions) {
     final pid = player['id'] as int;
     final name = player['name'] as String? ?? '';
     final mhr = player['mhr'] as int? ?? 190;
@@ -896,7 +943,8 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
               // شارة حالة إكمال التمارين لليوم
               if (isFullyCompleted)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: _gold,
                     borderRadius: BorderRadius.circular(10),
@@ -919,7 +967,8 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                 )
               else if (isPartiallyCompleted)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFF9100),
                     borderRadius: BorderRadius.circular(10),
@@ -935,7 +984,8 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
                 )
               else
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: EngineRowingUI.equationCardFill,
                     borderRadius: BorderRadius.circular(10),
@@ -969,11 +1019,13 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            const Icon(Icons.person_off_outlined, size: 48, color: EngineRowingUI.captionGrey),
+            const Icon(Icons.person_off_outlined,
+                size: 48, color: EngineRowingUI.captionGrey),
             const SizedBox(height: 12),
             Text(
               s.noActivePlayers,
-              style: const TextStyle(fontSize: 16, color: EngineRowingUI.labelSlate),
+              style: const TextStyle(
+                  fontSize: 16, color: EngineRowingUI.labelSlate),
             ),
           ],
         ),

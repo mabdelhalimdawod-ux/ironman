@@ -571,6 +571,10 @@ class ProgressCalcs {
     return null;
   }
 
+  /// جلب قيمة CP المعتمدة لتاريخ محدد (آخر CP تاريخ اختباره <= تاريخ التمرين من cp_tests)
+  static Future<double?> playerCpAt(int playerId, Object date) =>
+      getCpForDate(playerId, date);
+
   /// ── 5. قائمة المدخلات والمؤشرات الكاملة لكل منحنى ──
   /// تحدد المدخلات الفعلية التي تشارك في حساب كل مؤشر لإنشاء شارات الشاشة (Chips)
   static const Map<String, List<String>> curveInvolvedMetrics = {
@@ -626,7 +630,438 @@ class ProgressCalcs {
         return metricKey;
     }
   }
+  // ════════════════════════════════════════════════════════════════
+  // ── 7. محرك حسابات خط الأساس (Baseline) لـ Matrix Zone والتطور ──
+  // ════════════════════════════════════════════════════════════════
+  /// حساب خط الأساس لتراكم تمرينات اللاعب في زون ونوع تمرين محدد
+  /// وفق قرارات كوتش (12 نوفمبر):
+  /// - أقل عدد تمرينات 3، أقصى نافذة 5
+  /// - نسبة التقارب 3%، حد التحرك 1%
+  /// - يبدأ بعد 3 تمرينات متقاربة
+  /// - يتحرك صعوداً أو هبوطاً إذا تقاربت آخر 3-5 تمرينات واختلف متوسطها >= 1%
+  static BaselineResult computeBaseline({
+    required List<Map<String, Object?>> workouts,
+    required String metricKey,
+    DateTime? periodStartDate,
+    double convergenceRatio = 0.03,
+    double movementThreshold = 0.01,
+    int minWorkouts = 3,
+    int maxWindow = 5,
+  }) {
+    // 1. استخراج وفرز التمرينات التي تحتوي على القيمة المطلوبة
+    final parsed = <_WorkoutMetricPoint>[];
+    for (final w in workouts) {
+      final dateStr = (w['date'] as String?) ?? '';
+      final d = DateTime.tryParse(dateStr);
+      if (d == null) continue;
+
+      double? val;
+      if (metricKey == 'watts' || metricKey == 'avg_power') {
+        val = (w['avg_power'] as num?)?.toDouble();
+      } else if (metricKey == 'ef') {
+        val = (w['ef'] as num?)?.toDouble();
+      } else if (metricKey == 'decoupling') {
+        val = (w['decoupling'] as num?)?.toDouble();
+      } else if (metricKey.startsWith('eupnea')) {
+        val = (w[metricKey] as num?)?.toDouble() ?? (w['eupnea'] as num?)?.toDouble();
+      } else {
+        val = (w[metricKey] as num?)?.toDouble();
+      }
+
+      if (val != null && val > 0) {
+        parsed.add(_WorkoutMetricPoint(date: d, value: val));
+      }
+    }
+
+    parsed.sort((a, b) => a.date.compareTo(b.date));
+
+    if (parsed.length < minWorkouts) {
+      return const BaselineResult(
+        currentBaseline: null,
+        startOfPeriodBaseline: null,
+        hasEnoughData: false,
+        historyPoints: [],
+      );
+    }
+
+    // 2. تتبع تطور خط الأساس عبر الزمن
+    double? runningBaseline;
+    final history = <DateValuePoint>[];
+    double? startOfPeriodVal;
+
+    for (int i = 0; i < parsed.length; i++) {
+      final curDate = parsed[i].date;
+
+      if (periodStartDate != null &&
+          curDate.isBefore(periodStartDate) &&
+          runningBaseline != null) {
+        startOfPeriodVal = runningBaseline;
+      }
+
+      if (i + 1 < minWorkouts) {
+        continue;
+      }
+
+      if (runningBaseline == null) {
+        // فحص تقارب أول 3 تمرينات (أو توسيع النافذة حتى 5)
+        bool found = false;
+        for (int w = minWorkouts; w <= min(maxWindow, i + 1); w++) {
+          final windowValues = parsed.sublist(i - w + 1, i + 1).map((e) => e.value).toList();
+          final minV = windowValues.reduce(min);
+          final maxV = windowValues.reduce(max);
+          final avgV = windowValues.reduce((a, b) => a + b) / w;
+
+          if (avgV > 0 && (maxV - minV) <= avgV * convergenceRatio) {
+            runningBaseline = avgV;
+            found = true;
+            break;
+          }
+        }
+        if (found && runningBaseline != null) {
+          history.add(DateValuePoint(date: curDate, value: runningBaseline));
+        }
+      } else {
+        // خط الأساس موجود: هل آخر 3-5 تمرينات متقاربة وتختلف عن الحالي بنسبة >= حد التحرك؟
+        for (int w = minWorkouts; w <= min(maxWindow, i + 1); w++) {
+          final windowValues = parsed.sublist(i - w + 1, i + 1).map((e) => e.value).toList();
+          final minV = windowValues.reduce(min);
+          final maxV = windowValues.reduce(max);
+          final avgV = windowValues.reduce((a, b) => a + b) / w;
+
+          if (avgV > 0 && (maxV - minV) <= avgV * convergenceRatio) {
+            final currentBase = runningBaseline!;
+            final diffRatio = (avgV - currentBase).abs() / currentBase;
+            if (diffRatio >= movementThreshold) {
+              runningBaseline = avgV;
+              history.add(DateValuePoint(date: curDate, value: runningBaseline));
+              break;
+            }
+          }
+        }
+      }
+
+      if (periodStartDate != null &&
+          (curDate.isBefore(periodStartDate) || curDate.isAtSameMomentAs(periodStartDate)) &&
+          runningBaseline != null) {
+        startOfPeriodVal = runningBaseline;
+      }
+    }
+
+    if (periodStartDate == null) {
+      startOfPeriodVal = runningBaseline;
+    }
+
+    return BaselineResult(
+      currentBaseline: runningBaseline,
+      startOfPeriodBaseline: startOfPeriodVal,
+      hasEnoughData: runningBaseline != null,
+      historyPoints: history,
+    );
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // ── 8. محرك حسابات Matrix Zone ومنحنى القدرة (Capacity Curve) ──
+  // ════════════════════════════════════════════════════════════════
+  static const double kMaxZoneScore = 15.0;
+  static const double kMinBarWidth = 14.0;
+  static const double kMaxBarWidth = 32.0;
+  static const double kCapacityScoreFactor = 2.5;
+
+  static const List<MatrixZoneIndicatorConfig> defaultMatrixIndicators = [
+    MatrixZoneIndicatorConfig(key: 'watts', weight: 40.0, direction: 'up', sortOrder: 0),
+    MatrixZoneIndicatorConfig(key: 'ef', weight: 25.0, direction: 'up', sortOrder: 1),
+    MatrixZoneIndicatorConfig(key: 'time', weight: 20.0, direction: 'up', sortOrder: 2),
+    MatrixZoneIndicatorConfig(key: 'decoupling', weight: 15.0, direction: 'down', sortOrder: 3),
+  ];
+
+  /// حساب مقاييس Matrix Zone لكل الزونات للاعب معين في فترة ونوع تمرين محددين
+  static MatrixZoneAthleteResult computeMatrixZoneForAthlete({
+    required int playerId,
+    required String athleteName,
+    required String workoutKind,
+    required List<Map<String, Object?>> allAthleteLogs,
+    required DateTime periodStart,
+    required DateTime periodEnd,
+    List<MatrixZoneIndicatorConfig> indicatorConfigs = defaultMatrixIndicators,
+  }) {
+    final periodDurationDays = periodEnd.difference(periodStart).inDays + 1;
+    final prevPeriodStart = periodStart.subtract(Duration(days: periodDurationDays));
+    final prevPeriodEnd = periodStart.subtract(const Duration(days: 1));
+
+    // تصفية تمرينات نوع التمرين المحدد (قاعدة عدم التداخل)
+    final kindLogs = allAthleteLogs.where((l) {
+      final k = (l['kind'] as String?)?.trim();
+      return k == null || k.isEmpty || k.toLowerCase() == workoutKind.toLowerCase();
+    }).toList();
+
+    // تقسيم التمرينات حسب الزون
+    final details = <String, MatrixZoneDetail>{};
+    final orderedZones = HeartRateZones.orderedZones; // Z1..VO2 max
+
+    // الأساس التصاعدي لمنحنى القدرة عبر المناطق
+    final baseCapacityValues = {
+      'Z1': 100.0,
+      'Z2': 145.0,
+      'Z3': 195.0,
+      'Z4': 245.0,
+      'Threshold': 295.0,
+      'Z5': 345.0,
+      'VO2 max': 395.0,
+    };
+
+    for (int zi = 0; zi < orderedZones.length; zi++) {
+      final zoneKey = orderedZones[zi];
+      final zoneLogs = kindLogs.where((l) {
+        final z = (l['zone'] as String?) ?? '';
+        return HeartRateZones.normalizeZoneKey(z) == zoneKey;
+      }).toList();
+
+      final currentPeriodLogs = zoneLogs.where((l) {
+        final dStr = (l['date'] as String?) ?? '';
+        final d = DateTime.tryParse(dStr);
+        if (d == null) return false;
+        return (d.isAfter(periodStart) || d.isAtSameMomentAs(periodStart)) &&
+            (d.isBefore(periodEnd) || d.isAtSameMomentAs(periodEnd));
+      }).toList();
+
+      final prevPeriodLogs = zoneLogs.where((l) {
+        final dStr = (l['date'] as String?) ?? '';
+        final d = DateTime.tryParse(dStr);
+        if (d == null) return false;
+        return (d.isAfter(prevPeriodStart) || d.isAtSameMomentAs(prevPeriodStart)) &&
+            (d.isBefore(prevPeriodEnd) || d.isAtSameMomentAs(prevPeriodEnd));
+      }).toList();
+
+      // 1. طول الشريط = أفضل متوسط واط حققه اللاعب في الزون ده خلال الفترة
+      double? bestWatts;
+      final wattsList = currentPeriodLogs
+          .map((l) => (l['avg_power'] as num?)?.toDouble())
+          .whereType<double>()
+          .where((w) => w > 0)
+          .toList();
+      if (wattsList.isNotEmpty) {
+        bestWatts = wattsList.reduce(max);
+      }
+
+      // 2. حساب خطوط الأساس
+      final wattsBaseline = computeBaseline(
+        workouts: zoneLogs,
+        metricKey: 'watts',
+        periodStartDate: periodStart,
+      );
+      final efBaseline = computeBaseline(
+        workouts: zoneLogs,
+        metricKey: 'ef',
+        periodStartDate: periodStart,
+      );
+      final decouplingBaseline = computeBaseline(
+        workouts: zoneLogs,
+        metricKey: 'decoupling',
+        periodStartDate: periodStart,
+      );
+
+      // 3. حساب درجات المؤشرات الأربعة
+      final scoresMap = <String, MatrixZoneMetricScore>{};
+      double weightedScoreSum = 0.0;
+      double availableWeightSum = 0.0;
+
+      for (final cfg in indicatorConfigs) {
+        double? metricScore;
+        double rawVal = 0.0;
+        double? baseVal;
+        bool hasData = false;
+
+        if (cfg.key == 'watts') {
+          baseVal = wattsBaseline.startOfPeriodBaseline;
+          if (wattsList.isNotEmpty && baseVal != null && baseVal > 0) {
+            rawVal = wattsList.reduce((a, b) => a + b) / wattsList.length;
+            metricScore = ((rawVal / baseVal) - 1.0) * 100.0;
+            hasData = true;
+          }
+        } else if (cfg.key == 'ef') {
+          baseVal = efBaseline.startOfPeriodBaseline;
+          final efList = currentPeriodLogs
+              .map((l) => (l['ef'] as num?)?.toDouble())
+              .whereType<double>()
+              .where((v) => v > 0)
+              .toList();
+          if (efList.isNotEmpty && baseVal != null && baseVal > 0) {
+            rawVal = efList.reduce((a, b) => a + b) / efList.length;
+            metricScore = ((rawVal / baseVal) - 1.0) * 100.0;
+            hasData = true;
+          }
+        } else if (cfg.key == 'time') {
+          // الزمن (الساعات المتراكمة) يتقارن بالفترة السابقة بنفس الطول
+          final curSeconds = currentPeriodLogs.fold<int>(
+            0,
+            (sum, l) => sum + ((l['duration_seconds'] as num?)?.toInt() ?? 0),
+          );
+          final prevSeconds = prevPeriodLogs.fold<int>(
+            0,
+            (sum, l) => sum + ((l['duration_seconds'] as num?)?.toInt() ?? 0),
+          );
+          final curHours = curSeconds / 3600.0;
+          final prevHours = prevSeconds / 3600.0;
+          rawVal = curHours;
+          baseVal = prevHours;
+
+          if (curHours > 0 || prevHours > 0) {
+            hasData = true;
+            if (prevHours > 0) {
+              metricScore = ((curHours / prevHours) - 1.0) * 100.0;
+            } else {
+              metricScore = kMaxZoneScore;
+            }
+          }
+        } else if (cfg.key == 'decoupling') {
+          // Decoupling: الأقل أحسن (أساس البداية - متوسط الفترة)
+          baseVal = decouplingBaseline.startOfPeriodBaseline;
+          final decList = currentPeriodLogs
+              .map((l) => (l['decoupling'] as num?)?.toDouble())
+              .whereType<double>()
+              .toList();
+          if (decList.isNotEmpty && baseVal != null) {
+            rawVal = decList.reduce((a, b) => a + b) / decList.length;
+            metricScore = (baseVal - rawVal); // كلما نزل الـ Decoupling زادت الدرجة
+            hasData = true;
+          }
+        } else {
+          // مؤشر مخصص
+          final customList = currentPeriodLogs
+              .map((l) => (l[cfg.key] as num?)?.toDouble())
+              .whereType<double>()
+              .toList();
+          final prevCustomList = prevPeriodLogs
+              .map((l) => (l[cfg.key] as num?)?.toDouble())
+              .whereType<double>()
+              .toList();
+          if (customList.isNotEmpty) {
+            rawVal = customList.reduce((a, b) => a + b) / customList.length;
+            hasData = true;
+            if (prevCustomList.isNotEmpty) {
+              baseVal = prevCustomList.reduce((a, b) => a + b) / prevCustomList.length;
+              if (baseVal > 0) {
+                final ratio = ((rawVal / baseVal) - 1.0) * 100.0;
+                metricScore = cfg.isHigherBetter ? ratio : -ratio;
+              }
+            }
+          }
+        }
+
+        if (metricScore != null) {
+          metricScore = metricScore.clamp(-kMaxZoneScore, kMaxZoneScore);
+          weightedScoreSum += (cfg.weight * metricScore);
+          availableWeightSum += cfg.weight;
+        }
+
+        scoresMap[cfg.key] = MatrixZoneMetricScore(
+          indicatorKey: cfg.key,
+          rawValue: rawVal,
+          baselineValue: baseVal,
+          score: metricScore,
+          hasData: hasData,
+        );
+      }
+
+      final hasEnoughData = availableWeightSum > 0 && bestWatts != null;
+      double? zoneScore;
+      if (availableWeightSum > 0) {
+        zoneScore = (weightedScoreSum / availableWeightSum).clamp(-kMaxZoneScore, kMaxZoneScore);
+      }
+
+      // عرض الشريط: دالة متزايدة من درجة الزون (14.0 إلى 32.0)
+      final barWidth = zoneScore != null
+          ? (23.0 + (zoneScore / kMaxZoneScore) * 9.0).clamp(kMinBarWidth, kMaxBarWidth)
+          : kMinBarWidth;
+
+      // ارتفاع منحنى القدرة عند الزون: دالة متناقصة من درجة الزون (أوطى = قدرة أحسن)
+      double? capacityCurveVal;
+      if (zoneScore != null) {
+        final baseVal = baseCapacityValues[zoneKey] ?? 200.0;
+        capacityCurveVal = baseVal - (zoneScore * kCapacityScoreFactor);
+      }
+
+      details[zoneKey] = MatrixZoneDetail(
+        zoneKey: zoneKey,
+        bestWatts: bestWatts,
+        zoneScore: zoneScore,
+        barWidth: barWidth,
+        capacityCurveValue: capacityCurveVal,
+        startBaselineWatts: wattsBaseline.startOfPeriodBaseline,
+        currentBaselineWatts: wattsBaseline.currentBaseline,
+        metricScores: scoresMap,
+        hasEnoughData: hasEnoughData,
+      );
+    }
+
+    // حساب موقع علامات LT1 و LT2
+    final z2Detail = details['Z2'];
+    final thrDetail = details['Threshold'];
+
+    Point<double>? lt1;
+    if (z2Detail?.capacityCurveValue != null) {
+      final z2Score = z2Detail?.zoneScore ?? 0.0;
+      lt1 = Point<double>(1.5 + (z2Score / kMaxZoneScore) * 0.3, z2Detail!.capacityCurveValue!);
+    }
+
+    Point<double>? lt2;
+    if (thrDetail?.capacityCurveValue != null) {
+      final thrScore = thrDetail?.zoneScore ?? 0.0;
+      lt2 = Point<double>(4.0 + (thrScore / kMaxZoneScore) * 0.3, thrDetail!.capacityCurveValue!);
+    }
+
+    return MatrixZoneAthleteResult(
+      playerId: playerId,
+      athleteName: athleteName,
+      workoutKind: workoutKind,
+      detailsByZone: details,
+      lt1Point: lt1,
+      lt2Point: lt2,
+      hasData: details.values.any((d) => d.hasEnoughData),
+    );
+  }
+
+  /// تحميل إعدادات المؤشرات من جدول matrix_zone_config
+  static Future<List<MatrixZoneIndicatorConfig>> loadMatrixZoneConfig() async {
+    try {
+      final database = await DB.db;
+      final rows = await database.rawQuery(
+        'SELECT * FROM matrix_zone_config ORDER BY sort_order ASC',
+      );
+      if (rows.isNotEmpty) {
+        return rows.map((r) {
+          return MatrixZoneIndicatorConfig(
+            key: r['indicator_key'] as String,
+            weight: (r['weight'] as num).toDouble(),
+            direction: (r['direction'] as String?) ?? 'up',
+            sortOrder: (r['sort_order'] as num?)?.toInt() ?? 0,
+          );
+        }).toList();
+      }
+    } catch (_) {}
+    return defaultMatrixIndicators;
+  }
+
+  /// حفظ إعدادات المؤشرات في جدول matrix_zone_config
+  static Future<void> saveMatrixZoneConfig(List<MatrixZoneIndicatorConfig> configs) async {
+    final database = await DB.db;
+    await database.transaction((txn) async {
+      await txn.delete('matrix_zone_config');
+      for (int i = 0; i < configs.length; i++) {
+        final c = configs[i];
+        await txn.insert('matrix_zone_config', {
+          'indicator_key': c.key,
+          'weight': c.weight,
+          'direction': c.direction,
+          'sort_order': i,
+        });
+      }
+    });
+  }
+
 }
+
+
 
 /// نتيجة مزامنة جدول الكاش daily_load للاعب
 class DailyLoadSyncResult {
@@ -863,4 +1298,108 @@ class ProgressLoadCache {
       recomputedFromDate: dirtyStartDate,
     );
   }
+
+
+}
+
+class _WorkoutMetricPoint {
+  final DateTime date;
+  final double value;
+
+  const _WorkoutMetricPoint({required this.date, required this.value});
+}
+
+/// نتيجة حساب خط الأساس (Baseline)
+class BaselineResult {
+  final double? currentBaseline;
+  final double? startOfPeriodBaseline;
+  final bool hasEnoughData;
+  final List<DateValuePoint> historyPoints;
+
+  const BaselineResult({
+    this.currentBaseline,
+    this.startOfPeriodBaseline,
+    required this.hasEnoughData,
+    this.historyPoints = const [],
+  });
+}
+
+/// تهيئة إعداد المؤشر لـ Matrix Zone
+class MatrixZoneIndicatorConfig {
+  final String key;
+  final double weight;
+  final String direction;
+  final int sortOrder;
+
+  const MatrixZoneIndicatorConfig({
+    required this.key,
+    required this.weight,
+    this.direction = 'up',
+    this.sortOrder = 0,
+  });
+
+  bool get isHigherBetter => direction == 'up';
+}
+
+/// درجة مؤشر واحد في زون معين
+class MatrixZoneMetricScore {
+  final String indicatorKey;
+  final double rawValue;
+  final double? baselineValue;
+  final double? score;
+  final bool hasData;
+
+  const MatrixZoneMetricScore({
+    required this.indicatorKey,
+    required this.rawValue,
+    this.baselineValue,
+    this.score,
+    required this.hasData,
+  });
+}
+
+/// تفاصيل منطقة تدريبية واحدة للاعب في Matrix Zone
+class MatrixZoneDetail {
+  final String zoneKey;
+  final double? bestWatts;
+  final double? zoneScore;
+  final double barWidth;
+  final double? capacityCurveValue;
+  final double? startBaselineWatts;
+  final double? currentBaselineWatts;
+  final Map<String, MatrixZoneMetricScore> metricScores;
+  final bool hasEnoughData;
+
+  const MatrixZoneDetail({
+    required this.zoneKey,
+    this.bestWatts,
+    this.zoneScore,
+    required this.barWidth,
+    this.capacityCurveValue,
+    this.startBaselineWatts,
+    this.currentBaselineWatts,
+    this.metricScores = const {},
+    required this.hasEnoughData,
+  });
+}
+
+/// نتيجة حساب Matrix Zone الكاملة للاعب
+class MatrixZoneAthleteResult {
+  final int playerId;
+  final String athleteName;
+  final String workoutKind;
+  final Map<String, MatrixZoneDetail> detailsByZone;
+  final Point<double>? lt1Point;
+  final Point<double>? lt2Point;
+  final bool hasData;
+
+  const MatrixZoneAthleteResult({
+    required this.playerId,
+    required this.athleteName,
+    required this.workoutKind,
+    required this.detailsByZone,
+    this.lt1Point,
+    this.lt2Point,
+    required this.hasData,
+  });
 }

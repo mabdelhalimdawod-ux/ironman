@@ -27,8 +27,6 @@ class ScheduledSessionInfo {
 enum SessionLockReason {
   none,
   notStartedYet,
-  nextSessionStarted,
-  nextSessionLogged,
   lastSessionExpired,
 }
 

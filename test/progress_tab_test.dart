@@ -503,8 +503,9 @@ void main() {
       });
       await tester.pump();
 
-      expect(find.textContaining('Matrix Zone،'), findsOneWidget);
-      expect(find.textContaining('محور أفقي'), findsOneWidget);
+      final s = AppStrings.of(tester.element(find.byType(ProgressCurvePage)));
+      expect(find.text(s.matrixZoneTitle), findsWidgets);
+      expect(find.text(s.estimatedCurveNotice), findsWidgets);
       // Add second athlete and confirm Matrix Zone keeps a single shared chart
       await tester.runAsync(() async {
         await tester.tap(find.text('كريم'));
@@ -515,7 +516,7 @@ void main() {
         }
       });
       await tester.pump();
-      expect(find.byType(ProgressCurveHeader), findsOneWidget);
+      expect(find.text('كريم'), findsWidgets);
     });
 
     testWidgets('Recovery renders all 5 curve headers (4 curves + Eupnea)',

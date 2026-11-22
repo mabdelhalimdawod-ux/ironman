@@ -318,7 +318,7 @@ class DB {
 
   static Future<Database> _open() async {
     final path = join(await getDatabasesPath(), 'rowing.db');
-    return openDatabase(path, version: 9, onCreate: (d, v) async {
+    return openDatabase(path, version: 10, onCreate: (d, v) async {
       await d.execute(
           'CREATE TABLE players(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mhr INTEGER, active INTEGER DEFAULT 1, coach_id INTEGER, curves_shared INTEGER, curves_shared_by TEXT)');
       await d.execute(
@@ -355,6 +355,7 @@ class DB {
               eupnea_3 REAL,
               entered_by TEXT,
               zone TEXT,
+              kind TEXT,
               PRIMARY KEY(player_id, date, idx)
             )
           ''');
@@ -933,6 +934,27 @@ class DB {
           }
         }
         await SyncEngine.ensureDatabaseSyncSchema(d);
+      }
+      if (oldVersion < 10) {
+        final logCols = await d.rawQuery("PRAGMA table_info('logs')");
+        final logColNames = logCols.map((c) => c['name'] as String).toSet();
+        if (!logColNames.contains('kind')) {
+          await d.execute("ALTER TABLE logs ADD COLUMN kind TEXT");
+        }
+        await d.execute('''
+          CREATE TABLE IF NOT EXISTS matrix_zone_config (
+            indicator_key TEXT PRIMARY KEY,
+            weight REAL,
+            direction TEXT,
+            sort_order INTEGER
+          )
+        ''');
+        await d.execute('''
+          CREATE TABLE IF NOT EXISTS progress_baseline_config (
+            key TEXT PRIMARY KEY,
+            value REAL
+          )
+        ''');
       }
     });
   }

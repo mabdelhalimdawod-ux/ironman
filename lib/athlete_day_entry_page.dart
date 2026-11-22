@@ -4,12 +4,13 @@ import 'db.dart';
 import 'engine_rowing_ui.dart';
 import 'heart_rate_zones.dart';
 import 'power_calculations.dart';
+import 'program_service.dart';
 import 'session_lock_service.dart';
 
 /// نموذج إدارة حالة فورم تمرين واحد من تمارين اليوم
 class _SingleWorkoutFormState {
   final int sessionIdx;
-  final String kind;
+  String kind;
   final String time;
   final String initialZone;
 
@@ -133,7 +134,8 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
     setState(() {
       for (final form in _workoutForms) {
         final hr = int.tryParse(form.hrCtrl.text);
-        final calculatedZone = HeartRateZones.determineZone(hr: hr, mhr: mhr, rhr: rhr);
+        final calculatedZone =
+            HeartRateZones.determineZone(hr: hr, mhr: mhr, rhr: rhr);
         if (calculatedZone != null) {
           form.currentZone = calculatedZone;
         }
@@ -263,7 +265,8 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
         (f) => f.sessionIdx == idx,
         orElse: () => _workoutForms.isNotEmpty
             ? _workoutForms.first
-            : _SingleWorkoutFormState(sessionIdx: 0, kind: 'Erg', time: '07:00', initialZone: 'Z2'),
+            : _SingleWorkoutFormState(
+                sessionIdx: 0, kind: 'Erg', time: '07:00', initialZone: 'Z2'),
       );
 
       if (log['avg_power'] != null && (log['avg_power'] as num) > 0) {
@@ -294,6 +297,9 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
       if (log['zone'] != null && (log['zone'] as String).isNotEmpty) {
         form.currentZone = log['zone'] as String;
       }
+      if (log['kind'] != null && (log['kind'] as String).isNotEmpty) {
+        form.kind = log['kind'] as String;
+      }
       if (log['eupnea_1'] != null) {
         form.eupnea1Ctrl.text = (log['eupnea_1'] as num).toString();
       }
@@ -311,23 +317,28 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
     // جلب جميع حصص البرنامج لحساب حالة القفل بدقة وفق قواعد الكوتش
     List<ScheduledSessionInfo> allSched = widget.allScheduledSessions ?? [];
     if (allSched.isEmpty) {
-      final rows = await DB.q('SELECT date, idx, kind, zone, time FROM sessions ORDER BY date ASC, idx ASC');
-      allSched = rows.map((r) => ScheduledSessionInfo(
-        date: r['date'] as String? ?? widget.date,
-        idx: (r['idx'] as num?)?.toInt() ?? 0,
-        time: (r['time'] as String?) ?? '07:00',
-        kind: (r['kind'] as String?) ?? 'Erg',
-        zone: (r['zone'] as String?) ?? 'Z2',
-      )).toList();
+      final rows = await DB.q(
+          'SELECT date, idx, kind, zone, time FROM sessions ORDER BY date ASC, idx ASC');
+      allSched = rows
+          .map((r) => ScheduledSessionInfo(
+                date: r['date'] as String? ?? widget.date,
+                idx: (r['idx'] as num?)?.toInt() ?? 0,
+                time: (r['time'] as String?) ?? '07:00',
+                kind: (r['kind'] as String?) ?? 'Erg',
+                zone: (r['zone'] as String?) ?? 'Z2',
+              ))
+          .toList();
     }
-    final allPlayerLogs = await DB.q('SELECT * FROM logs WHERE player_id = ?', [_playerId]);
+    final allPlayerLogs =
+        await DB.q('SELECT * FROM logs WHERE player_id = ?', [_playerId]);
 
     // إعادة حساب الزونات التلقائية وحالة القفل لكل حصة
     final currentMhr = _currentMHR;
     final currentRhr = _currentRHR;
     for (final form in _workoutForms) {
       final hr = int.tryParse(form.hrCtrl.text);
-      final calculatedZone = HeartRateZones.determineZone(hr: hr, mhr: currentMhr, rhr: currentRhr);
+      final calculatedZone = HeartRateZones.determineZone(
+          hr: hr, mhr: currentMhr, rhr: currentRhr);
       if (calculatedZone != null) {
         form.currentZone = calculatedZone;
       }
@@ -390,7 +401,8 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
 
     setState(() {
       form.calculatedNP = PowerCalculations.calculateNormalizedPower(watts);
-      form.calculatedDecoupling = PowerCalculations.calculateDecoupling(watts, hrs);
+      form.calculatedDecoupling =
+          PowerCalculations.calculateDecoupling(watts, hrs);
       if (form.calculatedDecoupling != null) {
         form.decouplingCtrl.text = form.calculatedDecoupling.toString();
       }
@@ -421,13 +433,15 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
         final hrVal = int.tryParse(form.hrCtrl.text);
         final postHRVal = int.tryParse(form.postHRCtrl.text);
         final rec1minVal = int.tryParse(form.recovery1minCtrl.text);
-        final decouplingVal = double.tryParse(form.decouplingCtrl.text) ?? form.calculatedDecoupling;
+        final decouplingVal = double.tryParse(form.decouplingCtrl.text) ??
+            form.calculatedDecoupling;
         final eupnea1Val = double.tryParse(form.eupnea1Ctrl.text);
         final eupnea2Val = double.tryParse(form.eupnea2Ctrl.text);
         final eupnea3Val = double.tryParse(form.eupnea3Ctrl.text);
 
         // حساب الزون التلقائي قبل الحفظ
-        final autoZone = HeartRateZones.determineZone(hr: hrVal, mhr: mhrVal, rhr: rhrVal);
+        final autoZone =
+            HeartRateZones.determineZone(hr: hrVal, mhr: mhrVal, rhr: rhrVal);
         if (autoZone != null) {
           form.currentZone = autoZone;
         }
@@ -462,6 +476,7 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
           'eupnea_3': eupnea3Val,
           'entered_by': enteredBy,
           'zone': form.currentZone,
+          'kind': form.kind,
         });
       }
 
@@ -495,7 +510,8 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${s.error}: $e', style: const TextStyle(color: Colors.white)),
+            content: Text('${s.error}: $e',
+                style: const TextStyle(color: Colors.white)),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -518,7 +534,8 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
         fontWeight: FontWeight.bold,
       ),
       hintText: hint,
-      hintStyle: const TextStyle(color: EngineRowingUI.captionGrey, fontSize: 14),
+      hintStyle:
+          const TextStyle(color: EngineRowingUI.captionGrey, fontSize: 14),
       suffixText: suffix,
       suffixStyle: const TextStyle(
         color: EngineRowingUI.neonLime,
@@ -539,7 +556,8 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: EngineRowingUI.neonLime, width: 2.0),
+        borderSide:
+            const BorderSide(color: EngineRowingUI.neonLime, width: 2.0),
       ),
     );
   }
@@ -576,7 +594,8 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
       body: RowingGridBackground(
         child: _loading
             ? const Center(
-                child: CircularProgressIndicator(color: EngineRowingUI.neonLime),
+                child:
+                    CircularProgressIndicator(color: EngineRowingUI.neonLime),
               )
             : Center(
                 child: ConstrainedBox(
@@ -589,63 +608,66 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                       // المحتوى القابل للتمرير
                       Expanded(
                         child: ListView(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            children: [
-                              // قسم المؤشرات اليومية المشتركة (HRV، النوم، الوزن، الإرهاق)
-                              _buildCommonMetricsCard(s),
-                              const SizedBox(height: 16),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          children: [
+                            // قسم المؤشرات اليومية المشتركة (HRV، النوم، الوزن، الإرهاق)
+                            _buildCommonMetricsCard(s),
+                            const SizedBox(height: 16),
 
-                              // هيدر تمارين اليوم
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.fitness_center,
-                                    color: EngineRowingUI.neonLime,
-                                    size: 22,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      'فورمات تمارين اليوم (${_workoutForms.length})',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: EngineRowingUI.textWhite,
-                                      ),
+                            // هيدر تمارين اليوم
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.fitness_center,
+                                  color: EngineRowingUI.neonLime,
+                                  size: 22,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'فورمات تمارين اليوم (${_workoutForms.length})',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: EngineRowingUI.textWhite,
                                     ),
                                   ),
-                                  ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: EngineRowingUI.neonLime,
-                                      foregroundColor: EngineRowingUI.bgNavy,
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 6),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
+                                ),
+                                ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: EngineRowingUI.neonLime,
+                                    foregroundColor: EngineRowingUI.bgNavy,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 6),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
-                                    icon: const Icon(Icons.add, size: 16),
-                                    label: const Text(
-                                      'إضافة تمرين',
-                                      style: TextStyle(
-                                          fontSize: 12, fontWeight: FontWeight.bold),
-                                    ),
-                                    onPressed: _addNewWorkoutForm,
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
+                                  icon: const Icon(Icons.add, size: 16),
+                                  label: const Text(
+                                    'إضافة تمرين',
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  onPressed: _addNewWorkoutForm,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
 
-                              // عدد من الفورمات بعدد تمارين اليوم، كل فورم مخصص لتمرين ومكتوب عليه ميعاده ونوعه
-                              ...List.generate(_workoutForms.length, (idx) {
-                                return _buildWorkoutSessionForm(s, idx, _workoutForms[idx]);
-                              }),
+                            // عدد من الفورمات بعدد تمارين اليوم، كل فورم مخصص لتمرين ومكتوب عليه ميعاده ونوعه
+                            ...List.generate(_workoutForms.length, (idx) {
+                              return _buildWorkoutSessionForm(
+                                  s, idx, _workoutForms[idx]);
+                            }),
 
-                              const SizedBox(height: 24),
-                            ],
-                          ),
+                            const SizedBox(height: 24),
+                          ],
+                        ),
                       ),
 
                       // زر الحفظ الرئيسي والعودة لقائمة اللاعبين
@@ -664,7 +686,9 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: EngineRowingUI.cardFill,
-        border: Border(bottom: BorderSide(color: EngineRowingUI.neonLime.withAlpha(140), width: 1.2)),
+        border: Border(
+            bottom: BorderSide(
+                color: EngineRowingUI.neonLime.withAlpha(140), width: 1.2)),
       ),
       child: Row(
         children: [
@@ -752,7 +776,8 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
       color: EngineRowingUI.cardFill,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: EngineRowingUI.neonLime.withAlpha(160), width: 1.2),
+        side: BorderSide(
+            color: EngineRowingUI.neonLime.withAlpha(160), width: 1.2),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -791,7 +816,9 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.left,
                       style: _monoInputStyle(),
-                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      inputFormatters: [
+                        RowingNumberFormatter.englishDigitsInputFormatter
+                      ],
                       decoration: _fieldDeco(
                         label: s.mhrFieldLabel,
                         hint: s.mhrFieldHint,
@@ -809,7 +836,9 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.left,
                       style: _monoInputStyle(),
-                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      inputFormatters: [
+                        RowingNumberFormatter.englishDigitsInputFormatter
+                      ],
                       decoration: _fieldDeco(
                         label: s.morningRHRLabel,
                         hint: s.morningRHRHint,
@@ -830,10 +859,13 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                     textDirection: TextDirection.ltr,
                     child: TextFormField(
                       controller: _weightCtrl,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       textAlign: TextAlign.left,
                       style: _monoInputStyle(),
-                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      inputFormatters: [
+                        RowingNumberFormatter.englishDigitsInputFormatter
+                      ],
                       decoration: _fieldDeco(
                         label: s.weightLabel,
                         hint: s.weightHint,
@@ -848,10 +880,13 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                     textDirection: TextDirection.ltr,
                     child: TextFormField(
                       controller: _sleepCtrl,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       textAlign: TextAlign.left,
                       style: _monoInputStyle(),
-                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      inputFormatters: [
+                        RowingNumberFormatter.englishDigitsInputFormatter
+                      ],
                       decoration: _fieldDeco(
                         label: s.sleepLabel,
                         hint: s.sleepHint,
@@ -875,7 +910,9 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.left,
                       style: _monoInputStyle(),
-                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      inputFormatters: [
+                        RowingNumberFormatter.englishDigitsInputFormatter
+                      ],
                       decoration: _fieldDeco(
                         label: s.fatigueLabel,
                         hint: '1 - 5',
@@ -892,7 +929,9 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.left,
                       style: _monoInputStyle(),
-                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      inputFormatters: [
+                        RowingNumberFormatter.englishDigitsInputFormatter
+                      ],
                       decoration: _fieldDeco(
                         label: s.hrvLabel,
                         hint: s.hrvHint,
@@ -909,7 +948,8 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
     );
   }
 
-  Widget _buildWorkoutSessionForm(AppStrings s, int formIdx, _SingleWorkoutFormState form) {
+  Widget _buildWorkoutSessionForm(
+      AppStrings s, int formIdx, _SingleWorkoutFormState form) {
     final rangeText = form.targetRange?.format() ?? '-';
 
     // حساب الزون التلقائي من النبض الحالي ومعادلة كارفونين
@@ -926,7 +966,8 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
       color: EngineRowingUI.cardFill,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: EngineRowingUI.neonLime.withAlpha(160), width: 1.2),
+        side: BorderSide(
+            color: EngineRowingUI.neonLime.withAlpha(160), width: 1.2),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -950,7 +991,8 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                 ),
                 if (_workoutForms.length > 1)
                   IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 22),
+                    icon: const Icon(Icons.delete_outline,
+                        color: Colors.redAccent, size: 22),
                     tooltip: 'حذف هذا التمرين',
                     onPressed: () => _removeWorkoutForm(formIdx),
                   ),
@@ -964,7 +1006,8 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: EngineRowingUI.equationCardFill,
                     borderRadius: BorderRadius.circular(8),
@@ -993,13 +1036,53 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                     ],
                   ),
                 ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: EngineRowingUI.equationCardFill,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: EngineRowingUI.bgGridLine),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: kProgramWorkoutKinds.contains(form.kind)
+                          ? form.kind
+                          : 'Erg',
+                      dropdownColor: EngineRowingUI.cardFill,
+                      icon: const Icon(Icons.arrow_drop_down,
+                          color: EngineRowingUI.neonLime, size: 20),
+                      style: const TextStyle(
+                        color: EngineRowingUI.neonLime,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      onChanged: form.isLocked
+                          ? null
+                          : (val) {
+                              if (val != null) {
+                                setState(() {
+                                  form.kind = val;
+                                });
+                              }
+                            },
+                      items: kProgramWorkoutKinds.map((k) {
+                        return DropdownMenuItem<String>(
+                          value: k,
+                          child: Text(k),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
                 if (autoZone != null)
                   Builder(
                     builder: (ctx) {
                       final zColor = HeartRateZones.zoneColor(autoZone);
                       final isLime = autoZone == 'Z1' || autoZone == 'zone1';
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: zColor,
                           borderRadius: BorderRadius.circular(8),
@@ -1009,14 +1092,18 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                           children: [
                             Icon(
                               Icons.flash_on,
-                              color: isLime ? EngineRowingUI.bgNavy : Colors.white,
+                              color:
+                                  isLime ? EngineRowingUI.bgNavy : Colors.white,
                               size: 16,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              HeartRateZones.zoneDisplayName(autoZone, isArabic: false),
+                              HeartRateZones.zoneDisplayName(autoZone,
+                                  isArabic: false),
                               style: TextStyle(
-                                color: isLime ? EngineRowingUI.bgNavy : Colors.white,
+                                color: isLime
+                                    ? EngineRowingUI.bgNavy
+                                    : Colors.white,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
                               ),
@@ -1026,10 +1113,13 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                       );
                     },
                   ),
-                if (_workoutForms.length > 1 && !form.isLocked && widget.userRole != 'athlete') ...[
+                if (_workoutForms.length > 1 &&
+                    !form.isLocked &&
+                    widget.userRole != 'athlete') ...[
                   const SizedBox(width: 6),
                   IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                    icon: const Icon(Icons.delete_outline,
+                        color: Colors.redAccent, size: 20),
                     tooltip: 'حذف هذا التمرين',
                     onPressed: () => _removeWorkoutForm(formIdx),
                   ),
@@ -1039,7 +1129,8 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
             if (form.isLocked) ...[
               const SizedBox(height: 10),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: Colors.amber.shade900.withAlpha(50),
                   borderRadius: BorderRadius.circular(10),
@@ -1070,19 +1161,23 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                   ],
                 ),
               ),
-            ] else if (widget.userRole == 'coach' || widget.userRole == 'admin') ...[
+            ] else if (widget.userRole == 'coach' ||
+                widget.userRole == 'admin') ...[
               const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: EngineRowingUI.neonLime.withAlpha(25),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: EngineRowingUI.neonLime.withAlpha(80)),
+                  border:
+                      Border.all(color: EngineRowingUI.neonLime.withAlpha(80)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.shield_rounded, color: EngineRowingUI.neonLime, size: 14),
+                    const Icon(Icons.shield_rounded,
+                        color: EngineRowingUI.neonLime, size: 14),
                     const SizedBox(width: 6),
                     Text(
                       s.coachEditableNotice,
@@ -1098,16 +1193,19 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
             ] else ...[
               const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.green.shade900.withAlpha(40),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.green.shade600.withAlpha(90)),
+                  border:
+                      Border.all(color: Colors.green.shade600.withAlpha(90)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.edit_note_rounded, color: Colors.green.shade300, size: 16),
+                    Icon(Icons.edit_note_rounded,
+                        color: Colors.green.shade300, size: 16),
                     const SizedBox(width: 6),
                     Text(
                       s.sessionOpenNotice,
@@ -1135,7 +1233,8 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                 textDirection: TextDirection.ltr,
                 child: Row(
                   children: [
-                    const Icon(Icons.favorite, color: Colors.redAccent, size: 22),
+                    const Icon(Icons.favorite,
+                        color: Colors.redAccent, size: 22),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -1176,7 +1275,9 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.left,
                       style: _monoInputStyle(),
-                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      inputFormatters: [
+                        RowingNumberFormatter.englishDigitsInputFormatter
+                      ],
                       onChanged: (_) {
                         setState(() => _updateEF(form));
                       },
@@ -1197,10 +1298,13 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                     child: TextFormField(
                       controller: form.splitCtrl,
                       enabled: !form.isLocked,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       textAlign: TextAlign.left,
                       style: _monoInputStyle(),
-                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      inputFormatters: [
+                        RowingNumberFormatter.englishDigitsInputFormatter
+                      ],
                       decoration: _fieldDeco(
                         label: s.splitLabel,
                         hint: s.splitHint,
@@ -1225,7 +1329,9 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.left,
                       style: _monoInputStyle(),
-                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      inputFormatters: [
+                        RowingNumberFormatter.englishDigitsInputFormatter
+                      ],
                       decoration: _fieldDeco(
                         label: s.distanceLabel,
                         hint: s.distanceHint,
@@ -1246,7 +1352,9 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.left,
                       style: _monoInputStyle(),
-                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      inputFormatters: [
+                        RowingNumberFormatter.englishDigitsInputFormatter
+                      ],
                       onChanged: (_) => _onWorkoutHRChanged(form),
                       decoration: _fieldDeco(
                         label: s.workoutHRLabel,
@@ -1273,7 +1381,9 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.left,
                       style: _monoInputStyle(),
-                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      inputFormatters: [
+                        RowingNumberFormatter.englishDigitsInputFormatter
+                      ],
                       decoration: _fieldDeco(
                         label: s.postHRLabel,
                         hint: s.postHRHint,
@@ -1294,7 +1404,9 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.left,
                       style: _monoInputStyle(),
-                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      inputFormatters: [
+                        RowingNumberFormatter.englishDigitsInputFormatter
+                      ],
                       decoration: _fieldDeco(
                         label: s.hr1MinLabel,
                         hint: s.hr1MinHint,
@@ -1310,7 +1422,8 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
             if (form.calculatedEF != null && form.calculatedEF! > 0) ...[
               const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
                   color: EngineRowingUI.equationCardFill,
                   borderRadius: BorderRadius.circular(10),
@@ -1320,7 +1433,8 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                   textDirection: TextDirection.ltr,
                   child: Row(
                     children: [
-                      const Icon(Icons.bolt, color: EngineRowingUI.neonLime, size: 20),
+                      const Icon(Icons.bolt,
+                          color: EngineRowingUI.neonLime, size: 20),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -1344,7 +1458,8 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
 
             // حقلي واط NP ونبض Decoupling الاختياريين
             Theme(
-              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              data:
+                  Theme.of(context).copyWith(dividerColor: Colors.transparent),
               child: ExpansionTile(
                 tilePadding: EdgeInsets.zero,
                 iconColor: EngineRowingUI.neonLime,
@@ -1374,7 +1489,9 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                       enabled: !form.isLocked,
                       textAlign: TextAlign.left,
                       style: _monoInputStyle(),
-                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      inputFormatters: [
+                        RowingNumberFormatter.englishDigitsInputFormatter
+                      ],
                       onChanged: (_) => _onAdvancedCalculationsChanged(form),
                       decoration: _fieldDeco(
                         label: s.npWattsLabel,
@@ -1407,7 +1524,9 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                       enabled: !form.isLocked,
                       textAlign: TextAlign.left,
                       style: _monoInputStyle(),
-                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      inputFormatters: [
+                        RowingNumberFormatter.englishDigitsInputFormatter
+                      ],
                       onChanged: (_) => _onAdvancedCalculationsChanged(form),
                       decoration: _fieldDeco(
                         label: s.decouplingHRLabel,
@@ -1438,10 +1557,13 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                     child: TextFormField(
                       controller: form.decouplingCtrl,
                       enabled: !form.isLocked,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       textAlign: TextAlign.left,
                       style: _monoInputStyle(),
-                      inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                      inputFormatters: [
+                        RowingNumberFormatter.englishDigitsInputFormatter
+                      ],
                       decoration: _fieldDeco(
                         label: '${s.calculatedDecoupling} (%)',
                         hint: '3.5',
@@ -1452,7 +1574,8 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                   const SizedBox(height: 14),
                   Row(
                     children: [
-                      const Icon(Icons.air_rounded, color: EngineRowingUI.neonLime, size: 18),
+                      const Icon(Icons.air_rounded,
+                          color: EngineRowingUI.neonLime, size: 18),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -1475,10 +1598,13 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                           child: TextFormField(
                             controller: form.eupnea1Ctrl,
                             enabled: !form.isLocked,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
                             textAlign: TextAlign.left,
                             style: _monoInputStyle(),
-                            inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                            inputFormatters: [
+                              RowingNumberFormatter.englishDigitsInputFormatter
+                            ],
                             decoration: _fieldDeco(
                               label: s.eupneaField1,
                               hint: '45.0',
@@ -1494,10 +1620,13 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                           child: TextFormField(
                             controller: form.eupnea2Ctrl,
                             enabled: !form.isLocked,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
                             textAlign: TextAlign.left,
                             style: _monoInputStyle(),
-                            inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                            inputFormatters: [
+                              RowingNumberFormatter.englishDigitsInputFormatter
+                            ],
                             decoration: _fieldDeco(
                               label: s.eupneaField2,
                               hint: '40.0',
@@ -1513,10 +1642,13 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                           child: TextFormField(
                             controller: form.eupnea3Ctrl,
                             enabled: !form.isLocked,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
                             textAlign: TextAlign.left,
                             style: _monoInputStyle(),
-                            inputFormatters: [RowingNumberFormatter.englishDigitsInputFormatter],
+                            inputFormatters: [
+                              RowingNumberFormatter.englishDigitsInputFormatter
+                            ],
                             decoration: _fieldDeco(
                               label: s.eupneaField3,
                               hint: '35.0',
@@ -1554,10 +1686,13 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
           height: 54,
           child: ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: allLocked ? Colors.grey.shade800 : EngineRowingUI.neonLime,
-              foregroundColor: allLocked ? Colors.white60 : EngineRowingUI.bgNavy,
+              backgroundColor:
+                  allLocked ? Colors.grey.shade800 : EngineRowingUI.neonLime,
+              foregroundColor:
+                  allLocked ? Colors.white60 : EngineRowingUI.bgNavy,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
             ),
             icon: _isSaving
                 ? const SizedBox(
@@ -1569,7 +1704,9 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                     ),
                   )
                 : Icon(
-                    allLocked ? Icons.lock_outline_rounded : Icons.check_circle_outline,
+                    allLocked
+                        ? Icons.lock_outline_rounded
+                        : Icons.check_circle_outline,
                     size: 24,
                     color: allLocked ? Colors.white60 : EngineRowingUI.bgNavy,
                   ),
