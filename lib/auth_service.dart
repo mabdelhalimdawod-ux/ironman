@@ -5,7 +5,6 @@ import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sqflite/sqflite.dart';
 import 'db.dart';
 import 'cloud_api.dart';
 import 'cloud_config.dart';
@@ -192,20 +191,24 @@ class AuthService {
     final hash = hashPassword(password, salt);
 
     // 2. إدخال/مزامنة صف المستخدم محلياً كمرآة للـ profile
-    return await database.insert(
-        'users',
-        {
-          'email': email.trim().toLowerCase(),
-          'password_hash': hash,
-          'salt': salt,
-          'name': name.trim(),
-          'role': cleanRole,
-          'coach_id': coachId,
-          'subscription_active': subscriptionActive ? 1 : 0,
-          'player_id': playerId,
-          'created_at': DateTime.now().toIso8601String(),
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace);
+    final existingUser = await database.query('users', where: 'email = ?', whereArgs: [email.trim().toLowerCase()], limit: 1);
+    final userData = {
+      'email': email.trim().toLowerCase(),
+      'password_hash': hash,
+      'salt': salt,
+      'name': name.trim(),
+      'role': cleanRole,
+      'coach_id': coachId,
+      'subscription_active': subscriptionActive ? 1 : 0,
+      'player_id': playerId,
+      'created_at': DateTime.now().toIso8601String(),
+    };
+    if (existingUser.isNotEmpty) {
+      final existingId = existingUser.first['id'] as int;
+      await database.update('users', userData, where: 'id = ?', whereArgs: [existingId]);
+      return existingId;
+    }
+    return await database.insert('users', userData);
   }
 
   /// إنشاء الجداول الخاصة بنظام المستخدمين والرسائل والمواعيد (CREATE TABLE IF NOT EXISTS)

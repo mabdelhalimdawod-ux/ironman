@@ -226,7 +226,7 @@ void main() {
       // Verify all 7 menu entries appear cleanly without layout overflow
       expect(find.text('Matrix Zone'), findsOneWidget);
       expect(find.text('EF و Decoupling'), findsOneWidget);
-      expect(find.text('الواط'), findsOneWidget);
+      expect(find.text('منحنى الواط'), findsOneWidget);
       expect(find.text('PMC (الحمل)'), findsOneWidget);
       expect(find.text('الاستشفاء'), findsOneWidget);
       expect(find.text('ساعات مناطق التدريب'), findsOneWidget);
@@ -553,7 +553,9 @@ void main() {
       expect(find.byType(ProgressCurveHeader), findsNWidgets(5));
     });
 
-    testWidgets('Progress tab for athlete is locked strictly to their own playerId and does not expose others', (tester) async {
+    testWidgets(
+        'Progress tab for athlete is locked strictly to their own playerId and does not expose others',
+        (tester) async {
       await AppLanguage.instance.setLocale(const Locale('ar'));
 
       const athleteUser = AppUser(
@@ -568,8 +570,10 @@ void main() {
       await tester.runAsync(() async {
         final database = await DB.db;
         await database.delete('players');
-        await database.insert('players', {'id': 201, 'name': 'اللاعب يوسف', 'mhr': 190, 'active': 1});
-        await database.insert('players', {'id': 202, 'name': 'اللاعب طارق', 'mhr': 192, 'active': 1});
+        await database.insert('players',
+            {'id': 201, 'name': 'اللاعب يوسف', 'mhr': 190, 'active': 1});
+        await database.insert('players',
+            {'id': 202, 'name': 'اللاعب طارق', 'mhr': 192, 'active': 1});
 
         await tester.pumpWidget(
           const MaterialApp(

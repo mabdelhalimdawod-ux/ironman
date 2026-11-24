@@ -6,6 +6,7 @@ import 'package:rowing_app/engine_rowing_ui.dart';
 import 'package:rowing_app/main.dart';
 import 'package:rowing_app/dashboard_tab.dart';
 import 'package:rowing_app/program_tab.dart';
+import 'package:rowing_app/sync_engine.dart';
 import 'package:rowing_app/workouts_tab.dart';
 import 'package:rowing_app/session_workouts_page.dart';
 import 'package:rowing_app/program_service.dart';
@@ -14,6 +15,10 @@ void main() {
   setUpAll(() {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
+  });
+
+  tearDown(() {
+    SyncEngine.instance.cancelDebounce();
   });
 
   const testUser = AppUser(

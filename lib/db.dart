@@ -204,7 +204,8 @@ double? recoveryRate(int? hrDuring, int? hrPost) {
 }
 
 /// حساب مؤشر الجاهزية الشامل (مبني على CP + الفسيولوجيا)
-double calculateReadiness({
+/// يرجع null إذا توفر أقل من مكونين (< 2 components)
+double? calculateReadiness({
   int? rhr,
   double? rhrBaseline,
   int? hrv,
@@ -213,10 +214,12 @@ double calculateReadiness({
   double? sleepHours,
   double? tsb, // Training Stress Balance - المؤشر الرئيسي
 }) {
+  int componentsCount = 0;
   double score = 70;
 
   // ═══ TSB هو المقياس الرئيسي (الأهم - مبني على CP) ═══
   if (tsb != null) {
+    componentsCount++;
     if (tsb > 20) {
       score += 20; // جاهز جدًا
     } else if (tsb > 5) {
@@ -232,6 +235,7 @@ double calculateReadiness({
 
   // RHR مقارنة بالخط الأساسي
   if (rhr != null && rhrBaseline != null && rhrBaseline > 0) {
+    componentsCount++;
     final diff = rhr - rhrBaseline;
     if (diff > 8) {
       score -= 15;
@@ -246,6 +250,7 @@ double calculateReadiness({
 
   // HRV مقارنة بالخط الأساسي
   if (hrv != null && hrvBaseline != null && hrvBaseline > 0) {
+    componentsCount++;
     final ratio = hrv / hrvBaseline;
     if (ratio < 0.7) {
       score -= 15;
@@ -258,11 +263,13 @@ double calculateReadiness({
 
   // الإرهاق المحسوس
   if (fatigue != null) {
+    componentsCount++;
     score += (fatigue - 3) * -5.0;
   }
 
   // النوم
   if (sleepHours != null) {
+    componentsCount++;
     if (sleepHours < 5) {
       score -= 12;
     } else if (sleepHours < 6) {
@@ -272,11 +279,16 @@ double calculateReadiness({
     }
   }
 
+  if (componentsCount < 2) {
+    return null;
+  }
+
   return score.clamp(0, 100);
 }
 
 /// لون مؤشر الجاهزية
-int readinessColor(double score) {
+int readinessColor(double? score) {
+  if (score == null) return 0xFF9E9E9E; // رمادي محايد عند عدم كفاية البيانات
   if (score >= 80) return 0xFF4CAF50;
   if (score >= 60) return 0xFFFFC107;
   if (score >= 40) return 0xFFFF9800;
@@ -284,7 +296,8 @@ int readinessColor(double score) {
 }
 
 /// نص مؤشر الجاهزية
-String readinessText(double score) {
+String readinessText(double? score) {
+  if (score == null) return '--';
   if (score >= 80) return 'ممتاز';
   if (score >= 60) return 'جيد';
   if (score >= 40) return 'انتبه';
@@ -963,9 +976,122 @@ class DB {
           [List<Object?>? a]) async =>
       (await db).rawQuery(sql, a);
 
+  static List<String> getTableKeyColumns(String table) {
+    switch (table) {
+      case 'players':
+        return const ['id'];
+      case 'sessions':
+        return const ['date', 'idx'];
+      case 'notes':
+        return const ['date'];
+      case 'program_cycles':
+        return const ['id'];
+      case 'program_cycle_tests':
+        return const ['cycle_id', 'test_type'];
+      case 'program_day_config':
+        return const ['cycle_id', 'cycle_type', 'day_of_week'];
+      case 'program_sessions':
+        return const ['id'];
+      case 'program_workout_items':
+        return const ['id'];
+      case 'cycle_templates':
+        return const ['id'];
+      case 'logs':
+        return const ['player_id', 'date', 'idx'];
+      case 'athlete_custom_sessions':
+        return const ['player_id', 'date', 'session_idx'];
+      case 'athlete_custom_workout_items':
+        return const ['custom_session_id', 'section', 'item_idx'];
+      case 'cp_tests':
+        return const ['id'];
+      case 'cp_values':
+        return const ['player_id', 'date'];
+      case 'testing_dates':
+        return const ['id'];
+      case 'testing_date_recipients':
+        return const ['testing_date_id', 'athlete_id'];
+      case 'coach_messages':
+        return const ['id'];
+      case 'progress_baseline_config':
+        return const ['key'];
+      case 'matrix_zone_config':
+        return const ['key'];
+      case 'coach_requests':
+        return const ['id'];
+      case 'cycles':
+        return const ['id'];
+      case 'users':
+        return const ['id'];
+      case 'daily_load':
+        return const ['player_id', 'date'];
+      case 'sync_state':
+        return const ['table_name'];
+      case 'sync_flag':
+        return const ['id'];
+      default:
+        return const ['id'];
+    }
+  }
+
+  /// حفظ غير هدام في جداول البيانات: UPDATE إذا كان الصف موجوداً، وإلا INSERT.
+  /// يحافظ على الأعمدة غير الممررة (مثل remote_id و updated_at و dirty وأي تفاصيل لم تمرر).
   static Future<void> put(String table, Map<String, Object?> v) async {
-    await (await db)
-        .insert(table, v, conflictAlgorithm: ConflictAlgorithm.replace);
+    final database = await db;
+    final keys = getTableKeyColumns(table);
+
+    await database.transaction((txn) async {
+      final hasAllKeys = keys.every((k) => v.containsKey(k) && v[k] != null);
+      Map<String, Object?>? existingRow;
+      String? matchedWhere;
+      List<Object?>? matchedArgs;
+
+      if (hasAllKeys) {
+        final where = keys.map((k) => '$k = ?').join(' AND ');
+        final args = keys.map((k) => v[k]).toList();
+        final res =
+            await txn.query(table, where: where, whereArgs: args, limit: 1);
+        if (res.isNotEmpty) {
+          existingRow = res.first;
+          matchedWhere = where;
+          matchedArgs = args;
+        }
+      }
+
+      // إذا لم يُعثر عليه بالمفاتيح الأساسية، فحص remote_id إن وجد
+      if (existingRow == null &&
+          v.containsKey('remote_id') &&
+          v['remote_id'] != null) {
+        final res = await txn.query(table,
+            where: 'remote_id = ?', whereArgs: [v['remote_id']], limit: 1);
+        if (res.isNotEmpty) {
+          existingRow = res.first;
+          matchedWhere = 'remote_id = ?';
+          matchedArgs = [v['remote_id']];
+        }
+      }
+
+      // إذا لم يُعثر عليه وكان هناك id ممرر صراحة في الخريطة
+      if (existingRow == null &&
+          v.containsKey('id') &&
+          v['id'] != null &&
+          !keys.contains('id')) {
+        final res = await txn.query(table,
+            where: 'id = ?', whereArgs: [v['id']], limit: 1);
+        if (res.isNotEmpty) {
+          existingRow = res.first;
+          matchedWhere = 'id = ?';
+          matchedArgs = [v['id']];
+        }
+      }
+
+      if (existingRow != null && matchedWhere != null && matchedArgs != null) {
+        // تحديث الحقول الممررة فقط - يحافظ على باقي الأعمدة ولا يطلق DELETE
+        await txn.update(table, v, where: matchedWhere, whereArgs: matchedArgs);
+      } else {
+        await txn.insert(table, v);
+      }
+    });
+
     SyncEngine.instance.scheduleDebouncedSync();
   }
 
@@ -1085,9 +1211,10 @@ class DB {
     return r.isEmpty ? null : r.first;
   }
 
-  /// خط الأساس (متوسط آخر n يوم)
+  /// خط أساس الاستشفاء المرجعي (Recovery Baseline): نافذة 30 يوماً بحد أدنى 14 قراءة للـ RHR/HRV.
+  /// يمكن تمرير days و minCount للنوافذ الخاصة (مثل الفحص القريب 3 أيام بحد أدنى قراءة واحدة).
   static Future<Map<String, double>> playerBaseline(int playerId,
-      {int days = 14}) async {
+      {int days = 30, int minCount = 14}) async {
     final cutoff = dstr(DateTime.now().subtract(Duration(days: days)));
     final r = await q('''
       SELECT 
@@ -1105,7 +1232,9 @@ class DB {
       WHERE player_id=? AND date>=? AND rhr IS NOT NULL
     ''', [playerId, cutoff]);
 
-    if (r.isEmpty || r.first['count'] == 0) return {};
+    if (r.isEmpty || ((r.first['count'] as num?)?.toInt() ?? 0) < minCount) {
+      return {};
+    }
 
     final row = r.first;
     return {
@@ -1120,6 +1249,21 @@ class DB {
       'max_hrv': (row['max_hrv'] as num?)?.toDouble() ?? 0,
       'count': (row['count'] as num?)?.toDouble() ?? 0,
     };
+  }
+
+  /// RHR الفعّال لحساب مناطق التدريب: أحدث قراءة صالحة خلال آخر 7 أيام
+  static Future<int> playerEffectiveRHR(int playerId,
+      {int fallback = 60}) async {
+    final cutoff = dstr(DateTime.now().subtract(const Duration(days: 7)));
+    final r = await q('''
+      SELECT rhr FROM logs 
+      WHERE player_id=? AND date>=? AND rhr IS NOT NULL AND rhr > 30 AND rhr < 120
+      ORDER BY date DESC, idx DESC LIMIT 1
+    ''', [playerId, cutoff]);
+    if (r.isNotEmpty && r.first['rhr'] != null) {
+      return (r.first['rhr'] as num).toInt();
+    }
+    return fallback;
   }
 
   /// بيانات الاستشفاء
@@ -1241,8 +1385,8 @@ class DB {
 
   /// حساب مؤشرات التوازن - المحور الرئيسي هو CP
   static Future<Map<String, double>> physiologicalBalance(int playerId) async {
-    final baseline = await playerBaseline(playerId, days: 28);
-    final recent = await playerBaseline(playerId, days: 3);
+    final baseline = await playerBaseline(playerId, days: 30, minCount: 14);
+    final recent = await playerBaseline(playerId, days: 3, minCount: 1);
     final recovery = await playerRecoveryData(playerId, limit: 10);
     final cp = await playerCP(playerId);
     final tsb = await playerTSB(playerId);
@@ -1402,7 +1546,7 @@ class DB {
       final tsb = await playerTSB(id);
       final cp = await playerCP(id);
 
-      double score = 70;
+      double? score;
       if (latest != null || tsb != null) {
         score = calculateReadiness(
           rhr: latest?['rhr'] as int?,

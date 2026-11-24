@@ -274,7 +274,8 @@ class ProgressCalcs {
 
   /// ── 4. حسابات الـ PMC (Performance Management Chart: CTL, ATL, TSB) ──
   static Map<String, dynamic> calculatePMC({
-    required List<Map<String, dynamic>> dailyTssList, // [{date: DateTime, tss: double}]
+    required List<Map<String, dynamic>>
+        dailyTssList, // [{date: DateTime, tss: double}]
     DateTime? endDate,
     double initialCtl = 0,
     double initialAtl = 0,
@@ -417,8 +418,9 @@ class ProgressCalcs {
       final pMhr = (row['player_mhr'] as num?)?.toInt() ?? 0;
       final rMhr = (row['mhr'] as num?)?.toInt() ?? 0;
       final hMhr = (row['hr_max'] as num?)?.toInt() ?? 0;
-      final effMhr =
-          pMhr > 0 ? pMhr : (rMhr > 0 ? rMhr : (hMhr > 0 ? hMhr : (defaultMhr ?? 0)));
+      final effMhr = pMhr > 0
+          ? pMhr
+          : (rMhr > 0 ? rMhr : (hMhr > 0 ? hMhr : (defaultMhr ?? 0)));
 
       final rowRhr = (row['rhr'] as num?)?.toInt() ?? 0;
       final effRhr = rowRhr > 0 ? rowRhr : (defaultRhr ?? 60);
@@ -469,7 +471,9 @@ class ProgressCalcs {
       return null;
     }
     final intensityFactor = avgPower / cp;
-    return (durationSeconds * avgPower * intensityFactor) / (cp * 3600.0) * 100.0;
+    return (durationSeconds * avgPower * intensityFactor) /
+        (cp * 3600.0) *
+        100.0;
   }
 
   /// تصنيف حالة TSB طبقاً للحدود المسماة الموحدة في TsbThresholds
@@ -477,7 +481,8 @@ class ProgressCalcs {
     if (tsb > TsbThresholds.excessRest) return TsbStatus.excessRest;
     if (tsb >= TsbThresholds.raceReadyMin) return TsbStatus.raceReady;
     if (tsb >= TsbThresholds.neutralMin) return TsbStatus.neutral;
-    if (tsb >= TsbThresholds.productiveBuildMin) return TsbStatus.productiveBuild;
+    if (tsb >= TsbThresholds.productiveBuildMin)
+      return TsbStatus.productiveBuild;
     return TsbStatus.overreachRisk;
   }
 
@@ -630,6 +635,7 @@ class ProgressCalcs {
         return metricKey;
     }
   }
+
   // ════════════════════════════════════════════════════════════════
   // ── 7. محرك حسابات خط الأساس (Baseline) لـ Matrix Zone والتطور ──
   // ════════════════════════════════════════════════════════════════
@@ -663,7 +669,8 @@ class ProgressCalcs {
       } else if (metricKey == 'decoupling') {
         val = (w['decoupling'] as num?)?.toDouble();
       } else if (metricKey.startsWith('eupnea')) {
-        val = (w[metricKey] as num?)?.toDouble() ?? (w['eupnea'] as num?)?.toDouble();
+        val = (w[metricKey] as num?)?.toDouble() ??
+            (w['eupnea'] as num?)?.toDouble();
       } else {
         val = (w[metricKey] as num?)?.toDouble();
       }
@@ -706,7 +713,8 @@ class ProgressCalcs {
         // فحص تقارب أول 3 تمرينات (أو توسيع النافذة حتى 5)
         bool found = false;
         for (int w = minWorkouts; w <= min(maxWindow, i + 1); w++) {
-          final windowValues = parsed.sublist(i - w + 1, i + 1).map((e) => e.value).toList();
+          final windowValues =
+              parsed.sublist(i - w + 1, i + 1).map((e) => e.value).toList();
           final minV = windowValues.reduce(min);
           final maxV = windowValues.reduce(max);
           final avgV = windowValues.reduce((a, b) => a + b) / w;
@@ -723,7 +731,8 @@ class ProgressCalcs {
       } else {
         // خط الأساس موجود: هل آخر 3-5 تمرينات متقاربة وتختلف عن الحالي بنسبة >= حد التحرك؟
         for (int w = minWorkouts; w <= min(maxWindow, i + 1); w++) {
-          final windowValues = parsed.sublist(i - w + 1, i + 1).map((e) => e.value).toList();
+          final windowValues =
+              parsed.sublist(i - w + 1, i + 1).map((e) => e.value).toList();
           final minV = windowValues.reduce(min);
           final maxV = windowValues.reduce(max);
           final avgV = windowValues.reduce((a, b) => a + b) / w;
@@ -733,7 +742,8 @@ class ProgressCalcs {
             final diffRatio = (avgV - currentBase).abs() / currentBase;
             if (diffRatio >= movementThreshold) {
               runningBaseline = avgV;
-              history.add(DateValuePoint(date: curDate, value: runningBaseline));
+              history
+                  .add(DateValuePoint(date: curDate, value: runningBaseline));
               break;
             }
           }
@@ -741,7 +751,8 @@ class ProgressCalcs {
       }
 
       if (periodStartDate != null &&
-          (curDate.isBefore(periodStartDate) || curDate.isAtSameMomentAs(periodStartDate)) &&
+          (curDate.isBefore(periodStartDate) ||
+              curDate.isAtSameMomentAs(periodStartDate)) &&
           runningBaseline != null) {
         startOfPeriodVal = runningBaseline;
       }
@@ -768,10 +779,14 @@ class ProgressCalcs {
   static const double kCapacityScoreFactor = 2.5;
 
   static const List<MatrixZoneIndicatorConfig> defaultMatrixIndicators = [
-    MatrixZoneIndicatorConfig(key: 'watts', weight: 40.0, direction: 'up', sortOrder: 0),
-    MatrixZoneIndicatorConfig(key: 'ef', weight: 25.0, direction: 'up', sortOrder: 1),
-    MatrixZoneIndicatorConfig(key: 'time', weight: 20.0, direction: 'up', sortOrder: 2),
-    MatrixZoneIndicatorConfig(key: 'decoupling', weight: 15.0, direction: 'down', sortOrder: 3),
+    MatrixZoneIndicatorConfig(
+        key: 'watts', weight: 40.0, direction: 'up', sortOrder: 0),
+    MatrixZoneIndicatorConfig(
+        key: 'ef', weight: 25.0, direction: 'up', sortOrder: 1),
+    MatrixZoneIndicatorConfig(
+        key: 'time', weight: 20.0, direction: 'up', sortOrder: 2),
+    MatrixZoneIndicatorConfig(
+        key: 'decoupling', weight: 15.0, direction: 'down', sortOrder: 3),
   ];
 
   /// حساب مقاييس Matrix Zone لكل الزونات للاعب معين في فترة ونوع تمرين محددين
@@ -785,29 +800,21 @@ class ProgressCalcs {
     List<MatrixZoneIndicatorConfig> indicatorConfigs = defaultMatrixIndicators,
   }) {
     final periodDurationDays = periodEnd.difference(periodStart).inDays + 1;
-    final prevPeriodStart = periodStart.subtract(Duration(days: periodDurationDays));
+    final prevPeriodStart =
+        periodStart.subtract(Duration(days: periodDurationDays));
     final prevPeriodEnd = periodStart.subtract(const Duration(days: 1));
 
     // تصفية تمرينات نوع التمرين المحدد (قاعدة عدم التداخل)
     final kindLogs = allAthleteLogs.where((l) {
       final k = (l['kind'] as String?)?.trim();
-      return k == null || k.isEmpty || k.toLowerCase() == workoutKind.toLowerCase();
+      return k == null ||
+          k.isEmpty ||
+          k.toLowerCase() == workoutKind.toLowerCase();
     }).toList();
 
     // تقسيم التمرينات حسب الزون
     final details = <String, MatrixZoneDetail>{};
     final orderedZones = HeartRateZones.orderedZones; // Z1..VO2 max
-
-    // الأساس التصاعدي لمنحنى القدرة عبر المناطق
-    final baseCapacityValues = {
-      'Z1': 100.0,
-      'Z2': 145.0,
-      'Z3': 195.0,
-      'Z4': 245.0,
-      'Threshold': 295.0,
-      'Z5': 345.0,
-      'VO2 max': 395.0,
-    };
 
     for (int zi = 0; zi < orderedZones.length; zi++) {
       final zoneKey = orderedZones[zi];
@@ -828,7 +835,8 @@ class ProgressCalcs {
         final dStr = (l['date'] as String?) ?? '';
         final d = DateTime.tryParse(dStr);
         if (d == null) return false;
-        return (d.isAfter(prevPeriodStart) || d.isAtSameMomentAs(prevPeriodStart)) &&
+        return (d.isAfter(prevPeriodStart) ||
+                d.isAtSameMomentAs(prevPeriodStart)) &&
             (d.isBefore(prevPeriodEnd) || d.isAtSameMomentAs(prevPeriodEnd));
       }).toList();
 
@@ -922,7 +930,8 @@ class ProgressCalcs {
               .toList();
           if (decList.isNotEmpty && baseVal != null) {
             rawVal = decList.reduce((a, b) => a + b) / decList.length;
-            metricScore = (baseVal - rawVal); // كلما نزل الـ Decoupling زادت الدرجة
+            metricScore =
+                (baseVal - rawVal); // كلما نزل الـ Decoupling زادت الدرجة
             hasData = true;
           }
         } else {
@@ -939,7 +948,8 @@ class ProgressCalcs {
             rawVal = customList.reduce((a, b) => a + b) / customList.length;
             hasData = true;
             if (prevCustomList.isNotEmpty) {
-              baseVal = prevCustomList.reduce((a, b) => a + b) / prevCustomList.length;
+              baseVal = prevCustomList.reduce((a, b) => a + b) /
+                  prevCustomList.length;
               if (baseVal > 0) {
                 final ratio = ((rawVal / baseVal) - 1.0) * 100.0;
                 metricScore = cfg.isHigherBetter ? ratio : -ratio;
@@ -966,19 +976,26 @@ class ProgressCalcs {
       final hasEnoughData = availableWeightSum > 0 && bestWatts != null;
       double? zoneScore;
       if (availableWeightSum > 0) {
-        zoneScore = (weightedScoreSum / availableWeightSum).clamp(-kMaxZoneScore, kMaxZoneScore);
+        zoneScore = (weightedScoreSum / availableWeightSum)
+            .clamp(-kMaxZoneScore, kMaxZoneScore);
       }
 
       // عرض الشريط: دالة متزايدة من درجة الزون (14.0 إلى 32.0)
       final barWidth = zoneScore != null
-          ? (23.0 + (zoneScore / kMaxZoneScore) * 9.0).clamp(kMinBarWidth, kMaxBarWidth)
+          ? (23.0 + (zoneScore / kMaxZoneScore) * 9.0)
+              .clamp(kMinBarWidth, kMaxBarWidth)
           : kMinBarWidth;
 
-      // ارتفاع منحنى القدرة عند الزون: دالة متناقصة من درجة الزون (أوطى = قدرة أحسن)
+      // ارتفاع منحنى القدرة عند الزون: دالة متناقصة من درجة الزون مبنية على خط أساس الواط الفعلي للاعب
+      // capacityCurveVal = playerBaselineWatts * (1.0 - (zoneScore / 100.0))
+      // المنطقة التي لا تمتلك خط أساس = لا توجد نقطة (null)
       double? capacityCurveVal;
-      if (zoneScore != null) {
-        final baseVal = baseCapacityValues[zoneKey] ?? 200.0;
-        capacityCurveVal = baseVal - (zoneScore * kCapacityScoreFactor);
+      final playerBaselineWatts =
+          wattsBaseline.startOfPeriodBaseline ?? wattsBaseline.currentBaseline;
+      if (zoneScore != null &&
+          playerBaselineWatts != null &&
+          playerBaselineWatts > 0) {
+        capacityCurveVal = playerBaselineWatts * (1.0 - (zoneScore / 100.0));
       }
 
       details[zoneKey] = MatrixZoneDetail(
@@ -1001,13 +1018,15 @@ class ProgressCalcs {
     Point<double>? lt1;
     if (z2Detail?.capacityCurveValue != null) {
       final z2Score = z2Detail?.zoneScore ?? 0.0;
-      lt1 = Point<double>(1.5 + (z2Score / kMaxZoneScore) * 0.3, z2Detail!.capacityCurveValue!);
+      lt1 = Point<double>(
+          1.5 + (z2Score / kMaxZoneScore) * 0.3, z2Detail!.capacityCurveValue!);
     }
 
     Point<double>? lt2;
     if (thrDetail?.capacityCurveValue != null) {
       final thrScore = thrDetail?.zoneScore ?? 0.0;
-      lt2 = Point<double>(4.0 + (thrScore / kMaxZoneScore) * 0.3, thrDetail!.capacityCurveValue!);
+      lt2 = Point<double>(4.0 + (thrScore / kMaxZoneScore) * 0.3,
+          thrDetail!.capacityCurveValue!);
     }
 
     return MatrixZoneAthleteResult(
@@ -1043,7 +1062,8 @@ class ProgressCalcs {
   }
 
   /// حفظ إعدادات المؤشرات في جدول matrix_zone_config
-  static Future<void> saveMatrixZoneConfig(List<MatrixZoneIndicatorConfig> configs) async {
+  static Future<void> saveMatrixZoneConfig(
+      List<MatrixZoneIndicatorConfig> configs) async {
     final database = await DB.db;
     await database.transaction((txn) async {
       await txn.delete('matrix_zone_config');
@@ -1058,10 +1078,7 @@ class ProgressCalcs {
       }
     });
   }
-
 }
-
-
 
 /// نتيجة مزامنة جدول الكاش daily_load للاعب
 class DailyLoadSyncResult {
@@ -1100,7 +1117,8 @@ class ProgressLoadCache {
     await ensureTable();
     final database = await DB.db;
     if (fromDate == null) {
-      await database.delete('daily_load', where: 'player_id = ?', whereArgs: [playerId]);
+      await database
+          .delete('daily_load', where: 'player_id = ?', whereArgs: [playerId]);
     } else {
       await database.delete(
         'daily_load',
@@ -1298,8 +1316,6 @@ class ProgressLoadCache {
       recomputedFromDate: dirtyStartDate,
     );
   }
-
-
 }
 
 class _WorkoutMetricPoint {

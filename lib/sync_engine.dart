@@ -184,6 +184,14 @@ class SyncEngine extends ChangeNotifier {
     });
   }
 
+  /// إلغاء مؤقت المزامنة المؤجلة (مفيد في الاختبارات وعند الخروج)
+  void cancelDebounce() {
+    _debounceTimer?.cancel();
+    _debounceTimer = null;
+    _retryTimer?.cancel();
+    _retryTimer = null;
+  }
+
   /// جدولة مزامنة مؤجلة (Debounced Sync) بعد الحفظ بخمس ثوانٍ
   void scheduleDebouncedSync([Duration delay = const Duration(seconds: 5)]) {
     _debounceTimer?.cancel();
@@ -400,21 +408,56 @@ class SyncEngine extends ChangeNotifier {
               final validCols = cols.map((c) => c['name'] as String).toSet();
               insertData.removeWhere((k, v) => !validCols.contains(k));
 
-              await db.insert(
-                table.name,
-                insertData,
-                conflictAlgorithm: ConflictAlgorithm.replace,
-              );
+              if (existing.isNotEmpty) {
+                await db.update(
+                  table.name,
+                  insertData,
+                  where: whereClauses.join(' AND '),
+                  whereArgs: whereArgs,
+                );
+              } else {
+                // فحص إذا كان هناك سجل بنفس remote_id قبل الإدخال لتجنب التكرار
+                final existingByRemote = (remoteId != null && validCols.contains('remote_id'))
+                    ? await db.query(table.name, where: 'remote_id = ?', whereArgs: [remoteId], limit: 1)
+                    : const <Map<String, dynamic>>[];
+                if (existingByRemote.isNotEmpty) {
+                  await db.update(
+                    table.name,
+                    insertData,
+                    where: 'remote_id = ?',
+                    whereArgs: [remoteId],
+                  );
+                } else {
+                  await db.insert(
+                    table.name,
+                    insertData,
+                  );
+                }
+              }
             }
           }
         }
 
-        // تحديث آخر تاريخ سحب للجدول
-        await db.insert(
+        // تحديث آخر تاريخ سحب للجدول (تحديث إذا وجد وإلا إدخال)
+        final stateExist = await db.query(
           'sync_state',
-          {'table_name': table.name, 'last_pulled_at': nowUtcStr},
-          conflictAlgorithm: ConflictAlgorithm.replace,
+          where: 'table_name = ?',
+          whereArgs: [table.name],
+          limit: 1,
         );
+        if (stateExist.isNotEmpty) {
+          await db.update(
+            'sync_state',
+            {'last_pulled_at': nowUtcStr},
+            where: 'table_name = ?',
+            whereArgs: [table.name],
+          );
+        } else {
+          await db.insert(
+            'sync_state',
+            {'table_name': table.name, 'last_pulled_at': nowUtcStr},
+          );
+        }
       }
     } finally {
       await db.update('sync_flag', {'active': 0}, where: 'id = ?', whereArgs: [1]);

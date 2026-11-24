@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sqflite/sqflite.dart';
 import 'db.dart';
 import 'heart_rate_zones.dart';
 import 'sync_engine.dart';
@@ -39,7 +38,8 @@ const Map<String, String> kZoneToHrPercentMap = {
 };
 
 /// تحويل أي صيغة للزون إلى المفتاح الأساسي عبر مصدر الزونات الموحد
-String normalizeZoneKey(String rawZone) => HeartRateZones.normalizeZoneKey(rawZone);
+String normalizeZoneKey(String rawZone) =>
+    HeartRateZones.normalizeZoneKey(rawZone);
 
 /// تحويل مفتاح الزون إلى النص الكامل المنسدل
 String formatZoneToDetailed(String rawZone) {
@@ -82,9 +82,9 @@ const List<String> kProgramTestTypes = [
 ];
 
 Map<String, Color> get kZoneColors => {
-  for (final z in HeartRateZones.orderedZones)
-    z: HeartRateZones.zoneColor(z),
-};
+      for (final z in HeartRateZones.orderedZones)
+        z: HeartRateZones.zoneColor(z),
+    };
 
 // ============================================================================
 // نماذج البيانات (Data Models)
@@ -600,19 +600,31 @@ class ProgramService {
     // تهيئة الدورة التدريبية الأساسية
     for (int day = 0; day < 7; day++) {
       // إعدادات اليوم
-      await database.insert(
+      final dayConfigData = {
+        'cycle_id': cycleId,
+        'cycle_type': 'basic',
+        'day_of_week': day,
+        'location': 'مجرى التجديف الدولي',
+        'dispatch_date': '',
+        'dispatch_time': '06:00',
+        'comment': '',
+      };
+      final existingCfg = await database.query(
         'program_day_config',
-        {
-          'cycle_id': cycleId,
-          'cycle_type': 'basic',
-          'day_of_week': day,
-          'location': 'مجرى التجديف الدولي',
-          'dispatch_date': '',
-          'dispatch_time': '06:00',
-          'comment': '',
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
+        where: 'cycle_id = ? AND cycle_type = ? AND day_of_week = ?',
+        whereArgs: [cycleId, 'basic', day],
+        limit: 1,
       );
+      if (existingCfg.isNotEmpty) {
+        await database.update(
+          'program_day_config',
+          dayConfigData,
+          where: 'cycle_id = ? AND cycle_type = ? AND day_of_week = ?',
+          whereArgs: [cycleId, 'basic', day],
+        );
+      } else {
+        await database.insert('program_day_config', dayConfigData);
+      }
 
       // حصة 1 صباحية
       final s1Id = await database.insert('program_sessions', {
@@ -738,19 +750,31 @@ class ProgramService {
 
     // تهيئة الدورة التدريبية الفرعية (تستات وتهدئة)
     for (int day = 0; day < 7; day++) {
-      await database.insert(
+      final daySecData = {
+        'cycle_id': cycleId,
+        'cycle_type': 'secondary',
+        'day_of_week': day,
+        'location': 'مجرى التجديف الدولي',
+        'dispatch_date': '',
+        'dispatch_time': '06:00',
+        'comment': '',
+      };
+      final existingSecCfg = await database.query(
         'program_day_config',
-        {
-          'cycle_id': cycleId,
-          'cycle_type': 'secondary',
-          'day_of_week': day,
-          'location': 'مجرى التجديف الدولي',
-          'dispatch_date': '',
-          'dispatch_time': '06:00',
-          'comment': '',
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
+        where: 'cycle_id = ? AND cycle_type = ? AND day_of_week = ?',
+        whereArgs: [cycleId, 'secondary', day],
+        limit: 1,
       );
+      if (existingSecCfg.isNotEmpty) {
+        await database.update(
+          'program_day_config',
+          daySecData,
+          where: 'cycle_id = ? AND cycle_type = ? AND day_of_week = ?',
+          whereArgs: [cycleId, 'secondary', day],
+        );
+      } else {
+        await database.insert('program_day_config', daySecData);
+      }
 
       final sId = await database.insert('program_sessions', {
         'cycle_id': cycleId,
@@ -907,13 +931,25 @@ class ProgramService {
       whereArgs: [cycle.id],
     );
 
-    // تحديث التستات
+    // تحديث التستات (تحديث إذا وجد وإلا إدخال دون حذف كاذب)
     for (final t in cycle.tests) {
-      await database.insert(
+      final tMap = t.toMap();
+      final existingTest = await database.query(
         'program_cycle_tests',
-        t.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace,
+        where: 'cycle_id = ? AND test_type = ?',
+        whereArgs: [tMap['cycle_id'], tMap['test_type']],
+        limit: 1,
       );
+      if (existingTest.isNotEmpty) {
+        await database.update(
+          'program_cycle_tests',
+          tMap,
+          where: 'cycle_id = ? AND test_type = ?',
+          whereArgs: [tMap['cycle_id'], tMap['test_type']],
+        );
+      } else {
+        await database.insert('program_cycle_tests', tMap);
+      }
     }
   }
 
@@ -1006,12 +1042,24 @@ class ProgramService {
   static Future<void> saveDayConfig(ProgramDayConfig config) async {
     await ensureTables();
     final database = await DB.db;
+    final map = config.toMap();
 
-    await database.insert(
+    final existing = await database.query(
       'program_day_config',
-      config.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      where: 'cycle_id = ? AND cycle_type = ? AND day_of_week = ?',
+      whereArgs: [map['cycle_id'], map['cycle_type'], map['day_of_week']],
+      limit: 1,
     );
+    if (existing.isNotEmpty) {
+      await database.update(
+        'program_day_config',
+        map,
+        where: 'cycle_id = ? AND cycle_type = ? AND day_of_week = ?',
+        whereArgs: [map['cycle_id'], map['cycle_type'], map['day_of_week']],
+      );
+    } else {
+      await database.insert('program_day_config', map);
+    }
   }
 
   /// توليد قائمة تواريخ يوم معين في الأسبوع التي تقع داخل السيكل
@@ -1427,20 +1475,23 @@ class ProgramService {
   // ============================================================================
 
   /// جلب الحصص التفصيلية لتاريخ معين من قالب البرنامج النشط
-  static Future<List<ProgramDaySession>> getTemplateSessionsForDate(DateTime date) async {
+  static Future<List<ProgramDaySession>> getTemplateSessionsForDate(
+      DateTime date) async {
     await ensureTables();
     final dateStr = dstr(date);
     final cycles = await getAllProgramCycles();
     ProgramCycle? activeCycle;
     for (final c in cycles) {
-      if (c.startDate.compareTo(dateStr) <= 0 && c.endDate.compareTo(dateStr) >= 0) {
+      if (c.startDate.compareTo(dateStr) <= 0 &&
+          c.endDate.compareTo(dateStr) >= 0) {
         activeCycle = c;
         break;
       }
     }
     if (activeCycle != null) {
       final dayIndex = getWeekdayIndex(date);
-      final sessions = await getDaySessionsDetailed(activeCycle.id, 'basic', dayIndex);
+      final sessions =
+          await getDaySessionsDetailed(activeCycle.id, 'basic', dayIndex);
       if (sessions.isNotEmpty) return sessions;
     }
 
@@ -1504,14 +1555,16 @@ class ProgramService {
         [customSessionId],
       );
 
-      final workouts = workoutRows.map((w) => ProgramWorkoutItem.fromMap(w)).toList();
+      final workouts =
+          workoutRows.map((w) => ProgramWorkoutItem.fromMap(w)).toList();
       final session = ProgramDaySession(
         id: customSessionId,
         cycleId: 0,
         cycleType: 'custom',
         dayOfWeek: 0,
         sessionIdx: (sRow['session_idx'] as num?)?.toInt() ?? 0,
-        name: (sRow['name'] as String?) ?? 'الحصة ${((sRow['session_idx'] as num?)?.toInt() ?? 0) + 1}',
+        name: (sRow['name'] as String?) ??
+            'الحصة ${((sRow['session_idx'] as num?)?.toInt() ?? 0) + 1}',
         time: (sRow['time'] as String?) ?? '07:00',
         notesPhysio: (sRow['notes_physio'] as String?) ?? '',
         notesTech: (sRow['notes_tech'] as String?) ?? '',

@@ -412,13 +412,13 @@ class AppStrings {
       ? 'مؤشرات اختيارية (NP & Decoupling)'
       : 'Optional Metrics (NP & Decoupling)';
   String get npWattsLabel =>
-      isArabic ? 'واط NP (اختياري)' : 'NP Watts (Optional)';
+      isArabic ? 'واط NP تقديري (اختياري)' : 'Estimated NP Watts (Optional)';
   String get npWattsHint => isArabic
       ? 'قراءات مفصولة بفواصل أو قيمة واحدة'
       : 'Comma-separated watts or single value';
   String get calculatedNP => isArabic
-      ? 'القدرة المعيارية المحسوبة (NP)'
-      : 'Calculated Normalized Power (NP)';
+      ? 'القدرة المعيارية التقديرية (NP تقديري)'
+      : 'Estimated Normalized Power (Estimated NP)';
   String get decouplingHRLabel =>
       isArabic ? 'نبض Decoupling (اختياري)' : 'Decoupling HR (Optional)';
   String get decouplingHRHint =>
@@ -671,7 +671,7 @@ class AppStrings {
   String get progressCurves => isArabic ? 'منحنيات الأداء' : 'Progress Curves';
   String get curveEF =>
       isArabic ? 'معامل الكفاءة (EF)' : 'Efficiency Factor (EF)';
-  String get curveWatts => isArabic ? 'القدرة (الواط)' : 'Power (Watts)';
+  String get curveWatts => isArabic ? 'منحنى الواط' : 'Watts Curve';
   String get curveDecoupling =>
       isArabic ? 'التفكك القلبي (Decoupling)' : 'Cardiac Decoupling';
   String get curveHR => isArabic ? 'النبض (Heart Rate)' : 'Heart Rate';
@@ -872,7 +872,7 @@ class AppStrings {
   String get efDecouplingDesc => isArabic
       ? 'تطور معامل الكفاءة والتفكك القلبي الهوائي'
       : 'Aerobic efficiency factor & cardiac drift';
-  String get wattsCurveTitle => isArabic ? 'الواط' : 'Watts';
+  String get wattsCurveTitle => isArabic ? 'منحنى الواط' : 'Watts Curve';
   String get wattsCurveDesc => isArabic
       ? 'منحنيات القدرة (الواط) عبر الزمن ومناطق التدريب السبع'
       : 'Power progression across time and 7 HR zones';

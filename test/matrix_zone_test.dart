@@ -302,9 +302,14 @@ void main() {
       // عرض الشريط متزايد بين 14 و 32
       expect(z2.barWidth, inInclusiveRange(14.0, 32.0));
 
-      // منحنى القدرة متناقص مع درجة الزون (أقل قيمة = أفضل قدرة)
+      // منحنى القدرة مبني على خط أساس الواط الفعلي للاعب ودرجة الزون:
+      // capacityCurveVal = playerBaselineWatts * (1.0 - (zoneScore / 100.0))
       expect(z2.capacityCurveValue, isNotNull);
-      expect(z2.capacityCurveValue!, lessThan(145.0));
+      expect(z2.capacityCurveValue!, lessThan(z2.startBaselineWatts!));
+      expect(
+        z2.capacityCurveValue!,
+        closeTo(z2.startBaselineWatts! * (1.0 - (z2.zoneScore! / 100.0)), 1e-4),
+      );
     });
 
     test('إعادة توزيع الأوزان عند غياب أحد المؤشرات', () {
@@ -332,51 +337,27 @@ void main() {
       expect(z2.zoneScore, isNotNull);
     });
 
-    test('تصاعد منحنى القدرة عبر المناطق التدريبية السبعة', () {
-      final logs = [
-        {
-          'date': '2026-11-01',
-          'avg_power': 150.0,
-          'zone': 'Zone 1 - UT3',
-          'kind': 'Erg'
-        },
-        {
-          'date': '2026-11-01',
-          'avg_power': 180.0,
-          'zone': 'Zone 2 - UT2',
-          'kind': 'Erg'
-        },
-        {
-          'date': '2026-11-01',
-          'avg_power': 220.0,
-          'zone': 'Zone 3 - UT1',
-          'kind': 'Erg'
-        },
-        {
-          'date': '2026-11-01',
-          'avg_power': 250.0,
-          'zone': 'Zone 4 - AT',
-          'kind': 'Erg'
-        },
-        {
-          'date': '2026-11-01',
-          'avg_power': 280.0,
-          'zone': 'Threshold - AT',
-          'kind': 'Erg'
-        },
-        {
-          'date': '2026-11-01',
-          'avg_power': 310.0,
-          'zone': 'Zone 5 - TR',
-          'kind': 'Erg'
-        },
-        {
-          'date': '2026-11-01',
-          'avg_power': 350.0,
-          'zone': 'VO2 max - AN',
-          'kind': 'Erg'
-        },
-      ];
+    test('تصاعد منحنى القدرة عبر المناطق التدريبية السبعة عند توفر خطوط الأساس', () {
+      final logs = <Map<String, dynamic>>[];
+      final zonesPowers = {
+        'Zone 1 - UT3': 150.0,
+        'Zone 2 - UT2': 180.0,
+        'Zone 3 - UT1': 220.0,
+        'Zone 4 - AT': 250.0,
+        'Threshold - AT': 280.0,
+        'Zone 5 - TR': 310.0,
+        'VO2 max - AN': 350.0,
+      };
+
+      // 3 تمرينات أساس لكل منطقة قبل الفترة + تمرين في الفترة
+      zonesPowers.forEach((zone, p) {
+        logs.addAll([
+          {'date': '2026-10-20', 'avg_power': p, 'zone': zone, 'kind': 'Erg'},
+          {'date': '2026-10-22', 'avg_power': p, 'zone': zone, 'kind': 'Erg'},
+          {'date': '2026-10-25', 'avg_power': p, 'zone': zone, 'kind': 'Erg'},
+          {'date': '2026-11-01', 'avg_power': p + 5, 'zone': zone, 'kind': 'Erg'},
+        ]);
+      });
 
       final res = ProgressCalcs.computeMatrixZoneForAthlete(
         playerId: 1,
@@ -395,6 +376,26 @@ void main() {
           expect(d1!.capacityCurveValue!, lessThan(d2!.capacityCurveValue!));
         }
       }
+    });
+
+    test('المنطقة التي ليس لها خط أساس تكون نقطة منحنى القدرة null', () {
+      final logs = [
+        {'date': '2026-11-01', 'avg_power': 180.0, 'zone': 'Z2', 'kind': 'Erg'},
+      ];
+
+      final res = ProgressCalcs.computeMatrixZoneForAthlete(
+        playerId: 1,
+        athleteName: 'لاعب',
+        workoutKind: 'Erg',
+        allAthleteLogs: logs,
+        periodStart: DateTime(2026, 11, 1),
+        periodEnd: DateTime(2026, 11, 2),
+      );
+
+      final z2 = res.detailsByZone['Z2'];
+      expect(z2, isNotNull);
+      expect(z2!.startBaselineWatts, isNull);
+      expect(z2.capacityCurveValue, isNull);
     });
   });
 

@@ -45,7 +45,8 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
     zonesDist = await DB.playerZoneDistribution(playerId);
     recoveryData = await DB.playerRecoveryData(playerId);
     final db = await DB.db;
-    final pRows = await db.query('players', where: 'id = ?', whereArgs: [playerId], limit: 1);
+    final pRows = await db.query('players',
+        where: 'id = ?', whereArgs: [playerId], limit: 1);
     if (pRows.isNotEmpty) {
       _curvesShared = (pRows.first['curves_shared'] as num?)?.toInt() == 1;
       _curvesSharedBy = pRows.first['curves_shared_by'] as String? ?? 'coach';
@@ -83,7 +84,9 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
       ),
       body: RowingGridBackground(
         child: loading
-            ? const Center(child: CircularProgressIndicator(color: EngineRowingUI.neonLime))
+            ? const Center(
+                child:
+                    CircularProgressIndicator(color: EngineRowingUI.neonLime))
             : logs.isEmpty
                 ? _emptyState(s)
                 : Center(
@@ -109,7 +112,8 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                           _recoveryChart(s),
                           _sectionTitle(s.weightLabel),
                           _weightChart(),
-                          _sectionTitle('📊 ${s.isArabic ? 'توزيع مناطق التدريب' : 'Training Zones Distribution'}'),
+                          _sectionTitle(
+                              '📊 ${s.isArabic ? 'توزيع مناطق التدريب' : 'Training Zones Distribution'}'),
                           _zonesChart(),
                           _sectionTitle(s.sessionsHistory),
                           _recentLogsTable(s),
@@ -126,11 +130,15 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.insert_chart_outlined, size: 80, color: EngineRowingUI.labelSlate),
+            const Icon(Icons.insert_chart_outlined,
+                size: 80, color: EngineRowingUI.labelSlate),
             const SizedBox(height: 16),
             Text(
               s.noLogsForPlayer,
-              style: const TextStyle(fontSize: 18, color: EngineRowingUI.textWhite, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                  fontSize: 18,
+                  color: EngineRowingUI.textWhite,
+                  fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
@@ -202,7 +210,8 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                       textDirection: TextDirection.ltr,
                       child: Text(
                         '${s.maxHRLabel}: $mhr bpm • ${p['active'] == 1 ? s.playerStatusActive : s.playerStatusInactive}',
-                        style: const TextStyle(fontSize: 13, color: EngineRowingUI.labelSlate),
+                        style: const TextStyle(
+                            fontSize: 13, color: EngineRowingUI.labelSlate),
                       ),
                     ),
                   ],
@@ -220,12 +229,16 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _statChip(s.isArabic ? 'حصص الأسبوع' : 'Weekly', '$sessionCount7'),
-                  _statChip(s.isArabic ? 'إجمالي السجلات' : 'Total Logs', '${logs.length}'),
+                  _statChip(
+                      s.isArabic ? 'حصص الأسبوع' : 'Weekly', '$sessionCount7'),
+                  _statChip(s.isArabic ? 'إجمالي السجلات' : 'Total Logs',
+                      '${logs.length}'),
                   if (latest != null && latest['rhr'] != null)
-                    _statChip(s.isArabic ? 'آخر RHR' : 'Latest RHR', '${latest['rhr']}'),
+                    _statChip(s.isArabic ? 'آخر RHR' : 'Latest RHR',
+                        '${latest['rhr']}'),
                   if (baseline.isNotEmpty && baseline['avg_rhr'] != null)
-                    _statChip(s.isArabic ? 'متوسط RHR' : 'Avg RHR', '${baseline['avg_rhr']?.round()}'),
+                    _statChip(s.isArabic ? 'متوسط RHR' : 'Avg RHR',
+                        '${baseline['avg_rhr']?.round()}'),
                 ],
               ),
             ),
@@ -237,20 +250,27 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                   backgroundColor: EngineRowingUI.neonLime,
                   foregroundColor: EngineRowingUI.bgNavy,
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => MetricsCurvePage(initialPlayer: widget.player),
+                      builder: (_) =>
+                          MetricsCurvePage(initialPlayer: widget.player),
                     ),
                   );
                 },
-                icon: const Icon(Icons.auto_graph_rounded, color: EngineRowingUI.bgNavy),
+                icon: const Icon(Icons.auto_graph_rounded,
+                    color: EngineRowingUI.bgNavy),
                 label: Text(
-                  s.isArabic ? 'منحنيات مؤشرات التدريب (خمسة منحنيات)' : 'View Metrics Curves (5 Curves)',
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: EngineRowingUI.bgNavy),
+                  s.isArabic
+                      ? 'منحنيات مؤشرات التدريب (خمسة منحنيات)'
+                      : 'View Metrics Curves (5 Curves)',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: EngineRowingUI.bgNavy),
                 ),
               ),
             ),
@@ -264,8 +284,9 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
 
   Widget _buildCurveSharingCard(AppStrings s) {
     final currentUser = AuthService.currentUser;
-    final isAthleteViewingOwn =
-        currentUser != null && currentUser.isAthlete && currentUser.id == playerId;
+    final isAthleteViewingOwn = currentUser != null &&
+        currentUser.isAthlete &&
+        currentUser.id == playerId;
     final isCoach = currentUser != null && currentUser.isCoach;
     final athleteLocked = _curvesSharedBy == 'athlete';
     final canToggle = isAthleteViewingOwn || (isCoach && !athleteLocked);
@@ -348,7 +369,8 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
         const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(fontSize: 11, color: EngineRowingUI.labelSlate),
+          style:
+              const TextStyle(fontSize: 11, color: EngineRowingUI.labelSlate),
         ),
       ]);
 
@@ -370,12 +392,14 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
                     children: [
-                      const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 20),
+                      const Icon(Icons.warning_amber_rounded,
+                          color: Colors.redAccent, size: 20),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           RowingNumberFormatter.toEnglishDigits(a),
-                          style: const TextStyle(fontSize: 14, color: EngineRowingUI.textWhite),
+                          style: const TextStyle(
+                              fontSize: 14, color: EngineRowingUI.textWhite),
                         ),
                       ),
                     ],
@@ -389,7 +413,7 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
   // ==================== مؤشر الجاهزية ====================
   Widget _readinessCard(AppStrings s) {
     final latest = logs.isNotEmpty ? logs.first : null;
-    double score = 75;
+    double? score;
     if (latest != null && baseline.isNotEmpty) {
       score = calculateReadiness(
         rhr: latest['rhr'] as int?,
@@ -401,11 +425,13 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
       );
     }
 
-    final color = score >= 80
-        ? EngineRowingUI.neonLime
-        : score >= 60
-            ? const Color(0xFFFF9100)
-            : const Color(0xFFFF5252);
+    final color = score == null
+        ? EngineRowingUI.labelSlate
+        : score >= 80
+            ? EngineRowingUI.neonLime
+            : score >= 60
+                ? const Color(0xFFFF9100)
+                : const Color(0xFFFF5252);
     final text = readinessText(score);
 
     return Card(
@@ -425,7 +451,7 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                 width: 120,
                 height: 120,
                 child: CircularProgressIndicator(
-                  value: score / 100,
+                  value: score != null ? (score / 100).clamp(0.0, 1.0) : 0.0,
                   strokeWidth: 10,
                   backgroundColor: EngineRowingUI.equationCardFill,
                   valueColor: AlwaysStoppedAnimation(color),
@@ -437,7 +463,7 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                   Directionality(
                     textDirection: TextDirection.ltr,
                     child: Text(
-                      '${score.round()}%',
+                      score != null ? '${score.round()}%' : '--',
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -445,7 +471,11 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                       ),
                     ),
                   ),
-                  Text(text, style: TextStyle(fontSize: 14, color: color, fontWeight: FontWeight.w600)),
+                  Text(text,
+                      style: TextStyle(
+                          fontSize: 14,
+                          color: color,
+                          fontWeight: FontWeight.w600)),
                 ],
               ),
             ],
@@ -458,8 +488,8 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                 '${s.isArabic ? 'المتوسط' : 'Avg'}: ${baseline['avg_hrv']?.round() ?? '-'}'),
             _readinessDetail(s.fatigueLabel,
                 fatigueLabels[latest['fatigue'] as int?] ?? '-', ''),
-            _readinessDetail(s.sleepLabel,
-                '${latest['sleep_hours'] ?? '-'} ${s.hours}', ''),
+            _readinessDetail(
+                s.sleepLabel, '${latest['sleep_hours'] ?? '-'} ${s.hours}', ''),
           ],
         ]),
       ),
@@ -470,7 +500,9 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(children: [
         Expanded(
-          child: Text(label, style: const TextStyle(fontSize: 14, color: EngineRowingUI.labelSlate)),
+          child: Text(label,
+              style: const TextStyle(
+                  fontSize: 14, color: EngineRowingUI.labelSlate)),
         ),
         Directionality(
           textDirection: TextDirection.ltr,
@@ -489,7 +521,8 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
             textDirection: TextDirection.ltr,
             child: Text(
               RowingNumberFormatter.toEnglishDigits(sub),
-              style: const TextStyle(fontSize: 12, color: EngineRowingUI.captionGrey),
+              style: const TextStyle(
+                  fontSize: 12, color: EngineRowingUI.captionGrey),
             ),
           ),
         ],
@@ -508,7 +541,9 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Text(
-            s.isArabic ? 'لا توجد بيانات كافية لعرض التوازن' : 'Not enough data for balance radar',
+            s.isArabic
+                ? 'لا توجد بيانات كافية لعرض التوازن'
+                : 'Not enough data for balance radar',
             style: const TextStyle(color: EngineRowingUI.labelSlate),
           ),
         ),
@@ -547,7 +582,8 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
               RadarChartData(
                 radarShape: RadarShape.polygon,
                 radarBorderData: const BorderSide(color: Colors.transparent),
-                gridBorderData: const BorderSide(color: EngineRowingUI.bgGridLine, width: 1),
+                gridBorderData: const BorderSide(
+                    color: EngineRowingUI.bgGridLine, width: 1),
                 tickBorderData: const BorderSide(color: Colors.transparent),
                 tickCount: 4,
                 ticksTextStyle: const TextStyle(fontSize: 0),
@@ -559,9 +595,7 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                 getTitle: (i, _) => RadarChartTitle(text: keys[i]),
                 dataSets: [
                   RadarDataSet(
-                    dataEntries: [
-                      for (final v in values) RadarEntry(value: v)
-                    ],
+                    dataEntries: [for (final v in values) RadarEntry(value: v)],
                     fillColor: EngineRowingUI.neonLime.withValues(alpha: 0.15),
                     borderColor: EngineRowingUI.neonLime,
                     borderWidth: 2,
@@ -582,7 +616,8 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                     textDirection: TextDirection.ltr,
                     child: Text(
                       '${keys[i]}: ${values[i].round()}%',
-                      style: const TextStyle(fontSize: 11, color: EngineRowingUI.textWhite),
+                      style: const TextStyle(
+                          fontSize: 11, color: EngineRowingUI.textWhite),
                     ),
                   ),
                   backgroundColor: EngineRowingUI.equationCardFill,
@@ -648,9 +683,12 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                 ),
               ),
               titlesData: FlTitlesData(
-                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                bottomTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                topTitles:
+                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles:
+                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                bottomTitles:
+                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
@@ -677,7 +715,8 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                         label: HorizontalLineLabel(
                           show: true,
                           labelResolver: (_) => refLabel ?? '',
-                          style: const TextStyle(fontSize: 11, color: Colors.redAccent),
+                          style: const TextStyle(
+                              fontSize: 11, color: Colors.redAccent),
                         ),
                       ),
                     ])
@@ -691,8 +730,8 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                   barWidth: 3,
                   dotData: FlDotData(
                     show: spots.length <= 20,
-                    getDotPainter: (_, __, ___, ____) =>
-                        FlDotCirclePainter(radius: 3, color: color, strokeWidth: 0),
+                    getDotPainter: (_, __, ___, ____) => FlDotCirclePainter(
+                        radius: 3, color: color, strokeWidth: 0),
                   ),
                   belowBarData: BarAreaData(
                     show: true,
@@ -723,11 +762,8 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
 
   // ==================== نبض الراحة ====================
   Widget _rhrChart() {
-    final rhrLogs = logs
-        .where((l) => l['rhr'] != null)
-        .toList()
-        .reversed
-        .toList();
+    final rhrLogs =
+        logs.where((l) => l['rhr'] != null).toList().reversed.toList();
 
     final spots = <FlSpot>[];
     for (int i = 0; i < rhrLogs.length; i++) {
@@ -744,11 +780,8 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
 
   // ==================== تغير النبض ====================
   Widget _hrvChart() {
-    final hrvLogs = logs
-        .where((l) => l['hrv'] != null)
-        .toList()
-        .reversed
-        .toList();
+    final hrvLogs =
+        logs.where((l) => l['hrv'] != null).toList().reversed.toList();
 
     final spots = <FlSpot>[];
     for (int i = 0; i < hrvLogs.length; i++) {
@@ -776,7 +809,9 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Text(
-            s.isArabic ? 'لا توجد بيانات استشفاء مسجلة' : 'No recovery data recorded',
+            s.isArabic
+                ? 'لا توجد بيانات استشفاء مسجلة'
+                : 'No recovery data recorded',
             style: const TextStyle(color: EngineRowingUI.labelSlate),
           ),
         ),
@@ -794,14 +829,16 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
     }
 
     return Column(children: [
-      _lineChartCard(spots, EngineRowingUI.neonLime, refLine: 20, refLabel: 'Target: 20%+'),
+      _lineChartCard(spots, EngineRowingUI.neonLime,
+          refLine: 20, refLabel: 'Target: 20%+'),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Text(
           s.isArabic
               ? '💡 نسبة الاستشفاء = مدى انخفاض النبض بعد التمرين. أعلى من 20% = ممتاز'
               : '💡 Recovery Rate = Heart rate drop post-workout. >20% = Excellent',
-          style: const TextStyle(fontSize: 12, color: EngineRowingUI.captionGrey),
+          style:
+              const TextStyle(fontSize: 12, color: EngineRowingUI.captionGrey),
         ),
       ),
     ]);
@@ -809,16 +846,12 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
 
   // ==================== الوزن ====================
   Widget _weightChart() {
-    final wLogs = logs
-        .where((l) => l['weight'] != null)
-        .toList()
-        .reversed
-        .toList();
+    final wLogs =
+        logs.where((l) => l['weight'] != null).toList().reversed.toList();
 
     final spots = <FlSpot>[];
     for (int i = 0; i < wLogs.length; i++) {
-      spots.add(
-          FlSpot(i.toDouble(), (wLogs[i]['weight'] as num).toDouble()));
+      spots.add(FlSpot(i.toDouble(), (wLogs[i]['weight'] as num).toDouble()));
     }
 
     return _lineChartCard(
@@ -837,7 +870,8 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
         color: EngineRowingUI.cardFill,
         child: Padding(
           padding: EdgeInsets.all(16),
-          child: Text('لا توجد بيانات كافية', style: TextStyle(color: EngineRowingUI.labelSlate)),
+          child: Text('لا توجد بيانات كافية',
+              style: TextStyle(color: EngineRowingUI.labelSlate)),
         ),
       );
     }
@@ -871,9 +905,12 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                 gridData: const FlGridData(show: false),
                 borderData: FlBorderData(show: false),
                 titlesData: FlTitlesData(
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
@@ -884,7 +921,9 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
                               keys[v.toInt()],
-                              style: const TextStyle(fontSize: 11, color: EngineRowingUI.textWhite),
+                              style: const TextStyle(
+                                  fontSize: 11,
+                                  color: EngineRowingUI.textWhite),
                             ),
                           );
                         }
@@ -900,7 +939,8 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                         toY: zonesDist.values.elementAt(i).toDouble(),
                         color: colors[i % colors.length],
                         width: 24,
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(6)),
                       ),
                     ]),
                 ],
@@ -912,7 +952,8 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
             textDirection: TextDirection.ltr,
             child: Text(
               'Total: $totalSessions sessions (last 30 days)',
-              style: const TextStyle(color: EngineRowingUI.labelSlate, fontSize: 12),
+              style: const TextStyle(
+                  color: EngineRowingUI.labelSlate, fontSize: 12),
             ),
           ),
         ]),
@@ -929,7 +970,8 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
         color: EngineRowingUI.cardFill,
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Text(s.noData, style: const TextStyle(color: EngineRowingUI.labelSlate)),
+          child: Text(s.noData,
+              style: const TextStyle(color: EngineRowingUI.labelSlate)),
         ),
       );
     }
@@ -944,29 +986,66 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: DataTable(
-          headingRowColor: WidgetStateProperty.all(EngineRowingUI.equationCardFill),
+          headingRowColor:
+              WidgetStateProperty.all(EngineRowingUI.equationCardFill),
           columnSpacing: 14,
           columns: [
             DataColumn(
               label: Text(
                 s.isArabic ? 'Date' : 'Date',
-                style: const TextStyle(fontWeight: FontWeight.bold, color: EngineRowingUI.neonLime),
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: EngineRowingUI.neonLime),
               ),
             ),
             DataColumn(
               label: Text(
                 s.isArabic ? 'Kind' : 'Kind',
-                style: const TextStyle(fontWeight: FontWeight.bold, color: EngineRowingUI.neonLime),
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: EngineRowingUI.neonLime),
               ),
             ),
-            const DataColumn(label: Text('RHR', style: TextStyle(fontWeight: FontWeight.bold, color: EngineRowingUI.neonLime))),
-            const DataColumn(label: Text('HRV', style: TextStyle(fontWeight: FontWeight.bold, color: EngineRowingUI.neonLime))),
-            DataColumn(label: Text(s.workoutHRLabel, style: const TextStyle(fontWeight: FontWeight.bold, color: EngineRowingUI.neonLime))),
-            const DataColumn(label: Text('HR Max', style: TextStyle(fontWeight: FontWeight.bold, color: EngineRowingUI.neonLime))),
-            DataColumn(label: Text(s.postHRLabel, style: const TextStyle(fontWeight: FontWeight.bold, color: EngineRowingUI.neonLime))),
-            DataColumn(label: Text(s.hr1MinLabel, style: const TextStyle(fontWeight: FontWeight.bold, color: EngineRowingUI.neonLime))),
-            DataColumn(label: Text(s.weightLabel, style: const TextStyle(fontWeight: FontWeight.bold, color: EngineRowingUI.neonLime))),
-            DataColumn(label: Text(s.fatigueLabel, style: const TextStyle(fontWeight: FontWeight.bold, color: EngineRowingUI.neonLime))),
+            const DataColumn(
+                label: Text('RHR',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: EngineRowingUI.neonLime))),
+            const DataColumn(
+                label: Text('HRV',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: EngineRowingUI.neonLime))),
+            DataColumn(
+                label: Text(s.workoutHRLabel,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: EngineRowingUI.neonLime))),
+            const DataColumn(
+                label: Text('HR Max',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: EngineRowingUI.neonLime))),
+            DataColumn(
+                label: Text(s.postHRLabel,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: EngineRowingUI.neonLime))),
+            DataColumn(
+                label: Text(s.hr1MinLabel,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: EngineRowingUI.neonLime))),
+            DataColumn(
+                label: Text(s.weightLabel,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: EngineRowingUI.neonLime))),
+            DataColumn(
+                label: Text(s.fatigueLabel,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: EngineRowingUI.neonLime))),
           ],
           rows: [
             for (final l in recentLogs)
@@ -975,15 +1054,18 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                   Directionality(
                     textDirection: TextDirection.ltr,
                     child: Text(
-                      RowingNumberFormatter.toEnglishDigits('${l['date'] ?? ''}'),
-                      style: const TextStyle(fontSize: 13, color: EngineRowingUI.textWhite),
+                      RowingNumberFormatter.toEnglishDigits(
+                          '${l['date'] ?? ''}'),
+                      style: const TextStyle(
+                          fontSize: 13, color: EngineRowingUI.textWhite),
                     ),
                   ),
                 ),
                 DataCell(
                   Text(
                     '${l['kind'] ?? '-'}',
-                    style: const TextStyle(fontSize: 13, color: EngineRowingUI.textWhite),
+                    style: const TextStyle(
+                        fontSize: 13, color: EngineRowingUI.textWhite),
                   ),
                 ),
                 DataCell(_hrCell(l['rhr'] as int?)),
@@ -991,8 +1073,10 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                   Directionality(
                     textDirection: TextDirection.ltr,
                     child: Text(
-                      RowingNumberFormatter.toEnglishDigits('${l['hrv'] ?? '-'}'),
-                      style: const TextStyle(fontSize: 13, color: EngineRowingUI.textWhite),
+                      RowingNumberFormatter.toEnglishDigits(
+                          '${l['hrv'] ?? '-'}'),
+                      style: const TextStyle(
+                          fontSize: 13, color: EngineRowingUI.textWhite),
                     ),
                   ),
                 ),
@@ -1001,26 +1085,10 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                   Directionality(
                     textDirection: TextDirection.ltr,
                     child: Text(
-                      RowingNumberFormatter.toEnglishDigits('${l['hr_max'] ?? '-'}'),
-                      style: const TextStyle(fontSize: 13, color: EngineRowingUI.textWhite),
-                    ),
-                  ),
-                ),
-                DataCell(
-                  Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: Text(
-                      RowingNumberFormatter.toEnglishDigits('${l['hr_post'] ?? '-'}'),
-                      style: const TextStyle(fontSize: 13, color: EngineRowingUI.textWhite),
-                    ),
-                  ),
-                ),
-                DataCell(
-                  Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: Text(
-                      RowingNumberFormatter.toEnglishDigits('${l['hr_1min'] ?? '-'}'),
-                      style: const TextStyle(fontSize: 13, color: EngineRowingUI.textWhite),
+                      RowingNumberFormatter.toEnglishDigits(
+                          '${l['hr_max'] ?? '-'}'),
+                      style: const TextStyle(
+                          fontSize: 13, color: EngineRowingUI.textWhite),
                     ),
                   ),
                 ),
@@ -1029,16 +1097,42 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
                     textDirection: TextDirection.ltr,
                     child: Text(
                       RowingNumberFormatter.toEnglishDigits(
-                        l['weight'] != null ? (l['weight'] as num).toStringAsFixed(1) : '-',
+                          '${l['hr_post'] ?? '-'}'),
+                      style: const TextStyle(
+                          fontSize: 13, color: EngineRowingUI.textWhite),
+                    ),
+                  ),
+                ),
+                DataCell(
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      RowingNumberFormatter.toEnglishDigits(
+                          '${l['hr_1min'] ?? '-'}'),
+                      style: const TextStyle(
+                          fontSize: 13, color: EngineRowingUI.textWhite),
+                    ),
+                  ),
+                ),
+                DataCell(
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      RowingNumberFormatter.toEnglishDigits(
+                        l['weight'] != null
+                            ? (l['weight'] as num).toStringAsFixed(1)
+                            : '-',
                       ),
-                      style: const TextStyle(fontSize: 13, color: EngineRowingUI.textWhite),
+                      style: const TextStyle(
+                          fontSize: 13, color: EngineRowingUI.textWhite),
                     ),
                   ),
                 ),
                 DataCell(
                   Text(
                     fatigueLabels[l['fatigue'] as int?] ?? '-',
-                    style: const TextStyle(fontSize: 13, color: EngineRowingUI.textWhite),
+                    style: const TextStyle(
+                        fontSize: 13, color: EngineRowingUI.textWhite),
                   ),
                 ),
               ]),
@@ -1051,7 +1145,8 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
   /// خلية نبض ملونة حسب مقارنتها بالـ MHR والـ Zone
   Widget _hrCell(int? hr, {String? zone}) {
     if (hr == null) {
-      return const Text('-', style: TextStyle(fontSize: 13, color: EngineRowingUI.labelSlate));
+      return const Text('-',
+          style: TextStyle(fontSize: 13, color: EngineRowingUI.labelSlate));
     }
 
     Color textColor = EngineRowingUI.textWhite;
@@ -1074,7 +1169,8 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
       textDirection: TextDirection.ltr,
       child: Text(
         RowingNumberFormatter.toEnglishDigits('$hr'),
-        style: TextStyle(fontSize: 13, color: textColor, fontWeight: FontWeight.bold),
+        style: TextStyle(
+            fontSize: 13, color: textColor, fontWeight: FontWeight.bold),
       ),
     );
   }

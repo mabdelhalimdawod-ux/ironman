@@ -1,0 +1,2605 @@
+{
+  "total_tables": 27,
+  "synced_tables_count": 20,
+  "tables": [
+    {
+      "name": "athlete_custom_sessions",
+      "sql": "CREATE TABLE athlete_custom_sessions(\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            player_id INTEGER NOT NULL,\n            date TEXT NOT NULL,\n            session_idx INTEGER NOT NULL,\n            location TEXT,\n            dispatch_time TEXT,\n            notes_physio TEXT,\n            notes_tech TEXT,\n            coach_notes TEXT,\n            coach_edited INTEGER DEFAULT 0,\n            coach_edited_at TEXT,\n            is_rest_day INTEGER DEFAULT 0,\n            created_at TEXT, remote_id TEXT, updated_at TEXT, dirty INTEGER DEFAULT 0,\n            UNIQUE(player_id, date, session_idx)\n          )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "player_id",
+          "type": "INTEGER",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "date",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "session_idx",
+          "type": "INTEGER",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "location",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "dispatch_time",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "notes_physio",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "notes_tech",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "coach_notes",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 9,
+          "name": "coach_edited",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        },
+        {
+          "cid": 10,
+          "name": "coach_edited_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 11,
+          "name": "is_rest_day",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        },
+        {
+          "cid": 12,
+          "name": "created_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 13,
+          "name": "remote_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 14,
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 15,
+          "name": "dirty",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "sqlite_autoindex_athlete_custom_sessions_1",
+          "unique": 1,
+          "origin": "u",
+          "partial": 0
+        }
+      ]
+    },
+    {
+      "name": "athlete_custom_workout_items",
+      "sql": "CREATE TABLE athlete_custom_workout_items(\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            custom_session_id INTEGER NOT NULL,\n            section TEXT NOT NULL,\n            item_idx INTEGER NOT NULL,\n            intensity TEXT,\n            distance_meters INTEGER,\n            stroke_rate INTEGER,\n            duration_seconds INTEGER,\n            notes TEXT,\n            created_at TEXT\n          , remote_id TEXT, updated_at TEXT, dirty INTEGER DEFAULT 0)",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "custom_session_id",
+          "type": "INTEGER",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "section",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "item_idx",
+          "type": "INTEGER",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "intensity",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "distance_meters",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "stroke_rate",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "duration_seconds",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "notes",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 9,
+          "name": "created_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 10,
+          "name": "remote_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 11,
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 12,
+          "name": "dirty",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": []
+    },
+    {
+      "name": "coach_messages",
+      "sql": "CREATE TABLE coach_messages(\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            coach_id INTEGER,\n            recipient_type TEXT NOT NULL,\n            recipient_id INTEGER,\n            text TEXT NOT NULL,\n            created_at TEXT NOT NULL\n          , remote_id TEXT, updated_at TEXT, dirty INTEGER DEFAULT 0)",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "coach_id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "recipient_type",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "recipient_id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "text",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "created_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "remote_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "dirty",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": []
+    },
+    {
+      "name": "coach_requests",
+      "sql": "CREATE TABLE coach_requests(\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            coach_id INTEGER NOT NULL,\n            athlete_id INTEGER NOT NULL,\n            status TEXT DEFAULT 'pending',\n            created_at TEXT\n          , remote_id TEXT, updated_at TEXT, dirty INTEGER DEFAULT 0)",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "coach_id",
+          "type": "INTEGER",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "athlete_id",
+          "type": "INTEGER",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "status",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": "'pending'",
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "created_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "remote_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "dirty",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": []
+    },
+    {
+      "name": "cp_tests",
+      "sql": "CREATE TABLE cp_tests(\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            player_id INTEGER,\n            date TEXT,\n            test_type TEXT,\n            duration_seconds INTEGER,\n            avg_power REAL,\n            max_power REAL,\n            distance INTEGER,\n            avg_hr INTEGER,\n            max_hr INTEGER,\n            split_500 REAL,\n            notes TEXT\n          , remote_id TEXT, updated_at TEXT, dirty INTEGER DEFAULT 0)",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "player_id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "date",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "test_type",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "duration_seconds",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "avg_power",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "max_power",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "distance",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "avg_hr",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 9,
+          "name": "max_hr",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 10,
+          "name": "split_500",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 11,
+          "name": "notes",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 12,
+          "name": "remote_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 13,
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 14,
+          "name": "dirty",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": []
+    },
+    {
+      "name": "cp_values",
+      "sql": "CREATE TABLE cp_values(\n            player_id INTEGER,\n            date TEXT,\n            cp REAL,\n            w_prime REAL,\n            estimated INTEGER DEFAULT 0, remote_id TEXT, updated_at TEXT, dirty INTEGER DEFAULT 0,\n            PRIMARY KEY(player_id, date)\n          )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "player_id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "date",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 2
+        },
+        {
+          "cid": 2,
+          "name": "cp",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "w_prime",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "estimated",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "remote_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "dirty",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "sqlite_autoindex_cp_values_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ]
+    },
+    {
+      "name": "cycle_templates",
+      "sql": "CREATE TABLE cycle_templates(\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            name TEXT NOT NULL,\n            description TEXT,\n            created_at TEXT\n          , remote_id TEXT, updated_at TEXT, dirty INTEGER DEFAULT 0)",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "name",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "description",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "created_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "remote_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "dirty",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": []
+    },
+    {
+      "name": "cycles",
+      "sql": "CREATE TABLE cycles(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, start TEXT, end TEXT)",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "name",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "start",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "end",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": []
+    },
+    {
+      "name": "daily_load",
+      "sql": "CREATE TABLE daily_load(\n        player_id INTEGER NOT NULL,\n        date TEXT NOT NULL,\n        tss REAL,\n        ctl REAL NOT NULL,\n        atl REAL NOT NULL,\n        tsb REAL NOT NULL,\n        PRIMARY KEY(player_id, date)\n      )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "player_id",
+          "type": "INTEGER",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "date",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 2
+        },
+        {
+          "cid": 2,
+          "name": "tss",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "ctl",
+          "type": "REAL",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "atl",
+          "type": "REAL",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "tsb",
+          "type": "REAL",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "sqlite_autoindex_daily_load_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ]
+    },
+    {
+      "name": "logs",
+      "sql": "CREATE TABLE logs(\n            player_id INTEGER,\n            date TEXT,\n            idx INTEGER,\n            rhr INTEGER,\n            hrv INTEGER,\n            hr INTEGER,\n            hr_max INTEGER,\n            hr_post INTEGER,\n            hr_1min INTEGER,\n            weight REAL,\n            fatigue INTEGER,\n            sleep_hours REAL,\n            readiness INTEGER,\n            player_notes TEXT,\n            avg_power REAL,\n            max_power REAL,\n            duration_seconds INTEGER,\n            distance INTEGER,\n            split_500 REAL,\n            ef REAL,\n            eupnea REAL,\n            decoupling REAL,\n            entered_by TEXT,\n            eupnea_1 REAL,\n            eupnea_2 REAL,\n            eupnea_3 REAL,\n            zone TEXT,\n            kind TEXT,\n            zone_method TEXT, remote_id TEXT, updated_at TEXT, dirty INTEGER DEFAULT 0,\n            PRIMARY KEY(player_id, date, idx)\n          )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "player_id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "date",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 2
+        },
+        {
+          "cid": 2,
+          "name": "idx",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 3
+        },
+        {
+          "cid": 3,
+          "name": "rhr",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "hrv",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "hr",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "hr_max",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "hr_post",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "hr_1min",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 9,
+          "name": "weight",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 10,
+          "name": "fatigue",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 11,
+          "name": "sleep_hours",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 12,
+          "name": "readiness",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 13,
+          "name": "player_notes",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 14,
+          "name": "avg_power",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 15,
+          "name": "max_power",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 16,
+          "name": "duration_seconds",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 17,
+          "name": "distance",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 18,
+          "name": "split_500",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 19,
+          "name": "ef",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 20,
+          "name": "eupnea",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 21,
+          "name": "decoupling",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 22,
+          "name": "entered_by",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 23,
+          "name": "eupnea_1",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 24,
+          "name": "eupnea_2",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 25,
+          "name": "eupnea_3",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 26,
+          "name": "zone",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 27,
+          "name": "kind",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 28,
+          "name": "zone_method",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 29,
+          "name": "remote_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 30,
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 31,
+          "name": "dirty",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "sqlite_autoindex_logs_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ]
+    },
+    {
+      "name": "matrix_zone_config",
+      "sql": "CREATE TABLE matrix_zone_config(\n            key TEXT PRIMARY KEY,\n            weight REAL,\n            direction TEXT\n          , remote_id TEXT, updated_at TEXT, dirty INTEGER DEFAULT 0)",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "key",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "weight",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "direction",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "remote_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "dirty",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "sqlite_autoindex_matrix_zone_config_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ]
+    },
+    {
+      "name": "notes",
+      "sql": "CREATE TABLE notes(date TEXT PRIMARY KEY, general TEXT, tech TEXT, remote_id TEXT, updated_at TEXT, dirty INTEGER DEFAULT 0)",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "date",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "general",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "tech",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "remote_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "dirty",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "sqlite_autoindex_notes_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ]
+    },
+    {
+      "name": "players",
+      "sql": "CREATE TABLE players(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mhr INTEGER, active INTEGER DEFAULT 1, coach_id INTEGER, curves_shared INTEGER, curves_shared_by TEXT, remote_id TEXT, updated_at TEXT, dirty INTEGER DEFAULT 0)",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "name",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "mhr",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "active",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "1",
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "coach_id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "curves_shared",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "curves_shared_by",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "remote_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 9,
+          "name": "dirty",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": []
+    },
+    {
+      "name": "program_cycle_tests",
+      "sql": "CREATE TABLE program_cycle_tests(\n            cycle_id INTEGER NOT NULL,\n            test_type TEXT NOT NULL,\n            scheduled_date TEXT,\n            distance INTEGER,\n            duration_seconds INTEGER,\n            notes TEXT, remote_id TEXT, updated_at TEXT, dirty INTEGER DEFAULT 0,\n            PRIMARY KEY(cycle_id, test_type)\n          )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "cycle_id",
+          "type": "INTEGER",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "test_type",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 2
+        },
+        {
+          "cid": 2,
+          "name": "scheduled_date",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "distance",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "duration_seconds",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "notes",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "remote_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "dirty",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "sqlite_autoindex_program_cycle_tests_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ]
+    },
+    {
+      "name": "program_cycles",
+      "sql": "CREATE TABLE program_cycles(\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            name TEXT NOT NULL,\n            description TEXT,\n            start_date TEXT NOT NULL,\n            end_date TEXT NOT NULL,\n            total_weeks INTEGER DEFAULT 4,\n            is_active INTEGER DEFAULT 0,\n            created_at TEXT\n          , remote_id TEXT, updated_at TEXT, dirty INTEGER DEFAULT 0)",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "name",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "description",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "start_date",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "end_date",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "total_weeks",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "4",
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "is_active",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "created_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "remote_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 9,
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 10,
+          "name": "dirty",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": []
+    },
+    {
+      "name": "program_day_config",
+      "sql": "CREATE TABLE program_day_config(\n            cycle_id INTEGER NOT NULL,\n            cycle_type TEXT NOT NULL,\n            day_of_week INTEGER NOT NULL,\n            location TEXT,\n            dispatch_date TEXT,\n            dispatch_time TEXT,\n            comment TEXT, remote_id TEXT, updated_at TEXT, dirty INTEGER DEFAULT 0,\n            PRIMARY KEY(cycle_id, cycle_type, day_of_week)\n          )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "cycle_id",
+          "type": "INTEGER",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "cycle_type",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 2
+        },
+        {
+          "cid": 2,
+          "name": "day_of_week",
+          "type": "INTEGER",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 3
+        },
+        {
+          "cid": 3,
+          "name": "location",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "dispatch_date",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "dispatch_time",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "comment",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "remote_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 9,
+          "name": "dirty",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "sqlite_autoindex_program_day_config_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ]
+    },
+    {
+      "name": "program_sessions",
+      "sql": "CREATE TABLE program_sessions(\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            cycle_id INTEGER NOT NULL,\n            cycle_type TEXT NOT NULL,\n            day_of_week INTEGER NOT NULL,\n            session_idx INTEGER NOT NULL,\n            name TEXT NOT NULL,\n            time TEXT,\n            location TEXT,\n            notes_physio TEXT,\n            notes_tech TEXT,\n            comment TEXT,\n            created_at TEXT\n          , remote_id TEXT, updated_at TEXT, dirty INTEGER DEFAULT 0)",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "cycle_id",
+          "type": "INTEGER",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "cycle_type",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "day_of_week",
+          "type": "INTEGER",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "session_idx",
+          "type": "INTEGER",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "name",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "time",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "location",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "notes_physio",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 9,
+          "name": "notes_tech",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 10,
+          "name": "comment",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 11,
+          "name": "created_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 12,
+          "name": "remote_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 13,
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 14,
+          "name": "dirty",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": []
+    },
+    {
+      "name": "program_workout_items",
+      "sql": "CREATE TABLE program_workout_items(\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            session_id INTEGER NOT NULL,\n            section TEXT NOT NULL,\n            item_idx INTEGER NOT NULL,\n            intensity TEXT,\n            distance_meters INTEGER,\n            stroke_rate INTEGER,\n            duration_seconds INTEGER,\n            notes TEXT,\n            created_at TEXT\n          , remote_id TEXT, updated_at TEXT, dirty INTEGER DEFAULT 0)",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "session_id",
+          "type": "INTEGER",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "section",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "item_idx",
+          "type": "INTEGER",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "intensity",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "distance_meters",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "stroke_rate",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "duration_seconds",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "notes",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 9,
+          "name": "created_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 10,
+          "name": "remote_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 11,
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 12,
+          "name": "dirty",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": []
+    },
+    {
+      "name": "progress_baseline_config",
+      "sql": "CREATE TABLE progress_baseline_config(\n            key TEXT PRIMARY KEY,\n            value REAL\n          , remote_id TEXT, updated_at TEXT, dirty INTEGER DEFAULT 0)",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "key",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "value",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "remote_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "dirty",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "sqlite_autoindex_progress_baseline_config_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ]
+    },
+    {
+      "name": "sessions",
+      "sql": "CREATE TABLE sessions(date TEXT, idx INTEGER, kind TEXT, zone TEXT, remote_id TEXT, updated_at TEXT, dirty INTEGER DEFAULT 0, PRIMARY KEY(date, idx))",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "date",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "idx",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 2
+        },
+        {
+          "cid": 2,
+          "name": "kind",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "zone",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "remote_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "dirty",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "sqlite_autoindex_sessions_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ]
+    },
+    {
+      "name": "sqlite_sequence",
+      "sql": "CREATE TABLE sqlite_sequence(name,seq)",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "name",
+          "type": "",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 1,
+          "name": "seq",
+          "type": "",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": []
+    },
+    {
+      "name": "sync_flag",
+      "sql": "CREATE TABLE sync_flag (\n        id INTEGER PRIMARY KEY,\n        active INTEGER DEFAULT 0\n      )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "active",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": []
+    },
+    {
+      "name": "sync_state",
+      "sql": "CREATE TABLE sync_state (\n        table_name TEXT PRIMARY KEY,\n        last_pulled_at TEXT\n      )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "table_name",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "last_pulled_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "sqlite_autoindex_sync_state_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ]
+    },
+    {
+      "name": "sync_tombstones",
+      "sql": "CREATE TABLE sync_tombstones (\n        id INTEGER PRIMARY KEY AUTOINCREMENT,\n        table_name TEXT NOT NULL,\n        remote_key TEXT NOT NULL,\n        deleted_at TEXT NOT NULL\n      )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "table_name",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "remote_key",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "deleted_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": []
+    },
+    {
+      "name": "testing_date_recipients",
+      "sql": "CREATE TABLE testing_date_recipients(\n            testing_date_id INTEGER NOT NULL,\n            athlete_id INTEGER NOT NULL,\n            status TEXT DEFAULT 'pending', remote_id TEXT, updated_at TEXT, dirty INTEGER DEFAULT 0,\n            PRIMARY KEY (testing_date_id, athlete_id)\n          )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "testing_date_id",
+          "type": "INTEGER",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "athlete_id",
+          "type": "INTEGER",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 2
+        },
+        {
+          "cid": 2,
+          "name": "status",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": "'pending'",
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "remote_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "dirty",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "sqlite_autoindex_testing_date_recipients_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ]
+    },
+    {
+      "name": "testing_dates",
+      "sql": "CREATE TABLE testing_dates(\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            test_name TEXT NOT NULL,\n            test_date TEXT NOT NULL,\n            test_time TEXT,\n            location TEXT,\n            notes TEXT,\n            created_at TEXT\n          , remote_id TEXT, updated_at TEXT, dirty INTEGER DEFAULT 0)",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "test_name",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "test_date",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "test_time",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "location",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "notes",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "created_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "remote_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 9,
+          "name": "dirty",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": []
+    },
+    {
+      "name": "users",
+      "sql": "CREATE TABLE users (\n        id INTEGER PRIMARY KEY AUTOINCREMENT,\n        email TEXT NOT NULL UNIQUE,\n        password_hash TEXT NOT NULL,\n        salt TEXT NOT NULL,\n        name TEXT NOT NULL,\n        role TEXT NOT NULL DEFAULT 'athlete',\n        coach_id INTEGER,\n        subscription_active INTEGER DEFAULT 1,\n        player_id INTEGER,\n        photo_path TEXT,\n        created_at TEXT\n      )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "email",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "password_hash",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "salt",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "name",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "role",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": "'athlete'",
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "coach_id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "subscription_active",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "1",
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "player_id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 9,
+          "name": "photo_path",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 10,
+          "name": "created_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "sqlite_autoindex_users_1",
+          "unique": 1,
+          "origin": "u",
+          "partial": 0
+        }
+      ]
+    }
+  ],
+  "triggers_count": 60,
+  "triggers": [
+    {
+      "name": "trg_athlete_custom_sessions_delete",
+      "tbl_name": "athlete_custom_sessions",
+      "sql": "CREATE TRIGGER trg_athlete_custom_sessions_delete\n        AFTER DELETE ON 'athlete_custom_sessions'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0\n        BEGIN\n          INSERT INTO sync_tombstones (table_name, remote_key, deleted_at)\n          VALUES ('athlete_custom_sessions', COALESCE(OLD.remote_id, cast(OLD.id as text)), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));\n        END"
+    },
+    {
+      "name": "trg_athlete_custom_sessions_insert",
+      "tbl_name": "athlete_custom_sessions",
+      "sql": "CREATE TRIGGER trg_athlete_custom_sessions_insert\n        AFTER INSERT ON 'athlete_custom_sessions'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND (NEW.dirty IS NULL OR NEW.dirty != 1)\n        BEGIN\n          UPDATE 'athlete_custom_sessions'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_athlete_custom_sessions_update",
+      "tbl_name": "athlete_custom_sessions",
+      "sql": "CREATE TRIGGER trg_athlete_custom_sessions_update\n        AFTER UPDATE ON 'athlete_custom_sessions'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND NEW.dirty != 1\n        BEGIN\n          UPDATE 'athlete_custom_sessions'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_athlete_custom_workout_items_delete",
+      "tbl_name": "athlete_custom_workout_items",
+      "sql": "CREATE TRIGGER trg_athlete_custom_workout_items_delete\n        AFTER DELETE ON 'athlete_custom_workout_items'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0\n        BEGIN\n          INSERT INTO sync_tombstones (table_name, remote_key, deleted_at)\n          VALUES ('athlete_custom_workout_items', COALESCE(OLD.remote_id, cast(OLD.id as text)), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));\n        END"
+    },
+    {
+      "name": "trg_athlete_custom_workout_items_insert",
+      "tbl_name": "athlete_custom_workout_items",
+      "sql": "CREATE TRIGGER trg_athlete_custom_workout_items_insert\n        AFTER INSERT ON 'athlete_custom_workout_items'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND (NEW.dirty IS NULL OR NEW.dirty != 1)\n        BEGIN\n          UPDATE 'athlete_custom_workout_items'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_athlete_custom_workout_items_update",
+      "tbl_name": "athlete_custom_workout_items",
+      "sql": "CREATE TRIGGER trg_athlete_custom_workout_items_update\n        AFTER UPDATE ON 'athlete_custom_workout_items'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND NEW.dirty != 1\n        BEGIN\n          UPDATE 'athlete_custom_workout_items'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_coach_messages_delete",
+      "tbl_name": "coach_messages",
+      "sql": "CREATE TRIGGER trg_coach_messages_delete\n        AFTER DELETE ON 'coach_messages'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0\n        BEGIN\n          INSERT INTO sync_tombstones (table_name, remote_key, deleted_at)\n          VALUES ('coach_messages', COALESCE(OLD.remote_id, cast(OLD.id as text)), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));\n        END"
+    },
+    {
+      "name": "trg_coach_messages_insert",
+      "tbl_name": "coach_messages",
+      "sql": "CREATE TRIGGER trg_coach_messages_insert\n        AFTER INSERT ON 'coach_messages'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND (NEW.dirty IS NULL OR NEW.dirty != 1)\n        BEGIN\n          UPDATE 'coach_messages'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_coach_messages_update",
+      "tbl_name": "coach_messages",
+      "sql": "CREATE TRIGGER trg_coach_messages_update\n        AFTER UPDATE ON 'coach_messages'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND NEW.dirty != 1\n        BEGIN\n          UPDATE 'coach_messages'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_coach_requests_delete",
+      "tbl_name": "coach_requests",
+      "sql": "CREATE TRIGGER trg_coach_requests_delete\n        AFTER DELETE ON 'coach_requests'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0\n        BEGIN\n          INSERT INTO sync_tombstones (table_name, remote_key, deleted_at)\n          VALUES ('coach_requests', COALESCE(OLD.remote_id, cast(OLD.id as text)), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));\n        END"
+    },
+    {
+      "name": "trg_coach_requests_insert",
+      "tbl_name": "coach_requests",
+      "sql": "CREATE TRIGGER trg_coach_requests_insert\n        AFTER INSERT ON 'coach_requests'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND (NEW.dirty IS NULL OR NEW.dirty != 1)\n        BEGIN\n          UPDATE 'coach_requests'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_coach_requests_update",
+      "tbl_name": "coach_requests",
+      "sql": "CREATE TRIGGER trg_coach_requests_update\n        AFTER UPDATE ON 'coach_requests'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND NEW.dirty != 1\n        BEGIN\n          UPDATE 'coach_requests'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_cp_tests_delete",
+      "tbl_name": "cp_tests",
+      "sql": "CREATE TRIGGER trg_cp_tests_delete\n        AFTER DELETE ON 'cp_tests'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0\n        BEGIN\n          INSERT INTO sync_tombstones (table_name, remote_key, deleted_at)\n          VALUES ('cp_tests', COALESCE(OLD.remote_id, cast(OLD.id as text)), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));\n        END"
+    },
+    {
+      "name": "trg_cp_tests_insert",
+      "tbl_name": "cp_tests",
+      "sql": "CREATE TRIGGER trg_cp_tests_insert\n        AFTER INSERT ON 'cp_tests'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND (NEW.dirty IS NULL OR NEW.dirty != 1)\n        BEGIN\n          UPDATE 'cp_tests'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_cp_tests_update",
+      "tbl_name": "cp_tests",
+      "sql": "CREATE TRIGGER trg_cp_tests_update\n        AFTER UPDATE ON 'cp_tests'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND NEW.dirty != 1\n        BEGIN\n          UPDATE 'cp_tests'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_cp_values_delete",
+      "tbl_name": "cp_values",
+      "sql": "CREATE TRIGGER trg_cp_values_delete\n        AFTER DELETE ON 'cp_values'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0\n        BEGIN\n          INSERT INTO sync_tombstones (table_name, remote_key, deleted_at)\n          VALUES ('cp_values', COALESCE(OLD.remote_id, OLD.player_id || '_' || OLD.date), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));\n        END"
+    },
+    {
+      "name": "trg_cp_values_insert",
+      "tbl_name": "cp_values",
+      "sql": "CREATE TRIGGER trg_cp_values_insert\n        AFTER INSERT ON 'cp_values'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND (NEW.dirty IS NULL OR NEW.dirty != 1)\n        BEGIN\n          UPDATE 'cp_values'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_cp_values_update",
+      "tbl_name": "cp_values",
+      "sql": "CREATE TRIGGER trg_cp_values_update\n        AFTER UPDATE ON 'cp_values'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND NEW.dirty != 1\n        BEGIN\n          UPDATE 'cp_values'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_cycle_templates_delete",
+      "tbl_name": "cycle_templates",
+      "sql": "CREATE TRIGGER trg_cycle_templates_delete\n        AFTER DELETE ON 'cycle_templates'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0\n        BEGIN\n          INSERT INTO sync_tombstones (table_name, remote_key, deleted_at)\n          VALUES ('cycle_templates', COALESCE(OLD.remote_id, cast(OLD.id as text)), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));\n        END"
+    },
+    {
+      "name": "trg_cycle_templates_insert",
+      "tbl_name": "cycle_templates",
+      "sql": "CREATE TRIGGER trg_cycle_templates_insert\n        AFTER INSERT ON 'cycle_templates'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND (NEW.dirty IS NULL OR NEW.dirty != 1)\n        BEGIN\n          UPDATE 'cycle_templates'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_cycle_templates_update",
+      "tbl_name": "cycle_templates",
+      "sql": "CREATE TRIGGER trg_cycle_templates_update\n        AFTER UPDATE ON 'cycle_templates'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND NEW.dirty != 1\n        BEGIN\n          UPDATE 'cycle_templates'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_logs_delete",
+      "tbl_name": "logs",
+      "sql": "CREATE TRIGGER trg_logs_delete\n        AFTER DELETE ON 'logs'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0\n        BEGIN\n          INSERT INTO sync_tombstones (table_name, remote_key, deleted_at)\n          VALUES ('logs', COALESCE(OLD.remote_id, OLD.player_id || '_' || OLD.date || '_' || OLD.idx), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));\n        END"
+    },
+    {
+      "name": "trg_logs_insert",
+      "tbl_name": "logs",
+      "sql": "CREATE TRIGGER trg_logs_insert\n        AFTER INSERT ON 'logs'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND (NEW.dirty IS NULL OR NEW.dirty != 1)\n        BEGIN\n          UPDATE 'logs'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_logs_update",
+      "tbl_name": "logs",
+      "sql": "CREATE TRIGGER trg_logs_update\n        AFTER UPDATE ON 'logs'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND NEW.dirty != 1\n        BEGIN\n          UPDATE 'logs'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_matrix_zone_config_delete",
+      "tbl_name": "matrix_zone_config",
+      "sql": "CREATE TRIGGER trg_matrix_zone_config_delete\n        AFTER DELETE ON 'matrix_zone_config'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0\n        BEGIN\n          INSERT INTO sync_tombstones (table_name, remote_key, deleted_at)\n          VALUES ('matrix_zone_config', COALESCE(OLD.remote_id, OLD.key), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));\n        END"
+    },
+    {
+      "name": "trg_matrix_zone_config_insert",
+      "tbl_name": "matrix_zone_config",
+      "sql": "CREATE TRIGGER trg_matrix_zone_config_insert\n        AFTER INSERT ON 'matrix_zone_config'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND (NEW.dirty IS NULL OR NEW.dirty != 1)\n        BEGIN\n          UPDATE 'matrix_zone_config'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_matrix_zone_config_update",
+      "tbl_name": "matrix_zone_config",
+      "sql": "CREATE TRIGGER trg_matrix_zone_config_update\n        AFTER UPDATE ON 'matrix_zone_config'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND NEW.dirty != 1\n        BEGIN\n          UPDATE 'matrix_zone_config'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_notes_delete",
+      "tbl_name": "notes",
+      "sql": "CREATE TRIGGER trg_notes_delete\n        AFTER DELETE ON 'notes'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0\n        BEGIN\n          INSERT INTO sync_tombstones (table_name, remote_key, deleted_at)\n          VALUES ('notes', COALESCE(OLD.remote_id, OLD.date), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));\n        END"
+    },
+    {
+      "name": "trg_notes_insert",
+      "tbl_name": "notes",
+      "sql": "CREATE TRIGGER trg_notes_insert\n        AFTER INSERT ON 'notes'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND (NEW.dirty IS NULL OR NEW.dirty != 1)\n        BEGIN\n          UPDATE 'notes'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_notes_update",
+      "tbl_name": "notes",
+      "sql": "CREATE TRIGGER trg_notes_update\n        AFTER UPDATE ON 'notes'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND NEW.dirty != 1\n        BEGIN\n          UPDATE 'notes'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_players_delete",
+      "tbl_name": "players",
+      "sql": "CREATE TRIGGER trg_players_delete\n        AFTER DELETE ON 'players'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0\n        BEGIN\n          INSERT INTO sync_tombstones (table_name, remote_key, deleted_at)\n          VALUES ('players', COALESCE(OLD.remote_id, cast(OLD.id as text)), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));\n        END"
+    },
+    {
+      "name": "trg_players_insert",
+      "tbl_name": "players",
+      "sql": "CREATE TRIGGER trg_players_insert\n        AFTER INSERT ON 'players'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND (NEW.dirty IS NULL OR NEW.dirty != 1)\n        BEGIN\n          UPDATE 'players'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_players_update",
+      "tbl_name": "players",
+      "sql": "CREATE TRIGGER trg_players_update\n        AFTER UPDATE ON 'players'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND NEW.dirty != 1\n        BEGIN\n          UPDATE 'players'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_program_cycle_tests_delete",
+      "tbl_name": "program_cycle_tests",
+      "sql": "CREATE TRIGGER trg_program_cycle_tests_delete\n        AFTER DELETE ON 'program_cycle_tests'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0\n        BEGIN\n          INSERT INTO sync_tombstones (table_name, remote_key, deleted_at)\n          VALUES ('program_cycle_tests', COALESCE(OLD.remote_id, OLD.cycle_id || '_' || OLD.test_type), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));\n        END"
+    },
+    {
+      "name": "trg_program_cycle_tests_insert",
+      "tbl_name": "program_cycle_tests",
+      "sql": "CREATE TRIGGER trg_program_cycle_tests_insert\n        AFTER INSERT ON 'program_cycle_tests'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND (NEW.dirty IS NULL OR NEW.dirty != 1)\n        BEGIN\n          UPDATE 'program_cycle_tests'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_program_cycle_tests_update",
+      "tbl_name": "program_cycle_tests",
+      "sql": "CREATE TRIGGER trg_program_cycle_tests_update\n        AFTER UPDATE ON 'program_cycle_tests'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND NEW.dirty != 1\n        BEGIN\n          UPDATE 'program_cycle_tests'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_program_cycles_delete",
+      "tbl_name": "program_cycles",
+      "sql": "CREATE TRIGGER trg_program_cycles_delete\n        AFTER DELETE ON 'program_cycles'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0\n        BEGIN\n          INSERT INTO sync_tombstones (table_name, remote_key, deleted_at)\n          VALUES ('program_cycles', COALESCE(OLD.remote_id, cast(OLD.id as text)), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));\n        END"
+    },
+    {
+      "name": "trg_program_cycles_insert",
+      "tbl_name": "program_cycles",
+      "sql": "CREATE TRIGGER trg_program_cycles_insert\n        AFTER INSERT ON 'program_cycles'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND (NEW.dirty IS NULL OR NEW.dirty != 1)\n        BEGIN\n          UPDATE 'program_cycles'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_program_cycles_update",
+      "tbl_name": "program_cycles",
+      "sql": "CREATE TRIGGER trg_program_cycles_update\n        AFTER UPDATE ON 'program_cycles'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND NEW.dirty != 1\n        BEGIN\n          UPDATE 'program_cycles'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_program_day_config_delete",
+      "tbl_name": "program_day_config",
+      "sql": "CREATE TRIGGER trg_program_day_config_delete\n        AFTER DELETE ON 'program_day_config'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0\n        BEGIN\n          INSERT INTO sync_tombstones (table_name, remote_key, deleted_at)\n          VALUES ('program_day_config', COALESCE(OLD.remote_id, OLD.cycle_id || '_' || OLD.cycle_type || '_' || OLD.day_of_week), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));\n        END"
+    },
+    {
+      "name": "trg_program_day_config_insert",
+      "tbl_name": "program_day_config",
+      "sql": "CREATE TRIGGER trg_program_day_config_insert\n        AFTER INSERT ON 'program_day_config'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND (NEW.dirty IS NULL OR NEW.dirty != 1)\n        BEGIN\n          UPDATE 'program_day_config'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_program_day_config_update",
+      "tbl_name": "program_day_config",
+      "sql": "CREATE TRIGGER trg_program_day_config_update\n        AFTER UPDATE ON 'program_day_config'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND NEW.dirty != 1\n        BEGIN\n          UPDATE 'program_day_config'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_program_sessions_delete",
+      "tbl_name": "program_sessions",
+      "sql": "CREATE TRIGGER trg_program_sessions_delete\n        AFTER DELETE ON 'program_sessions'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0\n        BEGIN\n          INSERT INTO sync_tombstones (table_name, remote_key, deleted_at)\n          VALUES ('program_sessions', COALESCE(OLD.remote_id, cast(OLD.id as text)), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));\n        END"
+    },
+    {
+      "name": "trg_program_sessions_insert",
+      "tbl_name": "program_sessions",
+      "sql": "CREATE TRIGGER trg_program_sessions_insert\n        AFTER INSERT ON 'program_sessions'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND (NEW.dirty IS NULL OR NEW.dirty != 1)\n        BEGIN\n          UPDATE 'program_sessions'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_program_sessions_update",
+      "tbl_name": "program_sessions",
+      "sql": "CREATE TRIGGER trg_program_sessions_update\n        AFTER UPDATE ON 'program_sessions'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND NEW.dirty != 1\n        BEGIN\n          UPDATE 'program_sessions'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_program_workout_items_delete",
+      "tbl_name": "program_workout_items",
+      "sql": "CREATE TRIGGER trg_program_workout_items_delete\n        AFTER DELETE ON 'program_workout_items'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0\n        BEGIN\n          INSERT INTO sync_tombstones (table_name, remote_key, deleted_at)\n          VALUES ('program_workout_items', COALESCE(OLD.remote_id, cast(OLD.id as text)), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));\n        END"
+    },
+    {
+      "name": "trg_program_workout_items_insert",
+      "tbl_name": "program_workout_items",
+      "sql": "CREATE TRIGGER trg_program_workout_items_insert\n        AFTER INSERT ON 'program_workout_items'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND (NEW.dirty IS NULL OR NEW.dirty != 1)\n        BEGIN\n          UPDATE 'program_workout_items'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_program_workout_items_update",
+      "tbl_name": "program_workout_items",
+      "sql": "CREATE TRIGGER trg_program_workout_items_update\n        AFTER UPDATE ON 'program_workout_items'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND NEW.dirty != 1\n        BEGIN\n          UPDATE 'program_workout_items'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_progress_baseline_config_delete",
+      "tbl_name": "progress_baseline_config",
+      "sql": "CREATE TRIGGER trg_progress_baseline_config_delete\n        AFTER DELETE ON 'progress_baseline_config'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0\n        BEGIN\n          INSERT INTO sync_tombstones (table_name, remote_key, deleted_at)\n          VALUES ('progress_baseline_config', COALESCE(OLD.remote_id, OLD.key), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));\n        END"
+    },
+    {
+      "name": "trg_progress_baseline_config_insert",
+      "tbl_name": "progress_baseline_config",
+      "sql": "CREATE TRIGGER trg_progress_baseline_config_insert\n        AFTER INSERT ON 'progress_baseline_config'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND (NEW.dirty IS NULL OR NEW.dirty != 1)\n        BEGIN\n          UPDATE 'progress_baseline_config'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_progress_baseline_config_update",
+      "tbl_name": "progress_baseline_config",
+      "sql": "CREATE TRIGGER trg_progress_baseline_config_update\n        AFTER UPDATE ON 'progress_baseline_config'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND NEW.dirty != 1\n        BEGIN\n          UPDATE 'progress_baseline_config'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_sessions_delete",
+      "tbl_name": "sessions",
+      "sql": "CREATE TRIGGER trg_sessions_delete\n        AFTER DELETE ON 'sessions'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0\n        BEGIN\n          INSERT INTO sync_tombstones (table_name, remote_key, deleted_at)\n          VALUES ('sessions', COALESCE(OLD.remote_id, OLD.date || '_' || OLD.idx), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));\n        END"
+    },
+    {
+      "name": "trg_sessions_insert",
+      "tbl_name": "sessions",
+      "sql": "CREATE TRIGGER trg_sessions_insert\n        AFTER INSERT ON 'sessions'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND (NEW.dirty IS NULL OR NEW.dirty != 1)\n        BEGIN\n          UPDATE 'sessions'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_sessions_update",
+      "tbl_name": "sessions",
+      "sql": "CREATE TRIGGER trg_sessions_update\n        AFTER UPDATE ON 'sessions'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND NEW.dirty != 1\n        BEGIN\n          UPDATE 'sessions'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_testing_date_recipients_delete",
+      "tbl_name": "testing_date_recipients",
+      "sql": "CREATE TRIGGER trg_testing_date_recipients_delete\n        AFTER DELETE ON 'testing_date_recipients'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0\n        BEGIN\n          INSERT INTO sync_tombstones (table_name, remote_key, deleted_at)\n          VALUES ('testing_date_recipients', COALESCE(OLD.remote_id, OLD.testing_date_id || '_' || OLD.athlete_id), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));\n        END"
+    },
+    {
+      "name": "trg_testing_date_recipients_insert",
+      "tbl_name": "testing_date_recipients",
+      "sql": "CREATE TRIGGER trg_testing_date_recipients_insert\n        AFTER INSERT ON 'testing_date_recipients'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND (NEW.dirty IS NULL OR NEW.dirty != 1)\n        BEGIN\n          UPDATE 'testing_date_recipients'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_testing_date_recipients_update",
+      "tbl_name": "testing_date_recipients",
+      "sql": "CREATE TRIGGER trg_testing_date_recipients_update\n        AFTER UPDATE ON 'testing_date_recipients'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND NEW.dirty != 1\n        BEGIN\n          UPDATE 'testing_date_recipients'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_testing_dates_delete",
+      "tbl_name": "testing_dates",
+      "sql": "CREATE TRIGGER trg_testing_dates_delete\n        AFTER DELETE ON 'testing_dates'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0\n        BEGIN\n          INSERT INTO sync_tombstones (table_name, remote_key, deleted_at)\n          VALUES ('testing_dates', COALESCE(OLD.remote_id, cast(OLD.id as text)), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));\n        END"
+    },
+    {
+      "name": "trg_testing_dates_insert",
+      "tbl_name": "testing_dates",
+      "sql": "CREATE TRIGGER trg_testing_dates_insert\n        AFTER INSERT ON 'testing_dates'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND (NEW.dirty IS NULL OR NEW.dirty != 1)\n        BEGIN\n          UPDATE 'testing_dates'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    },
+    {
+      "name": "trg_testing_dates_update",
+      "tbl_name": "testing_dates",
+      "sql": "CREATE TRIGGER trg_testing_dates_update\n        AFTER UPDATE ON 'testing_dates'\n        WHEN (SELECT active FROM sync_flag WHERE id = 1) = 0 AND NEW.dirty != 1\n        BEGIN\n          UPDATE 'testing_dates'\n          SET dirty = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n          WHERE rowid = NEW.rowid;\n        END"
+    }
+  ]
+}

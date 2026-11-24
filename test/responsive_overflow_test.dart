@@ -73,8 +73,9 @@ void main() {
       if (find.byType(CircularProgressIndicator).evaluate().isEmpty) {
         break;
       }
-      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 50)));
-      await tester.pump();
+      await tester
+          .runAsync(() => Future.delayed(const Duration(milliseconds: 100)));
+      await tester.pump(const Duration(milliseconds: 50));
     }
   }
 
@@ -152,7 +153,8 @@ void main() {
 
             // فحص زرار إضافة دورة جديدة وعنوان الدورات
             expect(
-              find.text(loc.languageCode == 'ar' ? '+ دورة جديدة' : '+ New Cycle'),
+              find.text(
+                  loc.languageCode == 'ar' ? '+ دورة جديدة' : '+ New Cycle'),
               findsOneWidget,
             );
 
