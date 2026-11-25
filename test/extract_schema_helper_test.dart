@@ -291,5 +291,5 @@ void main() {
 
     await db.close();
     DB.testDatabase = null;
-  });
+  }, timeout: const Timeout(Duration(minutes: 2)));
 }

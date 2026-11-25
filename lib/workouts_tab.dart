@@ -5,6 +5,8 @@ import 'auth_service.dart';
 import 'engine_rowing_ui.dart';
 import 'program_service.dart';
 import 'athlete_day_entry_page.dart';
+import 'player_profile.dart';
+import 'progress_calcs.dart';
 import 'metrics_curve_page.dart';
 import 'session_lock_service.dart';
 import 'user_avatar_widget.dart';
@@ -193,10 +195,22 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
       ),
     );
 
-    // إذا تم الحفظ، نعيد تحميل البيانات فوراً ليتغير لون اسم اللاعب
-    if (result == true || mounted) {
+    // إذا تم الحفظ، نبطل كاش الحمل لليوم ونعيد تحميل البيانات فوراً
+    if (result == true) {
+      final pid = player['id'] as int;
+      await ProgressLoadCache.invalidateFrom(pid, fromDate: dateStr);
+      if (mounted) _loadAll();
+    } else if (mounted) {
       _loadAll();
     }
+  }
+
+  void _openPlayerProfile(Map<String, Object?> player) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PlayerProfilePage(player: player),
+      ),
+    );
   }
 
   @override
@@ -310,45 +324,60 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
             children: [
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final isCompact = constraints.maxWidth < 340;
-                  final infoRow = Row(
-                    children: [
-                      UserAvatarWidget(
-                        photoPath: (athlete['photo_path'] as String?) ??
-                            widget.user?.photoPath,
-                        radius: 22,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              athlete['name'] as String? ??
-                                  (s.isArabic
-                                      ? 'بطل التجديف'
-                                      : 'Rowing Athlete'),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: EngineRowingUI.textWhite,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              s.athleteWorkoutTitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                  fontSize: 12,
-                                  color: EngineRowingUI.labelSlate),
-                            ),
-                          ],
+                  final textScale = MediaQuery.textScalerOf(context).scale(1.0);
+                  final isCompact =
+                      constraints.maxWidth < 400 || textScale > 1.1;
+                  final infoRow = InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () => _openPlayerProfile(athlete),
+                    child: Row(
+                      children: [
+                        UserAvatarWidget(
+                          photoPath: (athlete['photo_path'] as String?) ??
+                              widget.user?.photoPath,
+                          radius: 22,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      athlete['name'] as String? ??
+                                          (s.isArabic
+                                              ? 'بطل التجديف'
+                                              : 'Rowing Athlete'),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: EngineRowingUI.textWhite,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  const Icon(Icons.info_outline,
+                                      size: 16, color: _gold),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                s.athleteWorkoutTitle,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    color: EngineRowingUI.labelSlate),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   );
 
                   final logBtn = ElevatedButton.icon(
@@ -904,39 +933,61 @@ class _WorkoutsTabState extends State<WorkoutsTab> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(
             children: [
-              // أفاتار اللاعب
-              UserAvatarWidget(
-                photoPath: player['photo_path'] as String?,
-                radius: 20,
-              ),
-              const SizedBox(width: 12),
-
-              // اسم اللاعب وتفاصيله (اللون يتغير هنا مباشرة)
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              // أفاتار اللاعب واسمه: الضغط عليهما يفتح ملف اللاعب التفصيلي
+              InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: () => _openPlayerProfile(player),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      name,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: nameColor, // تغيير لون اسم اللاعب!
-                      ),
+                    UserAvatarWidget(
+                      photoPath: player['photo_path'] as String?,
+                      radius: 20,
                     ),
-                    const SizedBox(height: 2),
-                    Directionality(
-                      textDirection: TextDirection.ltr,
-                      child: Text(
-                        '${s.maxHRLabel}: ${RowingNumberFormatter.toEnglishDigits(mhr.toString())} bpm',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: EngineRowingUI.labelSlate,
-                          fontFeatures: [FontFeature.tabularFigures()],
+                    const SizedBox(width: 12),
+                  ],
+                ),
+              ),
+
+              // اسم اللاعب وتفاصيله (الضغط عليه يفتح ملف اللاعب، وباقي الكارت يسجل أرقام التمارين)
+              Expanded(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => _openPlayerProfile(player),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              name,
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: nameColor, // تغيير لون اسم اللاعب!
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Icon(Icons.info_outline,
+                              size: 16, color: _gold),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Text(
+                          '${s.maxHRLabel}: ${RowingNumberFormatter.toEnglishDigits(mhr.toString())} bpm',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: EngineRowingUI.labelSlate,
+                            fontFeatures: [FontFeature.tabularFigures()],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
 

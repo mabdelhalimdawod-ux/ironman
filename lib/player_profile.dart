@@ -28,6 +28,7 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
   List<String> alerts = [];
   Map<String, int> zonesDist = {};
   List<Map<String, dynamic>> recoveryData = [];
+  double? playerTsb;
   bool _curvesShared = false;
   String _curvesSharedBy = 'coach';
 
@@ -44,6 +45,7 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
     alerts = await DB.overtrainingAlerts(playerId);
     zonesDist = await DB.playerZoneDistribution(playerId);
     recoveryData = await DB.playerRecoveryData(playerId);
+    playerTsb = await DB.playerTSB(playerId);
     final db = await DB.db;
     final pRows = await db.query('players',
         where: 'id = ?', whereArgs: [playerId], limit: 1);
@@ -422,6 +424,7 @@ class _PlayerProfileState extends State<PlayerProfilePage> {
         hrvBaseline: baseline['avg_hrv'],
         fatigue: latest['fatigue'] as int?,
         sleepHours: latest['sleep_hours'] as double?,
+        tsb: playerTsb,
       );
     }
 

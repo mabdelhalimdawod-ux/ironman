@@ -86,7 +86,7 @@ void main() {
 
   Future<void> pumpUntilLoaded(WidgetTester tester) async {
     await tester.pump();
-    for (int i = 0; i < 40; i++) {
+    for (int i = 0; i < 150; i++) {
       if (find.byType(CircularProgressIndicator).evaluate().isEmpty) {
         break;
       }

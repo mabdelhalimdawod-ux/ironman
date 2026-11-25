@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../power_calculations.dart';
-import '../app_strings.dart';
+import 'package:rowing_app/power_calculations.dart';
+import 'package:rowing_app/app_strings.dart';
 
 void main() {
   group('Phase 1 - Power & Decoupling Calculations Tests', () {

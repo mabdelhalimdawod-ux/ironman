@@ -59,21 +59,21 @@ supabase/migrations/0001_init.sql
 ### الخطوة 5: إنشاء حساب الأدمن وترقيته
 1. افتح تطبيق Engine Rowing.
 2. اذهب إلى شاشة **إنشاء حساب جديد** (Sign Up).
-3. سجّل حساباً جديداً بالبريد الإلكتروني المعتمد للأدمن:
+3. سجّل حساباً جديداً بالبريد الإلكتروني الذي تختاره للأدمن (مثلاً `admin@your-club.com`):
 ```text
-admin.mabdelhalimdawod@engine.rowing
+admin@your-club.com
 ```
 4. بعد التسجيل مباشرة، سيظهر لك تنبيه بأن الحساب في انتظار التفعيل (لأن النظام يمنع أي شخص من التسجيل كأدمن من داخل التطبيق لحمايته).
-5. ادخل مرة ثانية على **SQL Editor** في Supabase، والصق السطرين التاليين واضغط **Run**:
+5. ادخل مرة ثانية على **SQL Editor** في Supabase، واستبدل الإيميل بالبريد الذي سجلت به واضغط **Run**:
 ```sql
--- ترقية حساب الأدمن وتفعيل اشتراكه بصلاحية كاملة
+-- ترقية حساب الأدمن وتفعيل اشتراكه بصلاحية كاملة (استبدل الإيميل بإيميلك)
 UPDATE public.profiles 
 SET role = 'admin' 
-WHERE LOWER(email) = 'admin.mabdelhalimdawod@engine.rowing';
+WHERE LOWER(email) = 'admin@your-club.com';
 
 UPDATE public.subscriptions 
 SET active = true, note = 'حساب الأدمن الرئيسي مفعّل'
-WHERE user_id = (SELECT id FROM public.profiles WHERE LOWER(email) = 'admin.mabdelhalimdawod@engine.rowing');
+WHERE user_id = (SELECT id FROM public.profiles WHERE LOWER(email) = 'admin@your-club.com');
 ```
 الآن أصبح الحساب أدمن ومفعّلاً رسمياً!
 

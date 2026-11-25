@@ -110,7 +110,8 @@ class _TodayWorkoutPageState extends State<TodayWorkoutPage> {
   }
 
   @visibleForTesting
-  Future<void> updateDateSelection(DateTime picked, {required bool isStart}) async {
+  Future<void> updateDateSelection(DateTime picked,
+      {required bool isStart}) async {
     final s = AppStrings.of(context);
     final cleanPicked = DateTime(picked.year, picked.month, picked.day);
 
@@ -125,21 +126,17 @@ class _TodayWorkoutPageState extends State<TodayWorkoutPage> {
       }
     }
 
-    // فحص الحد الأقصى 7 أيام شاملة
+    // فحص الحد الأقصى 7 أيام شاملة: إظهار رسالة تحذيرية ومنع الاختيار فوراً (بدون اقتطاع صامت)
     final daysDiff = nextEnd.difference(nextStart).inDays + 1;
     if (daysDiff > 7) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(s.maxSevenDaysNotice),
-          backgroundColor: Colors.orange.shade800,
+          backgroundColor: Colors.redAccent,
         ),
       );
-      if (isStart) {
-        nextEnd = nextStart.add(const Duration(days: 6));
-      } else {
-        nextStart = nextEnd.subtract(const Duration(days: 6));
-      }
+      return; // منع الاختيار
     }
 
     setState(() {
@@ -288,7 +285,8 @@ class _TodayWorkoutPageState extends State<TodayWorkoutPage> {
                             fontWeight: FontWeight.bold)),
                   );
                 }).toList(),
-                onChanged: (val) => setDialogState(() => selectedPlayerId = val),
+                onChanged: (val) =>
+                    setDialogState(() => selectedPlayerId = val),
                 decoration: const InputDecoration(
                   filled: true,
                   fillColor: EngineRowingUI.equationCardFill,
@@ -461,8 +459,8 @@ class _TodayWorkoutPageState extends State<TodayWorkoutPage> {
       return Center(
         child: Text(
           s.noActivePlayers,
-          style: const TextStyle(
-              color: EngineRowingUI.labelSlate, fontSize: 14),
+          style:
+              const TextStyle(color: EngineRowingUI.labelSlate, fontSize: 14),
         ),
       );
     }
@@ -552,7 +550,8 @@ class _TodayWorkoutPageState extends State<TodayWorkoutPage> {
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
                         foregroundColor: EngineRowingUI.textWhite,
-                        side: const BorderSide(color: EngineRowingUI.bgGridLine),
+                        side:
+                            const BorderSide(color: EngineRowingUI.bgGridLine),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8)),
@@ -570,7 +569,8 @@ class _TodayWorkoutPageState extends State<TodayWorkoutPage> {
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
                         foregroundColor: EngineRowingUI.textWhite,
-                        side: const BorderSide(color: EngineRowingUI.bgGridLine),
+                        side:
+                            const BorderSide(color: EngineRowingUI.bgGridLine),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8)),
@@ -672,10 +672,12 @@ class _TodayWorkoutPageState extends State<TodayWorkoutPage> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: EngineRowingUI.neonLime.withValues(alpha: 0.15),
+                            color:
+                                EngineRowingUI.neonLime.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                                color: EngineRowingUI.neonLime.withValues(alpha: 0.4)),
+                                color: EngineRowingUI.neonLime
+                                    .withValues(alpha: 0.4)),
                           ),
                           child: Text(
                             s.readOnlyNotice,

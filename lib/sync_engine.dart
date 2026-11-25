@@ -5,6 +5,7 @@ import 'package:sqflite/sqflite.dart';
 import 'auth_service.dart';
 import 'cloud_api.dart';
 import 'db.dart';
+import 'progress_calcs.dart';
 
 /// حالة المزامنة اللحظية
 enum SyncStatus {
@@ -434,6 +435,24 @@ class SyncEngine extends ChangeNotifier {
                   );
                 }
               }
+            }
+          }
+
+          // إبطال كاش حمل التدريب للاعبين المتأثرين بتحديثات السحب
+          if ((table.name == 'logs' || table.name == 'cp_tests' || table.name == 'cp_values') && incoming.isNotEmpty) {
+            final affectedPlayers = <int, String?>{};
+            for (final row in incoming) {
+              final pid = (row['player_id'] as num?)?.toInt();
+              if (pid != null) {
+                final d = row['date'] as String?;
+                final curD = affectedPlayers[pid];
+                if (curD == null || (d != null && d.compareTo(curD) < 0)) {
+                  affectedPlayers[pid] = d;
+                }
+              }
+            }
+            for (final entry in affectedPlayers.entries) {
+              await ProgressLoadCache.invalidateFrom(entry.key, fromDate: entry.value);
             }
           }
         }

@@ -197,7 +197,7 @@ void main() {
   group('ProgressTab & ProgressCurvePage Widget Tests', () {
     const testUser = AppUser(
       id: 1,
-      email: 'mabdelhalimdawod@engine.rowing',
+      email: 'coach@test.local',
       name: 'Coach Mahmoud',
       role: 'coach',
       coachId: null,

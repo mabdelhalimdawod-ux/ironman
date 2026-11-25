@@ -266,6 +266,10 @@ class AppStrings {
   String get dayFriday => isArabic ? 'الجمعة' : 'Friday';
   String get copyTemplateToDay =>
       isArabic ? 'نسخ القالب ليوم آخر' : 'Copy Template to Another Day';
+  String get cycleTemplate =>
+      isArabic ? 'قالب الدورة المرحلية' : 'Cycle Template';
+  String get athleteProfile =>
+      isArabic ? 'الملف الشخصي للاعب' : 'Athlete Profile';
   String get templateSaved => isArabic
       ? 'تم حفظ القالب وتحديث جدول التمارين'
       : 'Template saved successfully';
@@ -523,7 +527,7 @@ class AppStrings {
       ? 'مرحباً بك في منصة Engine Rowing'
       : 'Welcome to Engine Rowing Platform';
   String get email => isArabic ? 'البريد الإلكتروني' : 'Email Address';
-  String get emailHint => 'coach@engine.rowing';
+  String get emailHint => 'name@example.com';
   String get password => isArabic ? 'كلمة المرور' : 'Password';
   String get passwordHint => '••••••••';
   String get firstName => isArabic ? 'الاسم الأول' : 'First Name';
@@ -1010,6 +1014,9 @@ class AppStrings {
   String get missingCpNotice => isArabic
       ? 'تمارين بدون قيمة CP: يظهر TSS كـ "--" ولا تدخل في حساب CTL و ATL'
       : 'Workouts without CP show TSS as "--" and are excluded from CTL & ATL';
+  String get recordCpTestNotice => isArabic
+      ? 'سجّل اختبار القدرة الحرجة لعرض حمل التدريب'
+      : 'Record a Critical Power test to see training load';
   String get ctlLineLabel => isArabic ? 'CTL (لياقة)' : 'CTL (Fitness)';
   String get atlLineLabel => isArabic ? 'ATL (تعب)' : 'ATL (Fatigue)';
   String get tsbBarLabel => isArabic ? 'TSB (الجاهزية)' : 'TSB (Form)';

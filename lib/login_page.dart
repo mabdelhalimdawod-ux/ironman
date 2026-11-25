@@ -79,9 +79,6 @@ class _LoginPageState extends State<LoginPage> {
     final savedEmail = await AuthService.getSavedEmail();
     if (savedEmail != null && savedEmail.isNotEmpty && mounted) {
       _loginEmailController.text = savedEmail;
-    } else if (mounted) {
-      _loginEmailController.text = 'mabdelhalimdawod@engine.rowing';
-      _loginPasswordController.text = 'mahmoud@76Mm';
     }
   }
 

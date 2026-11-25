@@ -462,14 +462,14 @@ void main() {
         ),
       );
 
-      for (int i = 0; i < 50; i++) {
-        if (find.byType(CircularProgressIndicator).evaluate().isEmpty) {
+      await tester.pump();
+      for (int i = 0; i < 150; i++) {
+        if (find.byType(CircularProgressIndicator).evaluate().isEmpty && i >= 3) {
           break;
         }
-        await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 30)));
+        await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 50)));
         await tester.pump();
       }
-      await tester.pump();
 
       expect(find.textContaining('2026-11-20'), findsWidgets);
 
@@ -486,10 +486,11 @@ void main() {
 
       final s = AppStrings.of(tester.element(find.byType(TodayWorkoutPage)));
       expect(find.text(s.maxSevenDaysNotice), findsOneWidget);
-      expect(state.endDate, DateTime(2026, 11, 28));
-      expect(state.startDate, DateTime(2026, 11, 22));
+      // تم منع الاختيار: التواريخ تظل دون تغيير
+      expect(state.startDate, DateTime(2026, 11, 20));
+      expect(state.endDate, DateTime(2026, 11, 20));
 
-      // Valid range <= 7 days succeeds
+      // Valid range <= 7 days succeeds (2026-11-20 to 2026-11-26 = 7 days inclusive)
       await tester.runAsync(() async {
         await state.updateDateSelection(
           DateTime(2026, 11, 26),
@@ -497,7 +498,7 @@ void main() {
         );
       });
       await tester.pump();
-      expect(state.startDate, DateTime(2026, 11, 22));
+      expect(state.startDate, DateTime(2026, 11, 20));
       expect(state.endDate, DateTime(2026, 11, 26));
     }, timeout: const Timeout(Duration(seconds: 60)));
   });

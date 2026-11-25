@@ -4,6 +4,7 @@ import 'db.dart';
 import 'engine_rowing_ui.dart';
 import 'program_service.dart';
 import 'cycle_weekly_cycles_page.dart';
+import 'cycle_template_page.dart';
 
 const Color _navy = EngineRowingUI.bgNavy;
 const Color _cardFill = EngineRowingUI.cardFill;
@@ -289,6 +290,17 @@ class _ProgramTabState extends State<ProgramTab> {
     );
   }
 
+  void _openCycleTemplate(ProgramCycle cycle) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CycleTemplatePage(
+          cycle: cycle.toMap(),
+          onSaved: () => _loadCycles(),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
@@ -307,8 +319,7 @@ class _ProgramTabState extends State<ProgramTab> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 850),
             child: ListView(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               children: [
                 // ── شريط رأس تاب Program مع زرار (+) لإضافة دورة مرحلية جديدة ──
                 _buildHeaderBar(s),
@@ -349,8 +360,8 @@ class _ProgramTabState extends State<ProgramTab> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 3),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: _gold.withAlpha(30),
                     borderRadius: BorderRadius.circular(8),
@@ -381,8 +392,8 @@ class _ProgramTabState extends State<ProgramTab> {
             backgroundColor: _gold,
             foregroundColor: _navy,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             elevation: 2,
           ),
           icon: const Icon(Icons.add_circle, color: _navy, size: 18),
@@ -866,26 +877,51 @@ class _ProgramTabState extends State<ProgramTab> {
                 ),
                 const SizedBox(height: 18),
 
-                // ── 4. زر (دخول) في منتصف التاب للدخول إلى صفحة الدورات التدريبية ──
+                // ── 4. أزرار الدخول إلى أسابيع الدورة وقالب الدورة المرحلية ──
                 Center(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _gold,
-                      foregroundColor: _navy,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 36, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      elevation: 2,
-                    ),
-                    icon: const Icon(Icons.meeting_room_rounded,
-                        color: _navy, size: 20),
-                    label: Text(
-                      '${s.enterCycle} (${cycle.name})',
-                      style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.bold),
-                    ),
-                    onPressed: () => _openCycleWeeklyCycles(cycle),
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 12,
+                    runSpacing: 10,
+                    children: [
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _gold,
+                          foregroundColor: _navy,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          elevation: 2,
+                        ),
+                        icon: const Icon(Icons.meeting_room_rounded,
+                            color: _navy, size: 20),
+                        label: Text(
+                          '${s.enterCycle} (${cycle.name})',
+                          style: const TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.bold),
+                        ),
+                        onPressed: () => _openCycleWeeklyCycles(cycle),
+                      ),
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: _gold,
+                          side: const BorderSide(color: _gold, width: 1.5),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        icon: const Icon(Icons.tune_rounded,
+                            color: _gold, size: 20),
+                        label: Text(
+                          s.cycleTemplate,
+                          style: const TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.bold),
+                        ),
+                        onPressed: () => _openCycleTemplate(cycle),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 16),

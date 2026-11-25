@@ -2836,12 +2836,15 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
     required _AthleteCurveData? data,
     required bool isLoading,
   }) {
-    final entries = data?.pmcEntries ?? const <DailyLoadEntry>[];
-    final today = data?.todayLoad;
-    final ctlToday = today?.ctl ?? 0.0;
-    final atlToday = today?.atl ?? 0.0;
-    final tsbToday = today?.tsb ?? 0.0;
-    final (tsbLabel, tsbColor) = _tsbVisualFromTheme(context, s, tsbToday);
+    final hasCp = (data != null && data.latestCp != null && data.latestCp! > 0);
+    final entries = hasCp ? data.pmcEntries : const <DailyLoadEntry>[];
+    final today = hasCp ? data.todayLoad : null;
+    final ctlToday = today?.ctl;
+    final atlToday = today?.atl;
+    final tsbToday = today?.tsb;
+    final (tsbLabel, tsbColor) = (hasCp && tsbToday != null)
+        ? _tsbVisualFromTheme(context, s, tsbToday)
+        : ('--', EngineRowingUI.labelSlate);
 
     return Container(
       margin: EdgeInsets.zero,
@@ -2896,7 +2899,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
               Expanded(
                 child: _buildPmcTodayCard(
                   label: '${s.ctlLineLabel} (${s.todayLabel})',
-                  value: ctlToday.toStringAsFixed(1),
+                  value: ctlToday != null ? ctlToday.toStringAsFixed(1) : '--',
                   color: EngineRowingUI.zone2Color,
                 ),
               ),
@@ -2904,7 +2907,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
               Expanded(
                 child: _buildPmcTodayCard(
                   label: '${s.atlLineLabel} (${s.todayLabel})',
-                  value: atlToday.toStringAsFixed(1),
+                  value: atlToday != null ? atlToday.toStringAsFixed(1) : '--',
                   color: EngineRowingUI.zone3Color,
                 ),
               ),
@@ -2912,14 +2915,41 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
               Expanded(
                 child: _buildPmcTodayCard(
                   label: '${s.tsbBarLabel} (${s.todayLabel})',
-                  value: tsbToday.toStringAsFixed(1),
+                  value: tsbToday != null ? tsbToday.toStringAsFixed(1) : '--',
                   color: tsbColor,
                 ),
               ),
             ],
           ),
 
-          if ((data?.missingCpWorkoutsCount ?? 0) > 0) ...[
+          if (!hasCp) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: EngineRowingUI.equationCardFill,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.amber.shade700, width: 1.2),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.speed_rounded,
+                      color: Colors.amber.shade400, size: 22),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      s.recordCpTestNotice,
+                      style: const TextStyle(
+                        color: EngineRowingUI.textWhite,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ] else if (data.missingCpWorkoutsCount > 0) ...[
             const SizedBox(height: 6),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
@@ -2933,7 +2963,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                         .withValues(alpha: 0.5)),
               ),
               child: Text(
-                '${s.missingCpNotice} (${data!.missingCpDates.join(', ')})',
+                '${s.missingCpNotice} (${data.missingCpDates.join(', ')})',
                 style: const TextStyle(
                   color: EngineRowingUI.labelSlate,
                   fontSize: 10.5,
@@ -2954,6 +2984,8 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                 ),
               ),
             )
+          else if (!hasCp)
+            const SizedBox.shrink()
           else if (entries.isEmpty)
             SizedBox(
               height: 80,

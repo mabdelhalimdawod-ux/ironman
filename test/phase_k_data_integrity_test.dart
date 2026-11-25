@@ -492,5 +492,112 @@ void main() {
       expect(z2!.bestWatts, equals(206.0));
       expect(z2.capacityCurveValue, isNotNull);
     });
+
+    test('10. Logs idx collision prevention: DB.nextLogIdx assigns auto-increment idx (MAX + 1)', () async {
+      DB.testDatabase = db;
+
+      const playerId = 99;
+      const date = '2026-11-24';
+      await db.delete('logs', where: 'player_id = ?', whereArgs: [playerId]);
+
+      // First workout should get idx 0
+      final idx0 = await DB.nextLogIdx(playerId, date);
+      expect(idx0, equals(0));
+
+      await DB.put('logs', {
+        'player_id': playerId,
+        'date': date,
+        'idx': idx0,
+        'avg_power': 220.0,
+      });
+
+      // Second workout on same date should get idx 1 (MAX + 1)
+      final idx1 = await DB.nextLogIdx(playerId, date);
+      expect(idx1, equals(1));
+
+      await DB.put('logs', {
+        'player_id': playerId,
+        'date': date,
+        'idx': idx1,
+        'avg_power': 240.0,
+      });
+
+      // Third workout on same date should get idx 2
+      final idx2 = await DB.nextLogIdx(playerId, date);
+      expect(idx2, equals(2));
+
+      await DB.put('logs', {
+        'player_id': playerId,
+        'date': date,
+        'idx': idx2,
+        'avg_power': 260.0,
+      });
+
+      // Verify all 3 workouts exist without collision
+      final rows = await db.query(
+        'logs',
+        where: 'player_id = ? AND date = ?',
+        whereArgs: [playerId, date],
+        orderBy: 'idx ASC',
+      );
+      expect(rows.length, equals(3));
+      expect(rows[0]['idx'], equals(0));
+      expect(rows[0]['avg_power'], equals(220.0));
+      expect(rows[1]['idx'], equals(1));
+      expect(rows[1]['avg_power'], equals(240.0));
+      expect(rows[2]['idx'], equals(2));
+
+      // Explicit update of existing row modifies it without creating duplicates
+      await DB.put('logs', {
+        'player_id': playerId,
+        'date': date,
+        'idx': 1,
+        'avg_power': 255.0,
+      });
+
+      final updatedRows = await db.query(
+        'logs',
+        where: 'player_id = ? AND date = ?',
+        whereArgs: [playerId, date],
+        orderBy: 'idx ASC',
+      );
+      expect(updatedRows.length, equals(3));
+      expect(updatedRows[1]['avg_power'], equals(255.0));
+    });
+
+    test('11. Cache invalidation on workout mutation clears daily_load cache', () async {
+      DB.testDatabase = db;
+
+      const playerId = 88;
+      const date = '2026-11-20';
+      await db.delete('daily_load', where: 'player_id = ?', whereArgs: [playerId]);
+
+      // Seed a cached daily_load entry
+      await db.insert('daily_load', {
+        'player_id': playerId,
+        'date': date,
+        'tss': 75.0,
+        'ctl': 45.0,
+        'atl': 60.0,
+        'tsb': -15.0,
+      });
+
+      final cachedBefore = await db.query(
+        'daily_load',
+        where: 'player_id = ? AND date >= ?',
+        whereArgs: [playerId, date],
+      );
+      expect(cachedBefore.isNotEmpty, isTrue);
+
+      // Invalidate cache
+      await ProgressLoadCache.invalidateFrom(playerId, fromDate: date);
+
+      final cachedAfter = await db.query(
+        'daily_load',
+        where: 'player_id = ? AND date >= ?',
+        whereArgs: [playerId, date],
+      );
+      expect(cachedAfter.isEmpty, isTrue);
+    });
   });
 }

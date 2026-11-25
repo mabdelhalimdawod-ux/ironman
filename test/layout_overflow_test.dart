@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:rowing_app/auth_service.dart';
+import 'package:rowing_app/db.dart';
 import 'package:rowing_app/engine_rowing_ui.dart';
 import 'package:rowing_app/main.dart';
 import 'package:rowing_app/dashboard_tab.dart';
@@ -12,9 +14,14 @@ import 'package:rowing_app/session_workouts_page.dart';
 import 'package:rowing_app/program_service.dart';
 
 void main() {
-  setUpAll(() {
+  setUpAll(() async {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
+    final tempDir = Directory.systemTemp.createTempSync('rowing_layout_test_');
+    await databaseFactory.setDatabasesPath(tempDir.path);
+    DB.testDatabase = null;
+    await AuthService.ensureTables();
+    await ProgramService.ensureTables();
   });
 
   tearDown(() {
@@ -23,12 +30,23 @@ void main() {
 
   const testUser = AppUser(
     id: 1,
-    email: 'mabdelhalimdawod@engine.rowing',
+    email: 'coach@test.local',
     name: 'Coach Mahmoud',
     role: 'coach',
     coachId: null,
     subscriptionActive: true,
   );
+
+  Future<void> settleAsync(WidgetTester tester, {int maxAttempts = 60}) async {
+    for (int i = 0; i < maxAttempts; i++) {
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 50)));
+      await tester.pump();
+      final hasLoading = find.byType(CircularProgressIndicator, skipOffstage: false).evaluate().isNotEmpty;
+      if (i >= 5 && !hasLoading) {
+        break;
+      }
+    }
+  }
 
   testWidgets('MainNavigationScaffold builds cleanly on mobile viewport and toggles sideNav overlay', (tester) async {
     tester.view.physicalSize = const Size(1080, 2400);
@@ -46,7 +64,7 @@ void main() {
     );
 
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await settleAsync(tester);
 
     // Verify hamburger button exists and tap it to open sideNav overlay
     final menuButton = find.byIcon(Icons.menu_rounded);
@@ -57,6 +75,7 @@ void main() {
     // Tap menu button again to close sideNav
     await tester.tap(menuButton, warnIfMissed: false);
     await tester.pump(const Duration(milliseconds: 300));
+    await settleAsync(tester);
   });
 
   testWidgets('DashboardTab builds cleanly', (tester) async {
@@ -73,6 +92,7 @@ void main() {
       ),
     );
     await tester.pump();
+    await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 100)));
     await tester.pump(const Duration(milliseconds: 300));
   });
 
@@ -90,6 +110,7 @@ void main() {
       ),
     );
     await tester.pump();
+    await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 100)));
     await tester.pump(const Duration(milliseconds: 300));
   });
 
@@ -102,12 +123,12 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: WorkoutsTab(),
+          body: WorkoutsTab(user: testUser),
         ),
       ),
     );
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await settleAsync(tester);
   });
 
   testWidgets('SessionWorkoutsPage builds without overflow on mobile screen', (tester) async {

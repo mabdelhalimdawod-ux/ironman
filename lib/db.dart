@@ -3,6 +3,7 @@ import 'package:sqflite/sqflite.dart';
 import 'dart:math';
 import 'heart_rate_zones.dart';
 import 'sync_engine.dart';
+import 'progress_calcs.dart';
 
 const kinds = ['Erg', 'Water', 'Fitness', 'Running'];
 
@@ -1376,9 +1377,30 @@ class DB {
 
   /// جلب آخر قيمة TSB (التوازن التدريبي) للاعب
   static Future<double?> playerTSB(int playerId) async {
+    final cp = await playerCP(playerId);
+    if (cp == null || cp <= 0) return null;
+
+    try {
+      final syncRes = await ProgressLoadCache.syncForPlayer(playerId);
+      final todayKey = dstr(DateTime.now());
+      final todayEntry =
+          syncRes.allEntries.where((e) => e.date == todayKey).firstOrNull;
+      if (todayEntry != null) return todayEntry.tsb;
+      if (syncRes.allEntries.isNotEmpty) return syncRes.allEntries.last.tsb;
+    } catch (_) {}
+
     final pmc = await playerPMC(playerId, days: 50);
     if (pmc.isEmpty) return null;
     return pmc.last['tsb'] as double;
+  }
+
+  /// جلب المعرف التسلسلي التالي لتمرين جديد في نفس اليوم للاعب لتجنب أي تصادم
+  static Future<int> nextLogIdx(int playerId, String date) async {
+    final rows = await q(
+      'SELECT COALESCE(MAX(idx), -1) + 1 AS next_idx FROM logs WHERE player_id = ? AND date = ?',
+      [playerId, date],
+    );
+    return (rows.first['next_idx'] as num).toInt();
   }
 
   // ==================== التوازن الفسيولوجي (مبني على CP) ====================

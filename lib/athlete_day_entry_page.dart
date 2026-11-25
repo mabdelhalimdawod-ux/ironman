@@ -6,6 +6,7 @@ import 'heart_rate_zones.dart';
 import 'power_calculations.dart';
 import 'program_service.dart';
 import 'session_lock_service.dart';
+import 'progress_calcs.dart';
 
 /// نموذج إدارة حالة فورم تمرين واحد من تمارين اليوم
 class _SingleWorkoutFormState {
@@ -148,9 +149,23 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
     });
   }
 
-  void _addNewWorkoutForm() {
+  void _addNewWorkoutForm() async {
+    // حساب المعرف التسلسلي التالي تلقائياً لمنع أي تصادم (الأكبر + 1)
+    int nextIdx = _workoutForms.length;
+    for (final f in _workoutForms) {
+      if (f.sessionIdx >= nextIdx) {
+        nextIdx = f.sessionIdx + 1;
+      }
+    }
+    try {
+      final dbNext = await DB.nextLogIdx(_playerId, widget.date);
+      if (dbNext > nextIdx) {
+        nextIdx = dbNext;
+      }
+    } catch (_) {}
+
+    if (!mounted) return;
     setState(() {
-      final nextIdx = _workoutForms.length;
       final formState = _SingleWorkoutFormState(
         sessionIdx: nextIdx,
         kind: 'Erg',
@@ -166,12 +181,25 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
     });
   }
 
-  void _removeWorkoutForm(int index) {
+  void _removeWorkoutForm(int index) async {
     if (_workoutForms.length <= 1) return;
+    final form = _workoutForms[index];
+    final removedIdx = form.sessionIdx;
+
     setState(() {
-      final form = _workoutForms.removeAt(index);
+      _workoutForms.removeAt(index);
       form.dispose();
     });
+
+    try {
+      final db = await DB.db;
+      await db.delete(
+        'logs',
+        where: 'player_id = ? AND date = ? AND idx = ?',
+        whereArgs: [_playerId, widget.date, removedIdx],
+      );
+      await ProgressLoadCache.invalidateFrom(_playerId, fromDate: widget.date);
+    } catch (_) {}
   }
 
   Future<void> _initFormsAndLoadExistingData() async {
@@ -479,6 +507,9 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
           'kind': form.kind,
         });
       }
+
+      // إبطال كاش حمل التدريب للتحديث الفوري لـ daily_load والجاهزية
+      await ProgressLoadCache.invalidateFrom(_playerId, fromDate: widget.date);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
