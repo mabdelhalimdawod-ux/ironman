@@ -49,6 +49,76 @@ class ZoneHoursEntry {
   });
 }
 
+/// قراءة واحدة من قراءات التفكك القلبي W-HR-T
+class DecouplingReading {
+  final double watts;
+  final double hr;
+  final double timeMinutes;
+
+  const DecouplingReading({
+    required this.watts,
+    required this.hr,
+    required this.timeMinutes,
+  });
+
+  /// حساب EF اللحظي لهذه القراءة = واط ÷ نبض
+  double get ef => hr > 0 ? (watts / hr) : 0.0;
+
+  @override
+  String toString() =>
+      'W${watts.round()}-HR${hr.round()}-T${timeMinutes.toStringAsFixed(1)}';
+}
+
+/// نتيجة تحليل نص قراءات Decoupling
+class DecouplingParseResult {
+  final List<DecouplingReading> readings;
+  final int ignoredCount;
+
+  const DecouplingParseResult({
+    required this.readings,
+    required this.ignoredCount,
+  });
+}
+
+/// مستوى سيطرة التفكك القلبي
+enum DecouplingControlLevel {
+  excellent, // < 5% سيطرة ممتازة
+  moderate, // 5% - 10% متوسط
+  high, // > 10% انحراف مرتفع
+  notEligible, // غير مؤهل للتفسير (ليست Z1/Z2 أو أقل من 60 دقيقة)
+}
+
+/// نتيجة حساب Decoupling الكامل للتمرين
+class DecouplingCalculationResult {
+  final double? decouplingPercent;
+  final double? efHalf1;
+  final double? efHalf2;
+  final List<DecouplingReading> half1Readings;
+  final List<DecouplingReading> half2Readings;
+  final List<DecouplingReading> allReadings;
+  final int ignoredCount;
+  final bool hasEnoughReadings;
+  final String? errorMessage;
+  final bool isEligibleForInterpretation;
+  final DecouplingControlLevel controlLevel;
+  final bool hasFewerReadingsThanRecommended;
+
+  const DecouplingCalculationResult({
+    this.decouplingPercent,
+    this.efHalf1,
+    this.efHalf2,
+    this.half1Readings = const [],
+    this.half2Readings = const [],
+    this.allReadings = const [],
+    this.ignoredCount = 0,
+    required this.hasEnoughReadings,
+    this.errorMessage,
+    required this.isEligibleForInterpretation,
+    required this.controlLevel,
+    this.hasFewerReadingsThanRecommended = false,
+  });
+}
+
 /// سجل حمل يومي مخزن في جدول daily_load
 class DailyLoadEntry {
   final int playerId;
@@ -270,6 +340,156 @@ class ProgressCalcs {
       return ProgressTrend.neutral;
     }
     return ProgressTrend.down;
+  }
+
+  /// ── 3.5 تحليل وحساب قراءات التفكك القلبي الهوائي (Decoupling) ──
+  ///
+  /// تحليل نص القراءات بصيغة: W200-HR180-T5, W205-HR183-T10
+  /// مفصولة بفواصل، غير حساسة لحالة الأحرف (case-insensitive)
+  /// كل قراءة يجب أن تشتمل على القيم الثلاث: W (واط)، HR (نبض)، T (الزمن بالدقائق)
+  /// أي قراءة ناقصة أو بتنسيق خاطئ يتم تجاهلها وزيادة ignoredCount
+  static DecouplingParseResult parseDecouplingReadings(String rawText) {
+    if (rawText.trim().isEmpty) {
+      return const DecouplingParseResult(readings: [], ignoredCount: 0);
+    }
+
+    final chunks = rawText.split(RegExp(r'[,;\n]'));
+    final readings = <DecouplingReading>[];
+    int ignoredCount = 0;
+
+    final wReg = RegExp(r'W\s*(\d+(?:\.\d+)?)', caseSensitive: false);
+    final hrReg = RegExp(r'HR\s*(\d+(?:\.\d+)?)', caseSensitive: false);
+    final tReg = RegExp(r'T\s*(\d+(?:\.\d+)?)', caseSensitive: false);
+
+    for (final rawChunk in chunks) {
+      final chunk = rawChunk.trim();
+      if (chunk.isEmpty) continue;
+
+      final wMatch = wReg.firstMatch(chunk);
+      final hrMatch = hrReg.firstMatch(chunk);
+      final tMatch = tReg.firstMatch(chunk);
+
+      if (wMatch != null && hrMatch != null && tMatch != null) {
+        final w = double.tryParse(wMatch.group(1)!);
+        final hr = double.tryParse(hrMatch.group(1)!);
+        final t = double.tryParse(tMatch.group(1)!);
+
+        if (w != null && hr != null && t != null && w > 0 && hr > 0 && t >= 0) {
+          readings.add(DecouplingReading(watts: w, hr: hr, timeMinutes: t));
+        } else {
+          ignoredCount++;
+        }
+      } else {
+        ignoredCount++;
+      }
+    }
+
+    readings.sort((a, b) => a.timeMinutes.compareTo(b.timeMinutes));
+
+    return DecouplingParseResult(
+      readings: readings,
+      ignoredCount: ignoredCount,
+    );
+  }
+
+  /// حساب Decoupling % وفق مواصفات كوتش:
+  /// - تقسيم التمرين لنصفين بالزمن الفعلي (T <= D/2 و T > D/2)
+  /// - EF لكل نصف = متوسط الواط ÷ متوسط النبض
+  /// - Decoupling % = ((EF1 - EF2) / EF1) * 100
+  /// - شرط قراءة واحدة على الأقل في كل نصف
+  /// - التفسير: < 5% سيطرة ممتازة، 5-10% متوسط، > 10% انحراف مرتفع
+  /// - غير مؤهل للتفسير إذا لم يكن Z1/Z2 أو المدة < 60 دقيقة
+  static DecouplingCalculationResult calculateDecoupling({
+    required String rawReadingsText,
+    required double durationMinutes,
+    String? zoneKey,
+  }) {
+    final parseResult = parseDecouplingReadings(rawReadingsText);
+    final readings = parseResult.readings;
+    final ignored = parseResult.ignoredCount;
+
+    if (readings.isEmpty) {
+      return DecouplingCalculationResult(
+        hasEnoughReadings: false,
+        errorMessage: 'مفيش قراءات كفاية في النصفين',
+        ignoredCount: ignored,
+        isEligibleForInterpretation: false,
+        controlLevel: DecouplingControlLevel.notEligible,
+      );
+    }
+
+    final effectiveD = durationMinutes > 0
+        ? durationMinutes
+        : readings.map((r) => r.timeMinutes).reduce(max);
+
+    final halfTime = effectiveD / 2.0;
+    final half1 = readings.where((r) => r.timeMinutes <= halfTime).toList();
+    final half2 = readings.where((r) => r.timeMinutes > halfTime).toList();
+
+    if (half1.isEmpty || half2.isEmpty) {
+      return DecouplingCalculationResult(
+        hasEnoughReadings: false,
+        errorMessage: 'مفيش قراءات كفاية في النصفين',
+        half1Readings: half1,
+        half2Readings: half2,
+        allReadings: readings,
+        ignoredCount: ignored,
+        isEligibleForInterpretation: false,
+        controlLevel: DecouplingControlLevel.notEligible,
+      );
+    }
+
+    final avgW1 =
+        half1.map((r) => r.watts).reduce((a, b) => a + b) / half1.length;
+    final avgHr1 =
+        half1.map((r) => r.hr).reduce((a, b) => a + b) / half1.length;
+    final ef1 = avgHr1 > 0 ? (avgW1 / avgHr1) : 0.0;
+
+    final avgW2 =
+        half2.map((r) => r.watts).reduce((a, b) => a + b) / half2.length;
+    final avgHr2 =
+        half2.map((r) => r.hr).reduce((a, b) => a + b) / half2.length;
+    final ef2 = avgHr2 > 0 ? (avgW2 / avgHr2) : 0.0;
+
+    double decouplingPct = 0.0;
+    if (ef1 > 0) {
+      decouplingPct = ((ef1 - ef2) / ef1) * 100.0;
+    }
+
+    final cleanZone =
+        zoneKey != null ? HeartRateZones.normalizeZoneKey(zoneKey) : null;
+    final isEligible =
+        (effectiveD >= 60.0) && (cleanZone == 'Z1' || cleanZone == 'Z2');
+
+    final DecouplingControlLevel controlLevel;
+    if (!isEligible) {
+      controlLevel = DecouplingControlLevel.notEligible;
+    } else if (decouplingPct < 5.0) {
+      controlLevel = DecouplingControlLevel.excellent;
+    } else if (decouplingPct <= 10.0) {
+      controlLevel = DecouplingControlLevel.moderate;
+    } else {
+      controlLevel = DecouplingControlLevel.high;
+    }
+
+    final double expectedIntervalMinutes =
+        effectiveD < 10 ? 1.0 : (effectiveD <= 40 ? 2.0 : 5.0);
+    final expectedCount = (effectiveD / expectedIntervalMinutes).floor();
+    final hasFewer = readings.length < (expectedCount * 0.7);
+
+    return DecouplingCalculationResult(
+      decouplingPercent: decouplingPct,
+      efHalf1: ef1,
+      efHalf2: ef2,
+      half1Readings: half1,
+      half2Readings: half2,
+      allReadings: readings,
+      ignoredCount: ignored,
+      hasEnoughReadings: true,
+      isEligibleForInterpretation: isEligible,
+      controlLevel: controlLevel,
+      hasFewerReadingsThanRecommended: hasFewer,
+    );
   }
 
   /// ── 4. حسابات الـ PMC (Performance Management Chart: CTL, ATL, TSB) ──
@@ -675,7 +895,7 @@ class ProgressCalcs {
         val = (w[metricKey] as num?)?.toDouble();
       }
 
-      if (val != null && val > 0) {
+      if (val != null && (metricKey == 'decoupling' ? val >= 0 : val > 0)) {
         parsed.add(_WorkoutMetricPoint(date: d, value: val));
       }
     }
@@ -751,8 +971,7 @@ class ProgressCalcs {
       }
 
       if (periodStartDate != null &&
-          (curDate.isBefore(periodStartDate) ||
-              curDate.isAtSameMomentAs(periodStartDate)) &&
+          curDate.isBefore(periodStartDate) &&
           runningBaseline != null) {
         startOfPeriodVal = runningBaseline;
       }
@@ -768,6 +987,31 @@ class ProgressCalcs {
       hasEnoughData: runningBaseline != null,
       historyPoints: history,
     );
+  }
+
+  /// جلب إعدادات خط الأساس من جدول progress_baseline_config مع القيم الافتراضية
+  static Future<Map<String, double>> loadBaselineConfig() async {
+    const defaults = {
+      'min_workouts': 3.0,
+      'max_window': 5.0,
+      'convergence_ratio': 0.03,
+      'movement_threshold': 0.01,
+    };
+    try {
+      final rows =
+          await DB.q('SELECT key, value FROM progress_baseline_config');
+      final result = Map<String, double>.from(defaults);
+      for (final r in rows) {
+        final k = r['key'] as String?;
+        final v = (r['value'] as num?)?.toDouble();
+        if (k != null && v != null) {
+          result[k] = v;
+        }
+      }
+      return result;
+    } catch (_) {
+      return defaults;
+    }
   }
 
   // ════════════════════════════════════════════════════════════════

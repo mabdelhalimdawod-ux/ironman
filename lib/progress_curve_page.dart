@@ -14,6 +14,9 @@ import 'progress_calcs.dart';
 import 'progress_curve_header.dart';
 import 'progress_panel.dart';
 import 'progress_period_filter.dart';
+import 'ef_zone_curve.dart';
+import 'decoupling_trend_curve.dart';
+import 'dynamic_watts_curve.dart';
 
 /// أنواع الشاشات والمنحنيات السبعة داخل تبويب Progress
 enum ProgressCurveType {
@@ -1013,68 +1016,84 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
         );
 
       case ProgressCurveType.efAndDecoupling:
+        final primaryId =
+            _selectedPlayerIds.isNotEmpty ? _selectedPlayerIds.first : 0;
+        final primaryData = _athleteCache[primaryId];
+        final multiWorkouts = {
+          for (final pid in _selectedPlayerIds)
+            pid: _athleteCache[pid]?.rawLogs ?? const <Map<String, Object?>>[],
+        };
+        final names = {
+          for (final pid in _selectedPlayerIds)
+            pid: _athleteCache[pid]?.name ?? _nameForId(pid),
+        };
+        final colors = {
+          for (final pid in _selectedPlayerIds)
+            pid: _athleteColors[pid] ?? Colors.cyan,
+        };
+
         return ListView(
           padding: EdgeInsets.zero,
           children: [
             ProgressCurveHeader(
-              curveName: s.efTitle,
-              period: _period,
-              trailing: IconButton(
-                icon: const Icon(Icons.info_outline_rounded,
-                    color: EngineRowingUI.neonLime, size: 18),
-                onPressed: () => _showInfoDialog(s.efTitle, s.efExplanation),
-              ),
-            ),
-            ..._buildStackedAthleteBlocks(
-              builder: (pid, data, color) => _buildAthleteLineBlock(
-                s: s,
-                athleteName: data?.name ?? _nameForId(pid),
-                athleteColor: color,
-                points: data?.efPoints ?? const [],
-                unit: 'W/bpm',
-                enableMA7: false,
-                isLoading: data == null && _loadingPlayerIds.contains(pid),
-                metricKey: 'ef',
-              ),
-            ),
-            ProgressCurveHeader(
-              curveName: s.decouplingTitle,
+              curveName: s.efDecouplingTitle,
               period: _period,
               trailing: IconButton(
                 icon: const Icon(Icons.info_outline_rounded,
                     color: EngineRowingUI.neonLime, size: 18),
                 onPressed: () =>
-                    _showInfoDialog(s.decouplingTitle, s.decouplingExplanation),
+                    _showInfoDialog(s.efDecouplingTitle, s.efDecouplingDesc),
               ),
             ),
-            ..._buildStackedAthleteBlocks(
-              builder: (pid, data, color) => _buildAthleteLineBlock(
-                s: s,
-                athleteName: data?.name ?? _nameForId(pid),
-                athleteColor: color,
-                points: data?.decouplingPoints ?? const [],
-                unit: '%',
-                enableMA7: true,
-                isLoading: data == null && _loadingPlayerIds.contains(pid),
-                metricKey: 'decoupling',
-              ),
+            EfZoneCurveWidget(
+              workouts: primaryData?.rawLogs ?? const [],
+              periodStart: _period.start,
+              periodEnd: _period.end,
+              athleteName: primaryData?.name ?? _nameForId(primaryId),
+              playerId: primaryId,
+              multiAthleteWorkouts:
+                  _selectedPlayerIds.length > 1 ? multiWorkouts : null,
+              athleteNames: names,
+              athleteColors: colors,
+            ),
+            const SizedBox(height: 14),
+            DecouplingTrendCurveWidget(
+              workouts: primaryData?.rawLogs ?? const [],
+              periodStart: _period.start,
+              periodEnd: _period.end,
+              athleteName: primaryData?.name ?? _nameForId(primaryId),
+              playerId: primaryId,
+              multiAthleteWorkouts:
+                  _selectedPlayerIds.length > 1 ? multiWorkouts : null,
+              athleteNames: names,
+              athleteColors: colors,
             ),
           ],
         );
 
       case ProgressCurveType.watts:
-        final wattsHeaderTitle = _selectedWattsZone == null
-            ? s.wattsCurveTitle
-            : '${s.wattsCurveTitle} - ${HeartRateZones.zoneDisplayName(_selectedWattsZone!, isArabic: s.isArabic)}';
+        final primaryId =
+            _selectedPlayerIds.isNotEmpty ? _selectedPlayerIds.first : 0;
+        final primaryData = _athleteCache[primaryId];
+        final multiWorkouts = {
+          for (final pid in _selectedPlayerIds)
+            pid: _athleteCache[pid]?.rawLogs ?? const <Map<String, Object?>>[],
+        };
+        final names = {
+          for (final pid in _selectedPlayerIds)
+            pid: _athleteCache[pid]?.name ?? _nameForId(pid),
+        };
+        final colors = {
+          for (final pid in _selectedPlayerIds)
+            pid: _athleteColors[pid] ?? Colors.cyan,
+        };
+
         return ListView(
           padding: EdgeInsets.zero,
           children: [
             ProgressCurveHeader(
-              curveName: wattsHeaderTitle,
+              curveName: s.dynamicWattsTitle,
               period: _period,
-              accentColor: _selectedWattsZone != null
-                  ? HeartRateZones.zoneColor(_selectedWattsZone!)
-                  : EngineRowingUI.neonLime,
               trailing: IconButton(
                 icon: const Icon(Icons.info_outline_rounded,
                     color: EngineRowingUI.neonLime, size: 18),
@@ -1082,25 +1101,16 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                     _showInfoDialog(s.wattsCurveTitle, s.wattsCurveDesc),
               ),
             ),
-            ..._buildStackedAthleteBlocks(
-              builder: (pid, data, color) {
-                final pts = data == null
-                    ? const <DateValuePoint>[]
-                    : (_selectedWattsZone == null
-                        ? data.overallWattsPoints
-                        : (data.zoneWattsPoints[_selectedWattsZone!] ??
-                            const []));
-                return _buildAthleteLineBlock(
-                  s: s,
-                  athleteName: data?.name ?? _nameForId(pid),
-                  athleteColor: color,
-                  points: pts,
-                  unit: 'W',
-                  enableMA7: true,
-                  isLoading: data == null && _loadingPlayerIds.contains(pid),
-                  metricKey: 'watts',
-                );
-              },
+            DynamicWattsCurveWidget(
+              workouts: primaryData?.rawLogs ?? const [],
+              periodStart: _period.start,
+              periodEnd: _period.end,
+              athleteName: primaryData?.name ?? _nameForId(primaryId),
+              playerId: primaryId,
+              multiAthleteWorkouts:
+                  _selectedPlayerIds.length > 1 ? multiWorkouts : null,
+              athleteNames: names,
+              athleteColors: colors,
             ),
           ],
         );

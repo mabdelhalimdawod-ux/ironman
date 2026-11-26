@@ -447,16 +447,20 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
               size: 64, color: EngineRowingUI.labelSlate),
           const SizedBox(height: 12),
           Text(
-            'لا توجد تمارين مجدولة ليوم $dayName (يوم راحة)',
+            s.isArabic
+                ? 'لا توجد تمارين مجدولة ليوم $dayName (يوم راحة)'
+                : 'No workouts scheduled for $dayName (Rest Day)',
             style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: EngineRowingUI.textWhite),
           ),
           const SizedBox(height: 6),
-          const Text(
-            'يمكنك إضافة حتى 6 خانات تمرين لهذا اليوم',
-            style: TextStyle(fontSize: 13, color: EngineRowingUI.labelSlate),
+          Text(
+            s.isArabic
+                ? 'يمكنك إضافة حتى 6 خانات تمرين لهذا اليوم'
+                : 'You can add up to 6 workout slots for this day',
+            style: const TextStyle(fontSize: 13, color: EngineRowingUI.labelSlate),
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
@@ -527,193 +531,208 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
             const Divider(height: 16, color: EngineRowingUI.bgGridLine),
 
             // الحقول الثلاثة الإلزامية: نوع التمرين، ميعاد التمرين بالساعة، والزون المستهدف
-            Row(
-              children: [
-                // 1. نوع التمرين (إرج، ماء، جري، مرونة، قوة، لياقة)
-                Expanded(
-                  flex: 3,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        s.workoutType,
-                        style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: EngineRowingUI.labelSlate),
-                      ),
-                      const SizedBox(height: 4),
-                      DropdownButtonFormField<String>(
-                        initialValue:
-                            ProgramService.workoutKinds.contains(slot.kind)
-                                ? slot.kind
-                                : 'إرج',
-                        dropdownColor: EngineRowingUI.equationCardFill,
-                        style: const TextStyle(
-                            color: EngineRowingUI.textWhite, fontSize: 14),
-                        decoration: InputDecoration(
-                          isDense: true,
-                          filled: true,
-                          fillColor: EngineRowingUI.equationCardFill,
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 10),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                                color: EngineRowingUI.bgGridLine),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                                color: EngineRowingUI.bgGridLine),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                                color: EngineRowingUI.neonLime),
-                          ),
-                        ),
-                        items: ProgramService.workoutKinds.map((k) {
-                          return DropdownMenuItem(value: k, child: Text(k));
-                        }).toList(),
-                        onChanged: (val) {
-                          if (val != null) _updateSlotKind(index, val);
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isNarrow = constraints.maxWidth < 400;
 
-                // 2. ميعاد التمرين بالساعة
-                Expanded(
-                  flex: 2,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        s.workoutTime,
-                        style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: EngineRowingUI.labelSlate),
-                      ),
-                      const SizedBox(height: 4),
-                      InkWell(
-                        onTap: () => _pickTime(index),
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 10),
-                          decoration: BoxDecoration(
-                            border:
-                                Border.all(color: EngineRowingUI.bgGridLine),
-                            borderRadius: BorderRadius.circular(8),
-                            color: EngineRowingUI.equationCardFill,
-                          ),
-                          child: Directionality(
-                            textDirection: TextDirection.ltr,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  RowingNumberFormatter.toEnglishDigits(
-                                      slot.time),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                    color: EngineRowingUI.textWhite,
-                                    fontFeatures: [
-                                      FontFeature.tabularFigures()
-                                    ],
-                                  ),
-                                ),
-                                const Icon(Icons.access_time,
-                                    size: 18, color: EngineRowingUI.neonLime),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-
-                // 3. الزون المستهدف (Z1 إلى Z5)
-                Expanded(
-                  flex: 2,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        s.selectZone,
-                        style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: EngineRowingUI.labelSlate),
-                      ),
-                      const SizedBox(height: 4),
-                      DropdownButtonFormField<String>(
-                        initialValue:
-                            ProgramService.targetZones.contains(slot.zone)
-                                ? slot.zone
-                                : 'Z2',
-                        dropdownColor: EngineRowingUI.equationCardFill,
-                        style: const TextStyle(
-                          color: EngineRowingUI.textWhite,
-                          fontSize: 14,
+                final kindField = Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      s.workoutType,
+                      style: const TextStyle(
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
+                          color: EngineRowingUI.labelSlate),
+                    ),
+                    const SizedBox(height: 4),
+                    DropdownButtonFormField<String>(
+                      initialValue:
+                          ProgramService.workoutKinds.contains(slot.kind)
+                              ? slot.kind
+                              : 'إرج',
+                      dropdownColor: EngineRowingUI.equationCardFill,
+                      style: const TextStyle(
+                          color: EngineRowingUI.textWhite, fontSize: 14),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        filled: true,
+                        fillColor: EngineRowingUI.equationCardFill,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 10),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(
+                              color: EngineRowingUI.bgGridLine),
                         ),
-                        decoration: InputDecoration(
-                          isDense: true,
-                          filled: true,
-                          fillColor: EngineRowingUI.equationCardFill,
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 10),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                                color: EngineRowingUI.bgGridLine),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                                color: EngineRowingUI.bgGridLine),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                                color: EngineRowingUI.neonLime),
-                          ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(
+                              color: EngineRowingUI.bgGridLine),
                         ),
-                        items: ProgramService.targetZones.map((z) {
-                          final color = EngineRowingUI.zoneColors[z] ??
-                              EngineRowingUI.neonLime;
-                          return DropdownMenuItem(
-                            value: z,
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                      color: color, shape: BoxShape.circle),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(
+                              color: EngineRowingUI.neonLime),
+                        ),
+                      ),
+                      items: ProgramService.workoutKinds.map((k) {
+                        return DropdownMenuItem(value: k, child: Text(k));
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) _updateSlotKind(index, val);
+                      },
+                    ),
+                  ],
+                );
+
+                final timeField = Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      s.workoutTime,
+                      style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: EngineRowingUI.labelSlate),
+                    ),
+                    const SizedBox(height: 4),
+                    InkWell(
+                      onTap: () => _pickTime(index),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 10),
+                        decoration: BoxDecoration(
+                          border:
+                              Border.all(color: EngineRowingUI.bgGridLine),
+                          borderRadius: BorderRadius.circular(8),
+                          color: EngineRowingUI.equationCardFill,
+                        ),
+                        child: Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                RowingNumberFormatter.toEnglishDigits(
+                                    slot.time),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: EngineRowingUI.textWhite,
+                                  fontFeatures: [
+                                    FontFeature.tabularFigures()
+                                  ],
                                 ),
-                                const SizedBox(width: 6),
-                                Text(z),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (val) {
-                          if (val != null) _updateSlotZone(index, val);
-                        },
+                              ),
+                              const Icon(Icons.access_time,
+                                  size: 18, color: EngineRowingUI.neonLime),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+
+                final zoneField = Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      s.selectZone,
+                      style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: EngineRowingUI.labelSlate),
+                    ),
+                    const SizedBox(height: 4),
+                    DropdownButtonFormField<String>(
+                      initialValue:
+                          ProgramService.targetZones.contains(slot.zone)
+                              ? slot.zone
+                              : 'Z2',
+                      dropdownColor: EngineRowingUI.equationCardFill,
+                      style: const TextStyle(
+                        color: EngineRowingUI.textWhite,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        filled: true,
+                        fillColor: EngineRowingUI.equationCardFill,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 10),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(
+                              color: EngineRowingUI.bgGridLine),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(
+                              color: EngineRowingUI.bgGridLine),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(
+                              color: EngineRowingUI.neonLime),
+                        ),
+                      ),
+                      items: ProgramService.targetZones.map((z) {
+                        final color = EngineRowingUI.zoneColors[z] ??
+                            EngineRowingUI.neonLime;
+                        return DropdownMenuItem(
+                          value: z,
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                    color: color, shape: BoxShape.circle),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(z),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) _updateSlotZone(index, val);
+                      },
+                    ),
+                  ],
+                );
+
+                if (isNarrow) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      kindField,
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(child: timeField),
+                          const SizedBox(width: 10),
+                          Expanded(child: zoneField),
+                        ],
                       ),
                     ],
-                  ),
-                ),
-              ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(flex: 3, child: kindField),
+                    const SizedBox(width: 10),
+                    Expanded(flex: 2, child: timeField),
+                    const SizedBox(width: 10),
+                    Expanded(flex: 2, child: zoneField),
+                  ],
+                );
+              },
             ),
           ],
         ),

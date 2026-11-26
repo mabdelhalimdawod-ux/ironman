@@ -9,8 +9,12 @@ import 'package:rowing_app/db.dart';
 import 'package:rowing_app/program_service.dart';
 import 'package:rowing_app/dashboard_tab.dart';
 import 'package:rowing_app/program_tab.dart';
+import 'package:rowing_app/cycle_weekly_cycles_page.dart';
+import 'package:rowing_app/cycle_template_page.dart';
 
 void main() {
+  late ProgramCycle testCycle;
+
   setUpAll(() async {
     SharedPreferences.setMockInitialValues({});
     await AppLanguage.instance.init();
@@ -25,6 +29,8 @@ void main() {
     await AuthService.ensureTables();
     await ProgramService.ensureTables();
     await ProgramService.addProgramCycle();
+    final cycles = await ProgramService.getAllProgramCycles();
+    testCycle = cycles.first;
 
     final today = dstr(DateTime.now());
     await DB.put('sessions', {
@@ -159,6 +165,72 @@ void main() {
             );
 
             // فحص عدم حدوث أي خطأ overflow
+            expect(tester.takeException(), isNull);
+          },
+        );
+      }
+    }
+  });
+
+  group('CycleWeeklyCyclesPage Multi-Size & Language Overflow Tests', () {
+    for (final size in testSizes) {
+      for (final loc in locales) {
+        testWidgets(
+          'CycleWeeklyCyclesPage renders cleanly on ${size.width.toInt()}x${size.height.toInt()} ${loc.languageCode}',
+          (tester) async {
+            tester.view.physicalSize = size;
+            tester.view.devicePixelRatio = 1.0;
+            addTearDown(tester.view.resetPhysicalSize);
+            addTearDown(tester.view.resetDevicePixelRatio);
+
+            await AppLanguage.instance.setLocale(loc);
+
+            await tester.pumpWidget(
+              MaterialApp(
+                locale: loc,
+                home: Scaffold(
+                  body: CycleWeeklyCyclesPage(
+                    cycle: testCycle,
+                    onSaved: () {},
+                  ),
+                ),
+              ),
+            );
+
+            await pumpUntilLoaded(tester);
+            expect(tester.takeException(), isNull);
+          },
+        );
+      }
+    }
+  });
+
+  group('CycleTemplatePage Multi-Size & Language Overflow Tests', () {
+    for (final size in testSizes) {
+      for (final loc in locales) {
+        testWidgets(
+          'CycleTemplatePage renders cleanly on ${size.width.toInt()}x${size.height.toInt()} ${loc.languageCode}',
+          (tester) async {
+            tester.view.physicalSize = size;
+            tester.view.devicePixelRatio = 1.0;
+            addTearDown(tester.view.resetPhysicalSize);
+            addTearDown(tester.view.resetDevicePixelRatio);
+
+            await AppLanguage.instance.setLocale(loc);
+
+            await tester.pumpWidget(
+              MaterialApp(
+                locale: loc,
+                home: Scaffold(
+                  body: CycleTemplatePage(
+                    cycle: {'id': testCycle.id, 'name': testCycle.name},
+                    onSaved: () {},
+                  ),
+                ),
+              ),
+            );
+
+            await pumpUntilLoaded(tester);
             expect(tester.takeException(), isNull);
           },
         );

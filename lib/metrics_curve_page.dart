@@ -7,6 +7,9 @@ import 'db.dart';
 import 'app_strings.dart';
 import 'heart_rate_zones.dart';
 import 'power_calculations.dart';
+import 'ef_zone_curve.dart';
+import 'decoupling_trend_curve.dart';
+import 'dynamic_watts_curve.dart';
 
 // ==================== ألوان التصميم الفاخرة (الهوية الجديدة المعتمدة) ====================
 const Color _navyDeep = Color(0xFF0A1633);
@@ -17,14 +20,13 @@ const Color _cardBorder = Color(0xFF11224A);
 const Color _gold = Color(0xFFB8F229);
 const Color _cyan = Color(0xFF2979FF);
 const Color _emerald = Color(0xFFB8F229);
-const Color _purple = Color(0xFFE65100);
 const Color _coral = Color(0xFFFF5252);
 
 /// الألوان المعتمدة للزونات السبعة من الـ Theme
 Map<String, Color> get _zoneColors => {
-  for (final z in HeartRateZones.orderedZones)
-    z: HeartRateZones.zoneColor(z),
-};
+      for (final z in HeartRateZones.orderedZones)
+        z: HeartRateZones.zoneColor(z),
+    };
 
 /// المسميات المعتمدة للزونات السبعة بالإنجليزية
 const Map<String, String> _zoneLabelsEn = {
@@ -90,7 +92,7 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
   DateTimeRange? _customDateRange;
 
   // سجلات التمارين المحملة والمفلترة
-  List<Map<String, dynamic>> _rawLogs = [];
+  List<Map<String, Object?>> _rawLogs = [];
 
   // بيانات منحنى الزونات السبعة
   // Map<zoneKey, Map<dateString, averageWatts>>
@@ -261,16 +263,26 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
                       hr: hr, mhr: rowMhr, rhr: rowRhr)
                   : null;
 
-      final item = <String, dynamic>{
+      final kind = (row['kind'] as String?)?.isNotEmpty == true
+          ? row['kind'] as String
+          : 'Erg';
+      final rawDecoupling = row['decoupling'] ?? decoupling;
+
+      final item = <String, Object?>{
         'date': date,
         'idx': row['idx'],
         'watts': watts,
+        'avg_power': watts,
         'hr': hr,
         'rhr': rowRhr,
         'mhr': rowMhr,
         'ef': ef,
-        'decoupling': decoupling,
+        'decoupling': rawDecoupling,
         'zone': assignedZone,
+        'kind': kind,
+        'duration_minutes': (row['duration_minutes'] as num?)?.toDouble() ??
+            (row['duration'] as num?)?.toDouble() ??
+            0.0,
         'photo_path': row['photo_path'],
         'player_name': row['player_name'],
       };
@@ -1315,57 +1327,22 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
   // 1. منحنى معامل الكفاءة (Efficiency Factor Curve / EF Curve)
   // =========================================================================
   Widget _buildEFCurveTab(AppStrings s) {
-    final validLogs = _rawLogs
-        .where((l) => l['ef'] != null && (l['ef'] as double) > 0)
-        .toList();
-    final spots = <FlSpot>[];
-    double totalEf = 0;
-    double maxEf = 0;
-
-    for (int i = 0; i < validLogs.length; i++) {
-      final ef = validLogs[i]['ef'] as double;
-      spots.add(FlSpot(i.toDouble(), ef));
-      totalEf += ef;
-      if (ef > maxEf) maxEf = ef;
-    }
-    final avgEf = spots.isNotEmpty ? totalEf / spots.length : 0.0;
+    final range = _getDateRange();
+    final pId =
+        _selectedPlayer != null ? (_selectedPlayer!['id'] as int? ?? 0) : 0;
+    final pName = _selectedPlayer != null
+        ? (_selectedPlayer!['name'] as String? ?? '')
+        : '';
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       children: [
-        _buildInfoBanner(
-          icon: Icons.speed_rounded,
-          accentColor: _cyan,
-          title: s.curveEF,
-          description: s.efMetricDesc,
-          extraTag: 'EF = Watts / HR',
-        ),
-        const SizedBox(height: 14),
-        _buildStatsSummaryRow(
-          items: [
-            _StatCardItem(
-                label: s.currentAvgEF,
-                value: avgEf > 0 ? avgEf.toStringAsFixed(2) : '-',
-                color: _cyan),
-            _StatCardItem(
-                label: s.isArabic ? 'أعلى EF' : 'Peak EF',
-                value: maxEf > 0 ? maxEf.toStringAsFixed(2) : '-',
-                color: _emerald),
-            _StatCardItem(
-                label: s.isArabic ? 'عدد التمارين' : 'Workouts',
-                value: spots.length.toString(),
-                color: _gold),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _buildStandardChartCard(
-          title: s.efTrendTitle,
-          unit: 'W/bpm',
-          spots: spots,
-          primaryColor: _cyan,
-          refLine: avgEf > 0 ? avgEf : null,
-          refLineLabel: '${s.baselineEF}: ${avgEf.toStringAsFixed(2)}',
-          dates: validLogs.map((l) => l['date'] as String).toList(),
+        EfZoneCurveWidget(
+          workouts: _rawLogs,
+          periodStart: range.start,
+          periodEnd: range.end,
+          athleteName: pName,
+          playerId: pId,
         ),
       ],
     );
@@ -1375,60 +1352,22 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
   // 2. منحنى القدرة (Watts Curve / منحنى الواط)
   // =========================================================================
   Widget _buildWattsCurveTab(AppStrings s) {
-    final validLogs = _rawLogs
-        .where((l) => l['watts'] != null && (l['watts'] as double) > 0)
-        .toList();
-    final spots = <FlSpot>[];
-    double totalWatts = 0;
-    double maxWatts = 0;
-
-    for (int i = 0; i < validLogs.length; i++) {
-      final w = validLogs[i]['watts'] as double;
-      spots.add(FlSpot(i.toDouble(), w));
-      totalWatts += w;
-      if (w > maxWatts) maxWatts = w;
-    }
-    final avgWatts = spots.isNotEmpty ? totalWatts / spots.length : 0.0;
+    final range = _getDateRange();
+    final pId =
+        _selectedPlayer != null ? (_selectedPlayer!['id'] as int? ?? 0) : 0;
+    final pName = _selectedPlayer != null
+        ? (_selectedPlayer!['name'] as String? ?? '')
+        : '';
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       children: [
-        _buildInfoBanner(
-          icon: Icons.bolt_rounded,
-          accentColor: _gold,
-          title: s.curveWatts,
-          description: s.isArabic
-              ? 'متابعة تطور القوة والواط الميكانيكي المستمر عبر التمارين والأزمنة'
-              : 'Monitor mechanical power output and sustained wattage across workouts',
-          extraTag: 'Watts & Pace 500m',
-        ),
-        const SizedBox(height: 14),
-        _buildStatsSummaryRow(
-          items: [
-            _StatCardItem(
-                label: s.avgWattsLabel,
-                value: avgWatts > 0 ? '${avgWatts.round()} W' : '-',
-                color: _gold),
-            _StatCardItem(
-                label: s.maxWattsLabel,
-                value: maxWatts > 0 ? '${maxWatts.round()} W' : '-',
-                color: _coral),
-            _StatCardItem(
-              label: s.isArabic ? 'معادل Split' : 'Equiv Split',
-              value: avgWatts > 0 ? formatSplit(wattsToSplit(avgWatts)) : '-',
-              color: _cyan,
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _buildStandardChartCard(
-          title: s.isArabic ? 'منحنى متوسط الواط' : 'Average Watts Curve',
-          unit: 'W',
-          spots: spots,
-          primaryColor: _gold,
-          refLine: avgWatts > 0 ? avgWatts : null,
-          refLineLabel: 'المتوسط: ${avgWatts.round()} W',
-          dates: validLogs.map((l) => l['date'] as String).toList(),
+        DynamicWattsCurveWidget(
+          workouts: _rawLogs,
+          periodStart: range.start,
+          periodEnd: range.end,
+          athleteName: pName,
+          playerId: pId,
         ),
       ],
     );
@@ -1438,36 +1377,22 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
   // 3. منحنى التفكك القلبي (Decoupling Curve)
   // =========================================================================
   Widget _buildDecouplingCurveTab(AppStrings s) {
-    final validLogs = _rawLogs.where((l) => l['decoupling'] != null).toList();
-    final spots = <FlSpot>[];
-    for (int i = 0; i < validLogs.length; i++) {
-      final d = validLogs[i]['decoupling'] as double;
-      spots.add(FlSpot(i.toDouble(), d));
-    }
+    final range = _getDateRange();
+    final pId =
+        _selectedPlayer != null ? (_selectedPlayer!['id'] as int? ?? 0) : 0;
+    final pName = _selectedPlayer != null
+        ? (_selectedPlayer!['name'] as String? ?? '')
+        : '';
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       children: [
-        _buildInfoBanner(
-          icon: Icons.trending_down_rounded,
-          accentColor: _purple,
-          title: s.curveDecoupling,
-          description: s.isArabic
-              ? 'مقياس الانجراف القلبي (Pw:HR Drift). القيم الأقل من 5% تدل على ثبات هوائي ممتاز.'
-              : 'Aerobic decoupling (Pw:HR Drift). Values below 5% indicate elite aerobic stamina.',
-          extraTag: 'Target: < 5.0%',
-        ),
-        const SizedBox(height: 14),
-        _buildStandardChartCard(
-          title: s.isArabic
-              ? 'منحنى التفكك والانجراف القلبي'
-              : 'Cardiac Decoupling Drift Curve',
-          unit: '%',
-          spots: spots,
-          primaryColor: _purple,
-          refLine: 5.0,
-          refLineLabel: s.isArabic ? 'عتبة 5% (حد الاستقرار)' : 'Threshold 5%',
-          dates: validLogs.map((l) => l['date'] as String).toList(),
+        DecouplingTrendCurveWidget(
+          workouts: _rawLogs,
+          periodStart: range.start,
+          periodEnd: range.end,
+          athleteName: pName,
+          playerId: pId,
         ),
       ],
     );

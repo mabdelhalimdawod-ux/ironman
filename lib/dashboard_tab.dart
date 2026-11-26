@@ -415,7 +415,8 @@ class _DashboardTabState extends State<DashboardTab> {
                 icon: const Icon(Icons.close_rounded, size: 16),
                 style: TextButton.styleFrom(
                   foregroundColor: Colors.redAccent,
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 ),
                 onPressed: () async {
                   final reqId =
@@ -733,14 +734,16 @@ class _DashboardTabState extends State<DashboardTab> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: EngineRowingUI.neonLime,
                 foregroundColor: EngineRowingUI.bgNavy,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: () => _openCoachRequestsDialog(s, user),
               label: Text(
                 s.isArabic ? 'مراجعة الطلبات' : 'Review Requests',
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -1271,7 +1274,7 @@ class _DashboardTabState extends State<DashboardTab> {
                             Directionality(
                               textDirection: TextDirection.ltr,
                               child: Text(
-                                'Date: $formattedDate',
+                                '${s.testDate}: $formattedDate',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   color: EngineRowingUI.labelSlate,

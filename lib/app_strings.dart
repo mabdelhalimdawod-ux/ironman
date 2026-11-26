@@ -1022,6 +1022,68 @@ class AppStrings {
   String get tsbBarLabel => isArabic ? 'TSB (الجاهزية)' : 'TSB (Form)';
   String get todayLabel => isArabic ? 'النهارده' : 'Today';
 
+  // ==================== Progress Dafaa 3: EF, Decoupling & Dynamic Watt ====================
+  String get selectWorkoutTypeAndZone => isArabic
+      ? 'اختر نوع التمرين ومنطقة التدريب'
+      : 'Select workout type and zone';
+  String get selectZonePrompt => isArabic
+      ? 'اختر منطقة التدريب'
+      : 'Select a zone';
+  String get selectWorkoutTypePrompt => isArabic
+      ? 'اختر نوع التمرين'
+      : 'Select workout type';
+  String get decouplingExcellent =>
+      isArabic ? 'سيطرة ممتازة' : 'Excellent control';
+  String get decouplingModerate =>
+      isArabic ? 'متوسط' : 'Moderate';
+  String get decouplingHigh =>
+      isArabic ? 'انحراف مرتفع' : 'High decoupling';
+  String get notEligibleForInterpretation => isArabic
+      ? 'غير مؤهل للتفسير (يتطلب منطقة 1 أو 2 ومدة 60+ د)'
+      : 'Not eligible for interpretation (Requires Z1/Z2 & 60+ min)';
+  String get notEligibleBadge => isArabic
+      ? 'غير مؤهل للتفسير'
+      : 'Not eligible';
+  String get notEnoughReadingsBothHalves => isArabic
+      ? 'مفيش قراءات كفاية في النصفين'
+      : 'Not enough readings in both halves';
+  String ignoredReadingsNotice(int count) => isArabic
+      ? 'تم تجاهل $count قراءة'
+      : 'Ignored $count reading(s)';
+  String get showBaselineAction =>
+      isArabic ? 'إظهار خط الأساس' : 'Show baseline';
+  String get hideBaselineAction =>
+      isArabic ? 'إخفاء خط الأساس' : 'Hide baseline';
+  String get noBaselineYetNeeds3Workouts => isArabic
+      ? 'لا يوجد أساس بعد (محتاج 3 تمرينات في الزون)'
+      : 'No baseline yet (requires 3 workouts in zone)';
+  String get fewerReadingsThanExpectedNotice => isArabic
+      ? 'عدد القراءات أقل من المتوقع لمدة هذا التمرين'
+      : 'Fewer readings than recommended for this duration';
+  String get firstHalfLabel => isArabic ? 'النصف الأول' : 'First Half';
+  String get secondHalfLabel => isArabic ? 'النصف الثاني' : 'Second Half';
+  String get selectWorkoutPrompt =>
+      isArabic ? 'اختر التمرين' : 'Select workout';
+  String get workoutDecouplingTrendTitle => isArabic
+      ? 'منحنى اتجاه التفكك القلبي'
+      : 'Decoupling Trend Curve';
+  String get actualEfForWorkoutTitle => isArabic
+      ? 'معامل الكفاءة (EF) الفعلي للتمرين'
+      : 'Actual Workout EF';
+  String get weeklyAverageEfTitle => isArabic
+      ? 'متوسط EF أسبوعي'
+      : 'Weekly Average EF';
+  String get dynamicWattsTitle => isArabic
+      ? 'منحنى الواط الديناميكي'
+      : 'Dynamic Watt Curve';
+  String get allZonesLabel => isArabic ? 'كل المناطق' : 'All Zones';
+  String get allWorkoutKindsLabel =>
+      isArabic ? 'كل الأنواع' : 'All Types';
+  String get durationMinutesLabel =>
+      isArabic ? 'المدة بالدقائق' : 'Duration (min)';
+  String get workoutDateLabel =>
+      isArabic ? 'تاريخ التمرين' : 'Workout Date';
+
   // المرحلة (ج) - تمرين اليوم وتخصيص المدرب والأرشيف
   String get workout => isArabic ? 'تمرين' : 'Workout';
   String get todayWorkout => isArabic ? 'تمرين اليوم' : "Today's Workout";
