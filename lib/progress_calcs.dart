@@ -815,7 +815,7 @@ class ProgressCalcs {
     'pmc': ['ctl', 'atl', 'tsb', 'watts', 'time'],
     'matrix': ['watts', 'hr', 'zone', 'time'],
     'zone_hours': ['time', 'hr', 'zone'],
-    'cp_tests': ['watts', 'time', 'split'],
+    'cp_tests': ['cp', 'w_prime', 'bi', 'time', 'watts'],
   };
 
   /// استرجاع الاسم الكامل غير المختصر لشارة المدخل من AppStrings
@@ -841,6 +841,12 @@ class ProgressCalcs {
         return s.chipWeight;
       case 'eupnea':
         return s.chipEupnea;
+      case 'cp':
+        return s.chipCP;
+      case 'w_prime':
+        return s.chipWPrime;
+      case 'bi':
+        return s.chipBalanceIndex;
       case 'ctl':
         return s.chipCTL;
       case 'atl':
@@ -1322,6 +1328,190 @@ class ProgressCalcs {
       }
     });
   }
+
+  // ════════════════════════════════════════════════════════════════
+  // ── 10. حسابات الاستشفاء (Recovery Calculations: SWC & RHR Alert) ──
+  // ════════════════════════════════════════════════════════════════
+  /// الثابت المعتمد لتنبيه ارتفاع نبض الراحة (5 نبضات عن المتوسط المتحرك)
+  static const double elevatedRhrThresholdBpm = 5.0;
+
+  /// فحص تنبيه ارتفاع نبض الراحة الصباحي:
+  /// إذا كان RHR لليوم أعلى من المتوسط المتحرك بـ 5 نبضات أو أكثر
+  static bool isRhrElevated({
+    required double? todayRhr,
+    required double? ma7Rhr,
+    double thresholdBpm = elevatedRhrThresholdBpm,
+  }) {
+    if (todayRhr == null || ma7Rhr == null) return false;
+    return todayRhr >= (ma7Rhr + thresholdBpm);
+  }
+
+  /// حساب حزام التغير الأدنى ذي المعنى (SWC) لـ HRV:
+  /// SWC = المتوسط المتحرك ± (0.5 × الانحراف المعياري لآخر 28 يوماً، أو آخر 7 أيام لو أقل)
+  static ({double? upper, double? lower, double? stdDev}) calcHrvSwcBand({
+    required DateTime targetDate,
+    required List<DateValuePoint> hrvPoints,
+    required double? ma7Value,
+    int maxWindowDays = 28,
+    int minWindowDays = 7,
+  }) {
+    if (ma7Value == null) {
+      return (upper: null, lower: null, stdDev: null);
+    }
+
+    final targetMidnight =
+        DateTime(targetDate.year, targetDate.month, targetDate.day);
+    final start28 = targetMidnight.subtract(Duration(days: maxWindowDays - 1));
+    final start7 = targetMidnight.subtract(Duration(days: minWindowDays - 1));
+
+    final values28 = <double>[];
+    final values7 = <double>[];
+
+    for (final pt in hrvPoints) {
+      if (pt.value == null || pt.value! <= 0) continue;
+      final d = DateTime(pt.date.year, pt.date.month, pt.date.day);
+      if (!d.isAfter(targetMidnight)) {
+        if (!d.isBefore(start28)) {
+          values28.add(pt.value!);
+        }
+        if (!d.isBefore(start7)) {
+          values7.add(pt.value!);
+        }
+      }
+    }
+
+    // شرط القراءات الكافية (3 قراءات على الأقل في نافذة 28 أو 7 أيام)
+    final window = values28.length >= 3
+        ? values28
+        : (values7.length >= 3 ? values7 : const <double>[]);
+
+    if (window.length < 3) {
+      return (upper: null, lower: null, stdDev: null);
+    }
+
+    final mean = window.reduce((a, b) => a + b) / window.length;
+    double sumSqDiff = 0.0;
+    for (final v in window) {
+      final diff = v - mean;
+      sumSqDiff += diff * diff;
+    }
+    final sampleVariance = sumSqDiff / (window.length - 1);
+    final stdDev = sqrt(sampleVariance);
+
+    final halfStdDev = 0.5 * stdDev;
+    final upper = double.parse((ma7Value + halfStdDev).toStringAsFixed(1));
+    final lower =
+        double.parse(max(0.0, ma7Value - halfStdDev).toStringAsFixed(1));
+
+    return (
+      upper: upper,
+      lower: lower,
+      stdDev: double.parse(stdDev.toStringAsFixed(1)),
+    );
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // ── 11. حسابات القدرة الحرجة (Critical Power: CP, W', Balance Index) ──
+  // ════════════════════════════════════════════════════════════════
+  /// المسافات الافتراضية الأربعة المعتمدة من كوتش
+  static const List<double> defaultCpDistances = [
+    500.0,
+    750.0,
+    1500.0,
+    3500.0,
+  ];
+
+  /// حساب الواط من المسافة بالمتر والزمن بالثواني:
+  /// watts = 2.80 ÷ (timeSec ÷ distanceM)^3
+  static double wattsFromTime(double distanceM, double timeSec) {
+    if (distanceM <= 0 || timeSec <= 0) return 0.0;
+    final pace = timeSec / distanceM; // ثانية لكل متر
+    if (pace <= 0) return 0.0;
+    final w = 2.80 / (pace * pace * pace);
+    return double.parse(w.toStringAsFixed(1));
+  }
+
+  /// حساب الشغل الكلي بالجول = الواط × الزمن بالثواني
+  static double workJoules(double watts, double timeSec) => watts * timeSec;
+
+  /// حساب مؤشر التوازن Balance Index (BI) المعتمد من كوتش:
+  /// BI = W' بالجول ÷ CP بالواط (الناتج بالثواني المتاحة للعمل فوق الـ CP)
+  static double balanceIndex(double wPrimeJoules, double cpWatts) {
+    if (cpWatts <= 0) return 0.0;
+    final bi = wPrimeJoules / cpWatts;
+    return double.parse(bi.toStringAsFixed(1));
+  }
+
+  /// تصنيف ميل مؤشر التوازن (BI) بمقارنة اختبار اللاعب بمتوسط اختباراته في الفترة
+  /// إذا كان أعلى من المتوسط = مايل للانفجارية، أقل = مايل للتحمل، متقارب (ضمن 2%) = متوازن
+  static BalanceIndexLeaning classifyBalanceIndex({
+    required double bi,
+    required double? avgBi,
+    double thresholdRatio = 0.02,
+  }) {
+    if (avgBi == null || avgBi <= 0) return BalanceIndexLeaning.unclassified;
+    final diff = (bi - avgBi) / avgBi;
+    if (diff > thresholdRatio) return BalanceIndexLeaning.explosive;
+    if (diff < -thresholdRatio) return BalanceIndexLeaning.endurance;
+    return BalanceIndexLeaning.balanced;
+  }
+
+  /// حساب CP و W' و BI من قائمة مسافات وأزمنة
+  /// يشترط 3 مسافات صالحة على الأقل، ويرجع null إذا كانت أقل من 3 أو النتائج غير متسقة
+  static CpCalculationResult? calcCpAndWPrime(
+    List<({double distanceM, double timeSec})> testDistances,
+  ) {
+    // تصفية المدخلات الصالحة (المسافة > 0 والزمن > 0)
+    final valid =
+        testDistances.where((t) => t.distanceM > 0 && t.timeSec > 0).toList();
+
+    if (valid.length < 3) {
+      return null;
+    }
+
+    // حساب النقاط (الزمن t والشغل w بالجول)
+    final points = valid.map((t) {
+      final w = wattsFromTime(t.distanceM, t.timeSec);
+      final work = w * t.timeSec;
+      return (t: t.timeSec, work: work, watts: w, distance: t.distanceM);
+    }).toList();
+
+    // انحدار خطي بالمربعات الصغرى: Work = CP * t + W'
+    // Y = Work, X = t
+    final n = points.length.toDouble();
+    double sumT = 0.0;
+    double sumWork = 0.0;
+    double sumTWork = 0.0;
+    double sumT2 = 0.0;
+
+    for (final p in points) {
+      sumT += p.t;
+      sumWork += p.work;
+      sumTWork += p.t * p.work;
+      sumT2 += p.t * p.t;
+    }
+
+    final denom = n * sumT2 - (sumT * sumT);
+    if (denom <= 0) return null;
+
+    final cp = (n * sumTWork - sumT * sumWork) / denom;
+    final wPrime = (sumWork - cp * sumT) / n;
+
+    // اشتراط CP > 0 و W' > 0
+    if (cp <= 0 || wPrime <= 0) {
+      return null;
+    }
+
+    final bi = balanceIndex(wPrime, cp);
+
+    return CpCalculationResult(
+      cpWatts: double.parse(cp.toStringAsFixed(1)),
+      wPrimeJoules: double.parse(wPrime.toStringAsFixed(1)),
+      wPrimeKiloJoules: double.parse((wPrime / 1000.0).toStringAsFixed(2)),
+      balanceIndexSeconds: bi,
+      validPointsCount: valid.length,
+    );
+  }
 }
 
 /// نتيجة مزامنة جدول الكاش daily_load للاعب
@@ -1560,6 +1750,31 @@ class ProgressLoadCache {
       recomputedFromDate: dirtyStartDate,
     );
   }
+}
+
+/// تصنيف ميل مؤشر التوازن
+enum BalanceIndexLeaning {
+  explosive,
+  endurance,
+  balanced,
+  unclassified,
+}
+
+/// نتيجة حساب CP و W' و BI
+class CpCalculationResult {
+  final double cpWatts;
+  final double wPrimeJoules;
+  final double wPrimeKiloJoules;
+  final double balanceIndexSeconds;
+  final int validPointsCount;
+
+  const CpCalculationResult({
+    required this.cpWatts,
+    required this.wPrimeJoules,
+    required this.wPrimeKiloJoules,
+    required this.balanceIndexSeconds,
+    required this.validPointsCount,
+  });
 }
 
 class _WorkoutMetricPoint {

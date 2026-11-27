@@ -810,6 +810,9 @@ class AppStrings {
   String get estimatedCurveOnly =>
       isArabic ? 'منحنى تقديري فقط' : 'Estimated curve only';
   String get estimatedCurveNotice => estimatedCurveOnly;
+  String get estimationNotice => estimatedCurveOnly;
+  String get insufficientData => notEnoughData;
+  String get ma7Label => movingAverage7Legend;
   String get zoneBaselinesTitle => isArabic
       ? 'مراقبة مناطق التدريب وخط الأساس (Personal Best)'
       : 'Zone Baselines & Progress Tracking';
@@ -829,11 +832,11 @@ class AppStrings {
       ? 'مراقبة جودة واستقرار النوم اليومي والتغير في وزن الجسم.'
       : 'Daily sleep duration and body weight tracking.';
   String get eupneaTitle => isArabic
-      ? 'معدل التنفس أثناء الراحة (Eupnea)'
-      : 'Resting Breathing Rate (Eupnea)';
+      ? 'نَفَس الراحة (Eupnea)'
+      : 'Resting Breathing (Eupnea)';
   String get eupneaExplanation => isArabic
-      ? 'معدل التنفس الطبيعي في الدقيقة؛ مؤشر دقيق للجهد الفسيولوجي والاستشفاء.'
-      : 'Resting respiratory rate in breaths per minute.';
+      ? 'زمن أقل لحد ما ترجع لنفس الراحة = استشفاء تنفسي أسرع، وبيدل تقريبيًا على قوة السعة الهوائية.'
+      : 'Less time to return to resting breathing = faster respiratory recovery, and indicates approximate aerobic capacity strength.';
   String get decouplingTitle => isArabic
       ? 'التفكك القلبي الهوائي (Decoupling)'
       : 'Aerobic Cardiac Decoupling';
@@ -1083,6 +1086,51 @@ class AppStrings {
       isArabic ? 'المدة بالدقائق' : 'Duration (min)';
   String get workoutDateLabel =>
       isArabic ? 'تاريخ التمرين' : 'Workout Date';
+
+  // ==================== Progress Dafaa 4: Recovery & Critical Power ====================
+  String get rhrElevatedAlert => isArabic
+      ? 'ارتفاع نبض الراحة، ممكن إرهاق أو مرض'
+      : 'Elevated resting HR, possible fatigue or illness';
+  String get swcBandLegend =>
+      isArabic ? 'حزام التغير الأدنى (SWC)' : 'SWC Band';
+  String get eupneaLowerIsBetter =>
+      isArabic ? 'الأقل أحسن (استشفاء أسرع)' : 'Lower is better (faster recovery)';
+  String get reading1Label => isArabic ? 'القياس 1' : 'Reading 1';
+  String get reading2Label => isArabic ? 'القياس 2' : 'Reading 2';
+  String get reading3Label => isArabic ? 'القياس 3' : 'Reading 3';
+  String get eupneaBelowBaselineNotice => isArabic
+      ? 'النقاط تحت خط الأساس = تحسن، وفوقه = تراجع'
+      : 'Points below baseline = improvement, above = fatigue';
+  String get criticalPowerBarsTitle => isArabic
+      ? 'منحنى القدرة الحرجة (CP / W\' / BI)'
+      : 'Critical Power Curve (CP / W\' / BI)';
+  String get criticalPowerBarsDesc => isArabic
+      ? 'اختبارات القدرة الحرجة (CP) والطاقة اللاهوائية (W\') ومؤشر التوازن (BI). مؤشر التوازن (BI = W\' ÷ CP بالثواني) هو تعريف من المدرب يوضح الثواني المتاحة للعمل فوق الـ CP.'
+      : 'Critical Power (CP), Anaerobic Work Capacity (W\'), and Balance Index (BI = W\' / CP in seconds). BI is coach-defined as seconds sustainable above CP.';
+  String get need3DistancesForCp => isArabic
+      ? 'محتاج 3 مسافات لحساب CP'
+      : 'Need 3 distances to calculate CP';
+  String get inconsistentTestResults => isArabic
+      ? 'نتائج الاختبار غير متسقة'
+      : 'Inconsistent test results';
+  String get noTestsInThisPeriod => isArabic
+      ? 'مفيش اختبارات في الفترة دي'
+      : 'No tests in this period';
+  String get enduranceLeaning => isArabic ? 'مايل للتحمل' : 'Endurance-leaning';
+  String get explosiveLeaning =>
+      isArabic ? 'مايل للانفجارية' : 'Explosive-leaning';
+  String get balancedLeaning => isArabic ? 'متوازن' : 'Balanced';
+  String get balanceIndexLabel =>
+      isArabic ? 'مؤشر التوازن (BI)' : 'Balance Index (BI)';
+  String get calculatedWattsLabel =>
+      isArabic ? 'الواط المحسوب' : 'Calculated Watts';
+  String get testTimeLabel => isArabic ? 'الزمن' : 'Time';
+  String get testDistanceLabel => isArabic ? 'المسافة' : 'Distance';
+  String get chipCP => isArabic ? 'القدرة الحرجة (CP)' : 'Critical Power (CP)';
+  String get chipWPrime =>
+      isArabic ? 'طاقة اللاهوائي (W\')' : 'Anaerobic (W\')';
+  String get chipBalanceIndex =>
+      isArabic ? 'مؤشر التوازن (BI)' : 'Balance Index (BI)';
 
   // المرحلة (ج) - تمرين اليوم وتخصيص المدرب والأرشيف
   String get workout => isArabic ? 'تمرين' : 'Workout';

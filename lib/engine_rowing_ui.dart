@@ -79,6 +79,8 @@ class EngineRowingUI {
   static const Color toastBg = Color(0xFF050C1E);
 
   static const Color neonLime = Color(0xFF9ED82E);
+  static const Color flameOrange = Color(0xFFFF9100);
+  static const Color electricCyan = Color(0xFF00E5FF);
   static const Color textWhite = Color(0xFFF2F4F8);
   static const Color labelSlate = Color(0xFF8596B8);
   static const Color captionGrey = Color(0xFF637599);

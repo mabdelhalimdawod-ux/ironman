@@ -17,6 +17,9 @@ import 'progress_period_filter.dart';
 import 'ef_zone_curve.dart';
 import 'decoupling_trend_curve.dart';
 import 'dynamic_watts_curve.dart';
+import 'recovery_curves.dart';
+import 'eupnea_curve.dart';
+import 'cp_bars_curve.dart';
 
 /// أنواع الشاشات والمنحنيات السبعة داخل تبويب Progress
 enum ProgressCurveType {
@@ -1155,15 +1158,12 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
               ),
             ),
             ..._buildStackedAthleteBlocks(
-              builder: (pid, data, color) => _buildAthleteLineBlock(
+              builder: (pid, data, color) => HrvCurveBlock(
                 s: s,
                 athleteName: data?.name ?? _nameForId(pid),
                 athleteColor: color,
                 points: data?.hrvPoints ?? const [],
-                unit: 'ms',
-                enableMA7: true,
                 isLoading: data == null && _loadingPlayerIds.contains(pid),
-                metricKey: 'hrv',
               ),
             ),
             // 2. RHR
@@ -1177,15 +1177,12 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
               ),
             ),
             ..._buildStackedAthleteBlocks(
-              builder: (pid, data, color) => _buildAthleteLineBlock(
+              builder: (pid, data, color) => RhrCurveBlock(
                 s: s,
                 athleteName: data?.name ?? _nameForId(pid),
                 athleteColor: color,
                 points: data?.rhrPoints ?? const [],
-                unit: 'bpm',
-                enableMA7: true,
                 isLoading: data == null && _loadingPlayerIds.contains(pid),
-                metricKey: 'rhr',
               ),
             ),
             // 3. Sleep
@@ -1200,15 +1197,12 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
               ),
             ),
             ..._buildStackedAthleteBlocks(
-              builder: (pid, data, color) => _buildAthleteLineBlock(
+              builder: (pid, data, color) => SleepCurveBlock(
                 s: s,
                 athleteName: data?.name ?? _nameForId(pid),
                 athleteColor: color,
                 points: data?.sleepPoints ?? const [],
-                unit: 'hrs',
-                enableMA7: true,
                 isLoading: data == null && _loadingPlayerIds.contains(pid),
-                metricKey: 'sleep',
               ),
             ),
             // 4. Weight
@@ -1223,15 +1217,12 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
               ),
             ),
             ..._buildStackedAthleteBlocks(
-              builder: (pid, data, color) => _buildAthleteLineBlock(
+              builder: (pid, data, color) => WeightCurveBlock(
                 s: s,
                 athleteName: data?.name ?? _nameForId(pid),
                 athleteColor: color,
                 points: data?.weightPoints ?? const [],
-                unit: 'kg',
-                enableMA7: true,
                 isLoading: data == null && _loadingPlayerIds.contains(pid),
-                metricKey: 'weight',
               ),
             ),
             // 5. + Eupnea
@@ -1246,15 +1237,16 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
               ),
             ),
             ..._buildStackedAthleteBlocks(
-              builder: (pid, data, color) => _buildAthleteLineBlock(
+              builder: (pid, data, color) => EupneaCurveBlock(
                 s: s,
                 athleteName: data?.name ?? _nameForId(pid),
                 athleteColor: color,
-                points: data?.eupneaPoints ?? const [],
-                unit: 'br/min',
-                enableMA7: true,
+                workouts: data?.rawLogs ?? const [],
+                periodStart: _period.start,
+                periodEnd: _period.end,
+                mhr: data?.mhr ?? 190,
+                effectiveRhr: data?.effectiveRhr ?? 60,
                 isLoading: data == null && _loadingPlayerIds.contains(pid),
-                metricKey: 'eupnea',
               ),
             ),
           ],
@@ -1301,12 +1293,17 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
               ),
             ),
             ..._buildStackedAthleteBlocks(
-              builder: (pid, data, color) => _buildAthleteCpTestsBlock(
+              builder: (pid, data, color) => CpBarsCurveBlock(
                 s: s,
                 athleteName: data?.name ?? _nameForId(pid),
                 athleteColor: color,
-                data: data,
+                playerId: pid,
+                periodStart: _period.start,
+                periodEnd: _period.end,
+                cpTestRows: data?.cpTestRows ?? const [],
+                cpValuePoints: data?.cpValuePoints ?? const [],
                 isLoading: data == null && _loadingPlayerIds.contains(pid),
+                onTestDataChanged: () => _fetchSingleAthlete(pid),
               ),
             ),
           ],
@@ -2289,6 +2286,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
   // ════════════════════════════════════════════════════════════════
   // ويدجت منحنى لاعب مفرد ملزوق مباشرة بدون فراغ خارجي (margin & padding = 0)
   // ════════════════════════════════════════════════════════════════
+  // ignore: unused_element
   Widget _buildAthleteLineBlock({
     required AppStrings s,
     required String athleteName,
@@ -3244,6 +3242,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
   // ════════════════════════════════════════════════════════════════
   // شاشة اختبارات CP
   // ════════════════════════════════════════════════════════════════
+  // ignore: unused_element
   Widget _buildAthleteCpTestsBlock({
     required AppStrings s,
     required String athleteName,
