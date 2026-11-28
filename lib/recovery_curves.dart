@@ -5,8 +5,9 @@ import 'app_strings.dart';
 import 'engine_rowing_ui.dart';
 import 'progress_calcs.dart';
 import 'progress_panel.dart';
+import 'scrollable_chart_container.dart';
 
-/// ويدجت منحنى HRV مع المتوسط المتحرك وحزام التغير الأدنى ذي المعنى (SWC)
+/// 1. منحنى تقلب نبض القلب (HRV) — نقطة واحدة لكل يوم مسجل بدون MA7 وبدون SWC
 class HrvCurveBlock extends StatelessWidget {
   final AppStrings s;
   final String athleteName;
@@ -25,277 +26,21 @@ class HrvCurveBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return ProgressPanel(
-        title: athleteName,
-        child: SizedBox(
-          height: 160,
-          child: Center(
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: athleteColor,
-            ),
-          ),
-        ),
-      );
-    }
-
-    final validPoints = points.where((p) => p.value != null && p.value! > 0).toList();
-    if (validPoints.length < 2) {
-      return ProgressPanel(
-        title: athleteName,
-        child: SizedBox(
-          height: 120,
-          child: Center(
-            child: Text(
-              s.insufficientData,
-              style: const TextStyle(color: Colors.white54, fontSize: 13),
-            ),
-          ),
-        ),
-      );
-    }
-
-    final maPoints = ProgressCalcs.movingAverage7(validPoints);
-
-    // حساب حزام SWC لكل يوم به قيمة MA7
-    final upperSwcSpots = <FlSpot>[];
-    final lowerSwcSpots = <FlSpot>[];
-    final dailySpots = <FlSpot>[];
-    final maSpots = <FlSpot>[];
-
-    double minY = double.infinity;
-    double maxY = -double.infinity;
-
-    for (int i = 0; i < validPoints.length; i++) {
-      final p = validPoints[i];
-      final x = i.toDouble();
-      final y = p.value!;
-      dailySpots.add(FlSpot(x, y));
-      if (y < minY) minY = y;
-      if (y > maxY) maxY = y;
-
-      final ma = maPoints.firstWhere(
-        (m) =>
-            m.date.year == p.date.year &&
-            m.date.month == p.date.month &&
-            m.date.day == p.date.day,
-        orElse: () => DateValuePoint(date: p.date, value: null),
-      );
-
-      if (ma.value != null && ma.value! > 0) {
-        maSpots.add(FlSpot(x, ma.value!));
-        if (ma.value! < minY) minY = ma.value!;
-        if (ma.value! > maxY) maxY = ma.value!;
-
-        final swc = ProgressCalcs.calcHrvSwcBand(
-          targetDate: p.date,
-          hrvPoints: validPoints,
-          ma7Value: ma.value,
-        );
-
-        if (swc.upper != null && swc.lower != null) {
-          upperSwcSpots.add(FlSpot(x, swc.upper!));
-          lowerSwcSpots.add(FlSpot(x, swc.lower!));
-          if (swc.upper! > maxY) maxY = swc.upper!;
-          if (swc.lower! < minY) minY = swc.lower!;
-        }
-      }
-    }
-
-    if (minY == double.infinity) {
-      minY = 0;
-      maxY = 100;
-    } else {
-      final pad = max(5.0, (maxY - minY) * 0.15);
-      minY = max(0.0, minY - pad);
-      maxY = maxY + pad;
-    }
-
-    final lineBars = <LineChartBarData>[];
-
-    // خطوط حزام SWC (Upper & Lower)
-    int? upperIndex;
-    int? lowerIndex;
-    if (upperSwcSpots.length >= 2 && lowerSwcSpots.length >= 2) {
-      upperIndex = lineBars.length;
-      lineBars.add(LineChartBarData(
-        spots: upperSwcSpots,
-        isCurved: true,
-        color: EngineRowingUI.neonLime.withValues(alpha: 0.5),
-        barWidth: 1.2,
-        dashArray: [4, 4],
-        dotData: const FlDotData(show: false),
-      ));
-
-      lowerIndex = lineBars.length;
-      lineBars.add(LineChartBarData(
-        spots: lowerSwcSpots,
-        isCurved: true,
-        color: EngineRowingUI.neonLime.withValues(alpha: 0.5),
-        barWidth: 1.2,
-        dashArray: [4, 4],
-        dotData: const FlDotData(show: false),
-      ));
-    }
-
-    // خط المتوسط المتحرك 7 أيام
-    if (maSpots.length >= 2) {
-      lineBars.add(LineChartBarData(
-        spots: maSpots,
-        isCurved: true,
-        color: Colors.white.withValues(alpha: 0.85),
-        barWidth: 2.2,
-        dotData: const FlDotData(show: false),
-      ));
-    }
-
-    // خط القراءات اليومية
-    lineBars.add(LineChartBarData(
-      spots: dailySpots,
-      isCurved: true,
-      color: athleteColor,
-      barWidth: 2.5,
-      isStrokeCapRound: true,
-      dotData: FlDotData(
-        show: true,
-        getDotPainter: (spot, percent, barData, index) =>
-            FlDotCirclePainter(
-          radius: 3.5,
-          color: athleteColor,
-          strokeWidth: 1.5,
-          strokeColor: Colors.black,
-        ),
-      ),
-      belowBarData: BarAreaData(
-        show: true,
-        color: athleteColor.withValues(alpha: 0.08),
-      ),
-    ));
-
-    return ProgressPanel(
-      title: athleteName,
-      trailing: Wrap(
-        spacing: 8,
-        runSpacing: 4,
-        children: [
-          _LegendChip(
-            label: s.hrvTitle,
-            color: athleteColor,
-          ),
-          _LegendChip(
-            label: s.ma7Label,
-            color: Colors.white70,
-          ),
-          if (upperIndex != null)
-            _LegendChip(
-              label: s.swcBandLegend,
-              color: EngineRowingUI.neonLime,
-              isDashed: true,
-            ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 180,
-            child: Directionality(
-              textDirection: TextDirection.ltr,
-              child: LineChart(
-                LineChartData(
-                  minY: minY,
-                  maxY: maxY,
-                  minX: 0,
-                  maxX: max(1.0, (validPoints.length - 1).toDouble()),
-                  betweenBarsData: (upperIndex != null && lowerIndex != null)
-                      ? [
-                          BetweenBarsData(
-                            fromIndex: upperIndex,
-                            toIndex: lowerIndex,
-                            color: EngineRowingUI.neonLime.withValues(alpha: 0.10),
-                          ),
-                        ]
-                      : const [],
-                  gridData: FlGridData(
-                    show: true,
-                    drawVerticalLine: false,
-                    horizontalInterval: max(5.0, (maxY - minY) / 4),
-                    getDrawingHorizontalLine: (value) => FlLine(
-                      color: Colors.white10,
-                      strokeWidth: 1,
-                    ),
-                  ),
-                  titlesData: FlTitlesData(
-                    rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 38,
-                        getTitlesWidget: (val, meta) => Padding(
-                          padding: const EdgeInsets.only(right: 4),
-                          child: Text(
-                            '${val.round()}',
-                            style: const TextStyle(
-                              color: Colors.white54,
-                              fontSize: 10,
-                            ),
-                            textAlign: TextAlign.end,
-                          ),
-                        ),
-                      ),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 22,
-                        interval: max(1.0, (validPoints.length / 5).floorToDouble()),
-                        getTitlesWidget: (val, meta) {
-                          final idx = val.toInt();
-                          if (idx >= 0 && idx < validPoints.length) {
-                            final d = validPoints[idx].date;
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Text(
-                                '${d.day}/${d.month}',
-                                style: const TextStyle(
-                                  color: Colors.white38,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            );
-                          }
-                          return const SizedBox.shrink();
-                        },
-                      ),
-                    ),
-                  ),
-                  borderData: FlBorderData(show: false),
-                  lineBarsData: lineBars,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Center(
-            child: Text(
-              s.estimationNotice,
-              style: const TextStyle(color: Colors.white38, fontSize: 10),
-            ),
-          ),
-        ],
-      ),
+    return _DailyRecoveryChartBlock(
+      s: s,
+      athleteName: athleteName,
+      athleteColor: athleteColor,
+      metricLabel: s.hrvTitle,
+      unit: 'ms',
+      decimals: 0,
+      minPadding: 5.0,
+      points: points,
+      isLoading: isLoading,
     );
   }
 }
 
-/// ويدجت منحنى نبض الراحة RHR مع المتوسط المتحرك وتنبيه الارتفاع (+5 نبضات)
+/// 2. منحنى نبض الراحة (RHR) — نقطة واحدة لكل يوم مسجل بدون MA7 وبدون تنبيه الارتفاع
 class RhrCurveBlock extends StatelessWidget {
   final AppStrings s;
   final String athleteName;
@@ -314,265 +59,21 @@ class RhrCurveBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return ProgressPanel(
-        title: athleteName,
-        child: SizedBox(
-          height: 160,
-          child: Center(
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: athleteColor,
-            ),
-          ),
-        ),
-      );
-    }
-
-    final validPoints = points.where((p) => p.value != null && p.value! > 0).toList();
-    if (validPoints.length < 2) {
-      return ProgressPanel(
-        title: athleteName,
-        child: SizedBox(
-          height: 120,
-          child: Center(
-            child: Text(
-              s.insufficientData,
-              style: const TextStyle(color: Colors.white54, fontSize: 13),
-            ),
-          ),
-        ),
-      );
-    }
-
-    final maPoints = ProgressCalcs.movingAverage7(validPoints);
-
-    // فحص تنبيه ارتفاع نبض الراحة لليوم (آخر قراءة متوفرة)
-    final latestPoint = validPoints.last;
-    final latestMa = maPoints.firstWhere(
-      (m) =>
-          m.date.year == latestPoint.date.year &&
-          m.date.month == latestPoint.date.month &&
-          m.date.day == latestPoint.date.day,
-      orElse: () => DateValuePoint(date: latestPoint.date, value: null),
-    );
-
-    final isElevated = ProgressCalcs.isRhrElevated(
-      todayRhr: latestPoint.value,
-      ma7Rhr: latestMa.value,
-    );
-
-    final dailySpots = <FlSpot>[];
-    final maSpots = <FlSpot>[];
-    double minY = double.infinity;
-    double maxY = -double.infinity;
-
-    for (int i = 0; i < validPoints.length; i++) {
-      final p = validPoints[i];
-      final x = i.toDouble();
-      final y = p.value!;
-      dailySpots.add(FlSpot(x, y));
-      if (y < minY) minY = y;
-      if (y > maxY) maxY = y;
-
-      final ma = maPoints.firstWhere(
-        (m) =>
-            m.date.year == p.date.year &&
-            m.date.month == p.date.month &&
-            m.date.day == p.date.day,
-        orElse: () => DateValuePoint(date: p.date, value: null),
-      );
-
-      if (ma.value != null && ma.value! > 0) {
-        maSpots.add(FlSpot(x, ma.value!));
-        if (ma.value! < minY) minY = ma.value!;
-        if (ma.value! > maxY) maxY = ma.value!;
-      }
-    }
-
-    if (minY == double.infinity) {
-      minY = 40;
-      maxY = 100;
-    } else {
-      final pad = max(3.0, (maxY - minY) * 0.15);
-      minY = max(30.0, minY - pad);
-      maxY = maxY + pad;
-    }
-
-    final lineBars = <LineChartBarData>[];
-
-    // خط المتوسط المتحرك 7 أيام
-    if (maSpots.length >= 2) {
-      lineBars.add(LineChartBarData(
-        spots: maSpots,
-        isCurved: true,
-        color: Colors.white.withValues(alpha: 0.85),
-        barWidth: 2.2,
-        dotData: const FlDotData(show: false),
-      ));
-    }
-
-    // خط النبض اليومي
-    lineBars.add(LineChartBarData(
-      spots: dailySpots,
-      isCurved: true,
-      color: athleteColor,
-      barWidth: 2.5,
-      isStrokeCapRound: true,
-      dotData: FlDotData(
-        show: true,
-        getDotPainter: (spot, percent, barData, index) =>
-            FlDotCirclePainter(
-          radius: 3.5,
-          color: athleteColor,
-          strokeWidth: 1.5,
-          strokeColor: Colors.black,
-        ),
-      ),
-      belowBarData: BarAreaData(
-        show: true,
-        color: athleteColor.withValues(alpha: 0.08),
-      ),
-    ));
-
-    return ProgressPanel(
-      title: athleteName,
-      trailing: Wrap(
-        spacing: 8,
-        runSpacing: 4,
-        children: [
-          _LegendChip(
-            label: s.rhrTitle,
-            color: athleteColor,
-          ),
-          _LegendChip(
-            label: s.ma7Label,
-            color: Colors.white70,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (isElevated) ...[
-            Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: Colors.amber.withValues(alpha: 0.6),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.warning_amber_rounded,
-                      color: Colors.amber, size: 18),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      s.rhrElevatedAlert,
-                      style: const TextStyle(
-                        color: Colors.amber,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          SizedBox(
-            height: 180,
-            child: Directionality(
-              textDirection: TextDirection.ltr,
-              child: LineChart(
-                LineChartData(
-                  minY: minY,
-                  maxY: maxY,
-                  minX: 0,
-                  maxX: max(1.0, (validPoints.length - 1).toDouble()),
-                  gridData: FlGridData(
-                    show: true,
-                    drawVerticalLine: false,
-                    horizontalInterval: max(4.0, (maxY - minY) / 4),
-                    getDrawingHorizontalLine: (value) => FlLine(
-                      color: Colors.white10,
-                      strokeWidth: 1,
-                    ),
-                  ),
-                  titlesData: FlTitlesData(
-                    rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 34,
-                        getTitlesWidget: (val, meta) => Padding(
-                          padding: const EdgeInsets.only(right: 4),
-                          child: Text(
-                            '${val.round()}',
-                            style: const TextStyle(
-                              color: Colors.white54,
-                              fontSize: 10,
-                            ),
-                            textAlign: TextAlign.end,
-                          ),
-                        ),
-                      ),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 22,
-                        interval: max(1.0, (validPoints.length / 5).floorToDouble()),
-                        getTitlesWidget: (val, meta) {
-                          final idx = val.toInt();
-                          if (idx >= 0 && idx < validPoints.length) {
-                            final d = validPoints[idx].date;
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Text(
-                                '${d.day}/${d.month}',
-                                style: const TextStyle(
-                                  color: Colors.white38,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            );
-                          }
-                          return const SizedBox.shrink();
-                        },
-                      ),
-                    ),
-                  ),
-                  borderData: FlBorderData(show: false),
-                  lineBarsData: lineBars,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Center(
-            child: Text(
-              s.estimationNotice,
-              style: const TextStyle(color: Colors.white38, fontSize: 10),
-            ),
-          ),
-        ],
-      ),
+    return _DailyRecoveryChartBlock(
+      s: s,
+      athleteName: athleteName,
+      athleteColor: athleteColor,
+      metricLabel: s.rhrTitle,
+      unit: 'bpm',
+      decimals: 0,
+      minPadding: 4.0,
+      points: points,
+      isLoading: isLoading,
     );
   }
 }
 
-/// ويدجت منحنى ساعات النوم مع المتوسط المتحرك 7 أيام
+/// 3. منحنى ساعات النوم (Sleep) — نقطة واحدة لكل يوم مسجل بدون MA7
 class SleepCurveBlock extends StatelessWidget {
   final AppStrings s;
   final String athleteName;
@@ -591,217 +92,23 @@ class SleepCurveBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return ProgressPanel(
-        title: athleteName,
-        child: SizedBox(
-          height: 160,
-          child: Center(
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: athleteColor,
-            ),
-          ),
-        ),
-      );
-    }
-
-    final validPoints = points.where((p) => p.value != null && p.value! > 0).toList();
-    if (validPoints.length < 2) {
-      return ProgressPanel(
-        title: athleteName,
-        child: SizedBox(
-          height: 120,
-          child: Center(
-            child: Text(
-              s.insufficientData,
-              style: const TextStyle(color: Colors.white54, fontSize: 13),
-            ),
-          ),
-        ),
-      );
-    }
-
-    final maPoints = ProgressCalcs.movingAverage7(validPoints);
-    final dailySpots = <FlSpot>[];
-    final maSpots = <FlSpot>[];
-    double minY = double.infinity;
-    double maxY = -double.infinity;
-
-    for (int i = 0; i < validPoints.length; i++) {
-      final p = validPoints[i];
-      final x = i.toDouble();
-      final y = p.value!;
-      dailySpots.add(FlSpot(x, y));
-      if (y < minY) minY = y;
-      if (y > maxY) maxY = y;
-
-      final ma = maPoints.firstWhere(
-        (m) =>
-            m.date.year == p.date.year &&
-            m.date.month == p.date.month &&
-            m.date.day == p.date.day,
-        orElse: () => DateValuePoint(date: p.date, value: null),
-      );
-
-      if (ma.value != null && ma.value! > 0) {
-        maSpots.add(FlSpot(x, ma.value!));
-        if (ma.value! < minY) minY = ma.value!;
-        if (ma.value! > maxY) maxY = ma.value!;
-      }
-    }
-
-    if (minY == double.infinity) {
-      minY = 0;
-      maxY = 12;
-    } else {
-      final pad = max(1.0, (maxY - minY) * 0.15);
-      minY = max(0.0, minY - pad);
-      maxY = maxY + pad;
-    }
-
-    final lineBars = <LineChartBarData>[];
-
-    if (maSpots.length >= 2) {
-      lineBars.add(LineChartBarData(
-        spots: maSpots,
-        isCurved: true,
-        color: Colors.white.withValues(alpha: 0.85),
-        barWidth: 2.2,
-        dotData: const FlDotData(show: false),
-      ));
-    }
-
-    lineBars.add(LineChartBarData(
-      spots: dailySpots,
-      isCurved: true,
-      color: athleteColor,
-      barWidth: 2.5,
-      isStrokeCapRound: true,
-      dotData: FlDotData(
-        show: true,
-        getDotPainter: (spot, percent, barData, index) =>
-            FlDotCirclePainter(
-          radius: 3.5,
-          color: athleteColor,
-          strokeWidth: 1.5,
-          strokeColor: Colors.black,
-        ),
-      ),
-      belowBarData: BarAreaData(
-        show: true,
-        color: athleteColor.withValues(alpha: 0.08),
-      ),
-    ));
-
-    return ProgressPanel(
-      title: athleteName,
-      trailing: Wrap(
-        spacing: 8,
-        runSpacing: 4,
-        children: [
-          _LegendChip(
-            label: '${s.chipSleep} (hrs)',
-            color: athleteColor,
-          ),
-          _LegendChip(
-            label: s.ma7Label,
-            color: Colors.white70,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 180,
-            child: Directionality(
-              textDirection: TextDirection.ltr,
-              child: LineChart(
-                LineChartData(
-                  minY: minY,
-                  maxY: maxY,
-                  minX: 0,
-                  maxX: max(1.0, (validPoints.length - 1).toDouble()),
-                  gridData: FlGridData(
-                    show: true,
-                    drawVerticalLine: false,
-                    horizontalInterval: max(1.0, (maxY - minY) / 4),
-                    getDrawingHorizontalLine: (value) => FlLine(
-                      color: Colors.white10,
-                      strokeWidth: 1,
-                    ),
-                  ),
-                  titlesData: FlTitlesData(
-                    rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 32,
-                        getTitlesWidget: (val, meta) => Padding(
-                          padding: const EdgeInsets.only(right: 4),
-                          child: Text(
-                            val.toStringAsFixed(1),
-                            style: const TextStyle(
-                              color: Colors.white54,
-                              fontSize: 10,
-                            ),
-                            textAlign: TextAlign.end,
-                          ),
-                        ),
-                      ),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 22,
-                        interval: max(1.0, (validPoints.length / 5).floorToDouble()),
-                        getTitlesWidget: (val, meta) {
-                          final idx = val.toInt();
-                          if (idx >= 0 && idx < validPoints.length) {
-                            final d = validPoints[idx].date;
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Text(
-                                '${d.day}/${d.month}',
-                                style: const TextStyle(
-                                  color: Colors.white38,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            );
-                          }
-                          return const SizedBox.shrink();
-                        },
-                      ),
-                    ),
-                  ),
-                  borderData: FlBorderData(show: false),
-                  lineBarsData: lineBars,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Center(
-            child: Text(
-              s.estimationNotice,
-              style: const TextStyle(color: Colors.white38, fontSize: 10),
-            ),
-          ),
-        ],
-      ),
+    return _DailyRecoveryChartBlock(
+      s: s,
+      athleteName: athleteName,
+      athleteColor: athleteColor,
+      metricLabel: s.chipSleep,
+      unit: 'hrs',
+      decimals: 1,
+      minPadding: 1.0,
+      fixedMinY: 0.0,
+      fixedMinMaxFloor: 10.0,
+      points: points,
+      isLoading: isLoading,
     );
   }
 }
 
-/// ويدجت منحنى الوزن مع المتوسط المتحرك 7 أيام (عرض فقط)
+/// 4. منحنى الوزن الصباحي (Weight) — نقطة واحدة لكل يوم مسجل بدون MA7
 class WeightCurveBlock extends StatelessWidget {
   final AppStrings s;
   final String athleteName;
@@ -820,27 +127,80 @@ class WeightCurveBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return _DailyRecoveryChartBlock(
+      s: s,
+      athleteName: athleteName,
+      athleteColor: athleteColor,
+      metricLabel: s.chipWeight,
+      unit: 'kg',
+      decimals: 1,
+      minPadding: 2.0,
+      points: points,
+      isLoading: isLoading,
+    );
+  }
+}
+
+/// مكوّن مشترك لمنحنيات الاستشفاء اليومية:
+/// - نقطة واحدة لكل يوم فيه بيانات فعلية فقط (بدون أيام فراغ)
+/// - بدون أي خط أو مسمى للمتوسط المتحرك MA7
+/// - تمرير أفقي يبدأ من أحدث تاريخ، ومحور Y ثابت، ووسيلة إيضاح في سطر أفقي واحد وبخط >= 12
+class _DailyRecoveryChartBlock extends StatelessWidget {
+  final AppStrings s;
+  final String athleteName;
+  final Color athleteColor;
+  final String metricLabel;
+  final String unit;
+  final int decimals;
+  final double minPadding;
+  final double? fixedMinY;
+  final double? fixedMinMaxFloor;
+  final List<DateValuePoint> points;
+  final bool isLoading;
+
+  const _DailyRecoveryChartBlock({
+    required this.s,
+    required this.athleteName,
+    required this.athleteColor,
+    required this.metricLabel,
+    required this.unit,
+    required this.decimals,
+    required this.minPadding,
+    this.fixedMinY,
+    this.fixedMinMaxFloor,
+    required this.points,
+    required this.isLoading,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     if (isLoading) {
       return ProgressPanel(
         title: athleteName,
-        child: SizedBox(
+        glowBorderColor: athleteColor.withValues(alpha: 0.45),
+        child: const SizedBox(
           height: 160,
           child: Center(
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: athleteColor,
+              color: EngineRowingUI.neonLime,
             ),
           ),
         ),
       );
     }
 
-    final validPoints = points.where((p) => p.value != null && p.value! > 0).toList();
+    final validPoints = points
+        .where((p) => p.value != null && p.value! > 0 && p.value!.isFinite)
+        .toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
+
     if (validPoints.length < 2) {
       return ProgressPanel(
         title: athleteName,
+        glowBorderColor: athleteColor.withValues(alpha: 0.45),
         child: SizedBox(
-          height: 120,
+          height: 130,
           child: Center(
             child: Text(
               s.insufficientData,
@@ -851,219 +211,186 @@ class WeightCurveBlock extends StatelessWidget {
       );
     }
 
-    final maPoints = ProgressCalcs.movingAverage7(validPoints);
     final dailySpots = <FlSpot>[];
-    final maSpots = <FlSpot>[];
-    double minY = double.infinity;
-    double maxY = -double.infinity;
+    double dataMin = double.infinity;
+    double dataMax = -double.infinity;
 
     for (int i = 0; i < validPoints.length; i++) {
-      final p = validPoints[i];
-      final x = i.toDouble();
-      final y = p.value!;
-      dailySpots.add(FlSpot(x, y));
-      if (y < minY) minY = y;
-      if (y > maxY) maxY = y;
-
-      final ma = maPoints.firstWhere(
-        (m) =>
-            m.date.year == p.date.year &&
-            m.date.month == p.date.month &&
-            m.date.day == p.date.day,
-        orElse: () => DateValuePoint(date: p.date, value: null),
-      );
-
-      if (ma.value != null && ma.value! > 0) {
-        maSpots.add(FlSpot(x, ma.value!));
-        if (ma.value! < minY) minY = ma.value!;
-        if (ma.value! > maxY) maxY = ma.value!;
-      }
+      final y = validPoints[i].value!;
+      dailySpots.add(FlSpot(i.toDouble(), y));
+      if (y < dataMin) dataMin = y;
+      if (y > dataMax) dataMax = y;
     }
 
-    if (minY == double.infinity) {
-      minY = 50;
-      maxY = 100;
-    } else {
-      final pad = max(1.0, (maxY - minY) * 0.15);
-      minY = max(30.0, minY - pad);
-      maxY = maxY + pad;
+    final pad = max(minPadding, (dataMax - dataMin) * 0.15);
+    final double minY = fixedMinY ?? max(0.0, dataMin - pad);
+    double maxY = dataMax + pad;
+    if (fixedMinMaxFloor != null) {
+      maxY = max(fixedMinMaxFloor!, maxY);
     }
-
-    final lineBars = <LineChartBarData>[];
-
-    if (maSpots.length >= 2) {
-      lineBars.add(LineChartBarData(
-        spots: maSpots,
-        isCurved: true,
-        color: Colors.white.withValues(alpha: 0.85),
-        barWidth: 2.2,
-        dotData: const FlDotData(show: false),
-      ));
+    if (maxY <= minY) {
+      maxY = minY + minPadding;
     }
-
-    lineBars.add(LineChartBarData(
-      spots: dailySpots,
-      isCurved: true,
-      color: athleteColor,
-      barWidth: 2.5,
-      isStrokeCapRound: true,
-      dotData: FlDotData(
-        show: true,
-        getDotPainter: (spot, percent, barData, index) =>
-            FlDotCirclePainter(
-          radius: 3.5,
-          color: athleteColor,
-          strokeWidth: 1.5,
-          strokeColor: Colors.black,
-        ),
-      ),
-      belowBarData: BarAreaData(
-        show: true,
-        color: athleteColor.withValues(alpha: 0.08),
-      ),
-    ));
 
     return ProgressPanel(
       title: athleteName,
-      trailing: Wrap(
-        spacing: 8,
-        runSpacing: 4,
-        children: [
-          _LegendChip(
-            label: '${s.chipWeight} (kg)',
-            color: athleteColor,
-          ),
-          _LegendChip(
-            label: s.ma7Label,
-            color: Colors.white70,
-          ),
-        ],
-      ),
+      glowBorderColor: athleteColor.withValues(alpha: 0.45),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 180,
-            child: Directionality(
-              textDirection: TextDirection.ltr,
-              child: LineChart(
+          ScrollableChartFrame(
+            height: 220.0,
+            slotsCount: validPoints.length,
+            slotWidth: 64.0,
+            minY: minY,
+            maxY: maxY,
+            yTicksCount: 5,
+            yAxisUnitLabel: '$metricLabel ($unit)',
+            formatYLabel: (v) => v.toStringAsFixed(decimals),
+            bottomReservedSize: 34.0,
+            chartBuilder: (chartWidth, chartHeight) {
+              return LineChart(
                 LineChartData(
                   minY: minY,
                   maxY: maxY,
-                  minX: 0,
-                  maxX: max(1.0, (validPoints.length - 1).toDouble()),
+                  minX: -0.5,
+                  maxX: (validPoints.length - 1).toDouble() + 0.5,
+                  clipData: const FlClipData.none(),
                   gridData: FlGridData(
                     show: true,
-                    drawVerticalLine: false,
-                    horizontalInterval: max(1.0, (maxY - minY) / 4),
-                    getDrawingHorizontalLine: (value) => FlLine(
-                      color: Colors.white10,
-                      strokeWidth: 1,
+                    drawVerticalLine: true,
+                    verticalInterval: 1.0,
+                    getDrawingHorizontalLine: (_) => const FlLine(
+                      color: EngineRowingUI.bgGridLine,
+                      strokeWidth: 0.8,
+                    ),
+                    getDrawingVerticalLine: (_) => FlLine(
+                      color: EngineRowingUI.bgGridLine.withValues(alpha: 0.4),
+                      strokeWidth: 0.6,
+                    ),
+                  ),
+                  borderData: FlBorderData(
+                    show: true,
+                    border: const Border(
+                      left: BorderSide(
+                          color: EngineRowingUI.bgGridLine, width: 1.0),
+                      bottom: BorderSide(
+                          color: EngineRowingUI.bgGridLine, width: 1.0),
                     ),
                   ),
                   titlesData: FlTitlesData(
-                    rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
                     topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 34,
-                        getTitlesWidget: (val, meta) => Padding(
-                          padding: const EdgeInsets.only(right: 4),
-                          child: Text(
-                            val.toStringAsFixed(1),
-                            style: const TextStyle(
-                              color: Colors.white54,
-                              fontSize: 10,
-                            ),
-                            textAlign: TextAlign.end,
-                          ),
-                        ),
-                      ),
-                    ),
+                        sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)),
+                    leftTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)),
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        reservedSize: 22,
-                        interval: max(1.0, (validPoints.length / 5).floorToDouble()),
+                        reservedSize: 34.0,
+                        interval: 1.0,
                         getTitlesWidget: (val, meta) {
-                          final idx = val.toInt();
-                          if (idx >= 0 && idx < validPoints.length) {
-                            final d = validPoints[idx].date;
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Text(
-                                '${d.day}/${d.month}',
-                                style: const TextStyle(
-                                  color: Colors.white38,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            );
+                          if ((val - val.roundToDouble()).abs() > 0.05) {
+                            return const SizedBox.shrink();
                           }
-                          return const SizedBox.shrink();
+                          final idx = val.round();
+                          if (idx < 0 || idx >= validPoints.length) {
+                            return const SizedBox.shrink();
+                          }
+                          final d = validPoints[idx].date;
+                          return SideTitleWidget(
+                            meta: meta,
+                            space: 8,
+                            child: Text(
+                              '${d.day}/${d.month}',
+                              maxLines: 1,
+                              softWrap: false,
+                              style: const TextStyle(
+                                color: EngineRowingUI.labelSlate,
+                                fontSize: 12,
+                                fontFeatures: [FontFeature.tabularFigures()],
+                              ),
+                            ),
+                          );
                         },
                       ),
                     ),
                   ),
-                  borderData: FlBorderData(show: false),
-                  lineBarsData: lineBars,
+                  lineTouchData: LineTouchData(
+                    enabled: true,
+                    touchTooltipData: LineTouchTooltipData(
+                      fitInsideHorizontally: true,
+                      fitInsideVertically: true,
+                      getTooltipColor: (_) =>
+                          EngineRowingUI.bgNavy.withValues(alpha: 0.95),
+                      tooltipBorder:
+                          BorderSide(color: athleteColor, width: 0.8),
+                      getTooltipItems: (touchedSpots) {
+                        return touchedSpots.map((spot) {
+                          final idx = spot.x.round();
+                          if (idx < 0 || idx >= validPoints.length) return null;
+                          final p = validPoints[idx];
+                          final dStr =
+                              '${p.date.day}/${p.date.month}/${p.date.year}';
+                          return LineTooltipItem(
+                            '$metricLabel\n$dStr\n${p.value!.toStringAsFixed(decimals)} $unit',
+                            TextStyle(
+                              color: athleteColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          );
+                        }).toList();
+                      },
+                    ),
+                  ),
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: dailySpots,
+                      isCurved: false,
+                      color: athleteColor,
+                      barWidth: 2.6,
+                      dotData: FlDotData(
+                        show: true,
+                        getDotPainter: (spot, percent, bar, index) =>
+                            FlDotCirclePainter(
+                          radius: 4.5,
+                          color: athleteColor,
+                          strokeWidth: 1.4,
+                          strokeColor: EngineRowingUI.cardFill,
+                        ),
+                      ),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        color: athleteColor.withValues(alpha: 0.08),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ),
+              );
+            },
           ),
-          const SizedBox(height: 6),
-          Center(
-            child: Text(
-              s.estimationNotice,
-              style: const TextStyle(color: Colors.white38, fontSize: 10),
+          const SizedBox(height: 10),
+          SingleLineLegend(
+            items: [
+              SingleLineLegendItem(
+                color: athleteColor,
+                label: metricLabel,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            s.estimationNotice,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: EngineRowingUI.labelSlate,
+              fontSize: 12,
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _LegendChip extends StatelessWidget {
-  final String label;
-  final Color color;
-  final bool isDashed;
-
-  const _LegendChip({
-    required this.label,
-    required this.color,
-    this.isDashed = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 12,
-          height: 3,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(1.5),
-          ),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: color.withValues(alpha: 0.9),
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
     );
   }
 }

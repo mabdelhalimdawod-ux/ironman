@@ -1052,9 +1052,8 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                 width: 135,
                 child: DropdownButtonFormField<String>(
                   isExpanded: true,
-                  initialValue: kProgramWorkoutKinds.contains(widget.item.kind)
-                      ? widget.item.kind
-                      : kProgramWorkoutKinds.first,
+                  initialValue: WorkoutKinds.normalizeKind(widget.item.kind) ??
+                      WorkoutKinds.all.first,
                   dropdownColor: _cardFill,
                   isDense: true,
                   decoration: const InputDecoration(
@@ -1074,10 +1073,10 @@ class _WorkoutRowWidgetState extends State<_WorkoutRowWidget> {
                     focusedBorder: OutlineInputBorder(
                         borderSide: BorderSide(color: _gold)),
                   ),
-                  items: kProgramWorkoutKinds.map((k) {
+                  items: WorkoutKinds.all.map((k) {
                     return DropdownMenuItem(
                       value: k,
-                      child: Text(k,
+                      child: Text(WorkoutKinds.displayName(k, s),
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                               fontSize: 14,

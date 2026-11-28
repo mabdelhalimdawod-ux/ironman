@@ -6,6 +6,7 @@ import 'db.dart';
 import 'engine_rowing_ui.dart';
 import 'progress_calcs.dart';
 import 'progress_panel.dart';
+import 'scrollable_chart_container.dart';
 
 /// بيانات اختبار قدرة حرجة واحد معروض في الرسم
 class CpTestDisplayItem {
@@ -259,21 +260,18 @@ class _CpBarsCurveBlockState extends State<CpBarsCurveBlock> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── 1. عنوان وشرح المنحنى ومفتاح الأعمدة ──
-          Wrap(
-            spacing: 12,
-            runSpacing: 6,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              _BarLegend(
+          // ── 1. عنوان وشرح المنحنى ومفتاح الأعمدة في سطر واحد ──
+          SingleLineLegend(
+            items: [
+              SingleLineLegendItem(
                 color: EngineRowingUI.neonLime,
                 label: widget.s.chipCP,
               ),
-              _BarLegend(
+              SingleLineLegendItem(
                 color: EngineRowingUI.flameOrange,
                 label: widget.s.chipWPrime,
               ),
-              _BarLegend(
+              SingleLineLegendItem(
                 color: EngineRowingUI.electricCyan,
                 label: widget.s.chipBalanceIndex,
               ),
@@ -292,18 +290,26 @@ class _CpBarsCurveBlockState extends State<CpBarsCurveBlock> {
               ),
             ),
           ] else ...[
-            SizedBox(
-              height: 220,
-              child: Directionality(
-                textDirection: TextDirection.ltr,
-                child: BarChart(
+            ScrollableChartFrame(
+              height: 235.0,
+              slotsCount: testItems.length,
+              slotWidth: 110.0,
+              minY: 0,
+              maxY: 100,
+              yTicksCount: 5,
+              yAxisWidth: 46.0,
+              formatYLabel: (v) => '${v.round()}%',
+              bottomReservedSize: 32.0,
+              chartBuilder: (chartWidth, chartHeight) {
+                return BarChart(
                   BarChartData(
                     alignment: BarChartAlignment.spaceAround,
                     maxY: 100, // نسب مئوية معيارية لضمان تناسب طول الأعمدة
                     barTouchData: BarTouchData(
                       enabled: true,
                       touchTooltipData: BarTouchTooltipData(
-                        getTooltipColor: (_) => Colors.black.withValues(alpha: 0.85),
+                        getTooltipColor: (_) =>
+                            Colors.black.withValues(alpha: 0.85),
                         getTooltipItem: (group, groupIndex, rod, rodIndex) {
                           final item = testItems[group.x.toInt()];
                           String text = '';
@@ -316,7 +322,7 @@ class _CpBarsCurveBlockState extends State<CpBarsCurveBlock> {
                           }
                           return BarTooltipItem(
                             text,
-                            const TextStyle(color: Colors.white, fontSize: 11),
+                            const TextStyle(color: Colors.white, fontSize: 12),
                           );
                         },
                       ),
@@ -334,20 +340,24 @@ class _CpBarsCurveBlockState extends State<CpBarsCurveBlock> {
                       bottomTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
-                          reservedSize: 26,
+                          reservedSize: 32,
                           getTitlesWidget: (val, meta) {
                             final idx = val.toInt();
                             if (idx >= 0 && idx < testItems.length) {
                               final item = testItems[idx];
                               final parts = item.date.split('-');
-                              final label = parts.length >= 3 ? '${parts[2]}/${parts[1]}' : item.date;
+                              final label = parts.length >= 3
+                                  ? '${int.tryParse(parts[2]) ?? parts[2]}/${int.tryParse(parts[1]) ?? parts[1]}'
+                                  : item.date;
                               return Padding(
                                 padding: const EdgeInsets.only(top: 6),
                                 child: Text(
                                   label,
+                                  maxLines: 1,
+                                  softWrap: false,
                                   style: const TextStyle(
-                                    color: Colors.white60,
-                                    fontSize: 10,
+                                    color: Colors.white70,
+                                    fontSize: 12,
                                   ),
                                 ),
                               );
@@ -363,8 +373,10 @@ class _CpBarsCurveBlockState extends State<CpBarsCurveBlock> {
                       final item = testItems[i];
                       // معايرة الارتفاعات لتبدو متناسقة على نفس المحور
                       final cpPct = min(100.0, (item.cpWatts / 450.0) * 100.0);
-                      final wpPct = min(100.0, (item.wPrimeKiloJoules / 30.0) * 100.0);
-                      final biPct = min(100.0, (item.balanceIndexSeconds / 120.0) * 100.0);
+                      final wpPct =
+                          min(100.0, (item.wPrimeKiloJoules / 30.0) * 100.0);
+                      final biPct =
+                          min(100.0, (item.balanceIndexSeconds / 120.0) * 100.0);
 
                       return BarChartGroupData(
                         x: i,
@@ -395,47 +407,54 @@ class _CpBarsCurveBlockState extends State<CpBarsCurveBlock> {
                       );
                     }),
                   ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            // قائمة بطاقات تفاصيل الاختبارات وتصنيف الميل
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: testItems.map((item) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.white12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        item.date,
-                        style: const TextStyle(color: Colors.white70, fontSize: 11),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${item.cpWatts.round()}W | ${item.wPrimeKiloJoules}kJ | ${item.balanceIndexSeconds.round()}s',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      if (item.leaning != BalanceIndexLeaning.unclassified) ...[
-                        const SizedBox(width: 6),
-                        _LeaningBadge(leaning: item.leaning, s: widget.s),
-                      ],
-                    ],
-                  ),
                 );
-              }).toList(),
+              },
+            ),
+            const SizedBox(height: 10),
+
+            // بطاقات تفاصيل الاختبارات في سطر أفقي واحد قابل للتمرير (مؤشر التوازن كرقم فقط)
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: [
+                  for (int i = 0; i < testItems.length; i++) ...[
+                    if (i > 0) const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            testItems[i].date,
+                            maxLines: 1,
+                            softWrap: false,
+                            style: const TextStyle(
+                                color: Colors.white70, fontSize: 12),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${testItems[i].cpWatts.round()}W | ${testItems[i].wPrimeKiloJoules}kJ | ${testItems[i].balanceIndexSeconds.round()}s',
+                            maxLines: 1,
+                            softWrap: false,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ],
 
@@ -484,7 +503,7 @@ class _CpBarsCurveBlockState extends State<CpBarsCurveBlock> {
                       const SizedBox(width: 4),
                       Text(
                         ProgressCalcs.formatDateKey(_testDate),
-                        style: const TextStyle(color: Colors.white70, fontSize: 11),
+                        style: const TextStyle(color: Colors.white70, fontSize: 12),
                       ),
                     ],
                   ),
@@ -518,7 +537,7 @@ class _CpBarsCurveBlockState extends State<CpBarsCurveBlock> {
                           isDense: true,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                           suffixText: 'm',
-                          suffixStyle: const TextStyle(color: Colors.white38, fontSize: 10),
+                          suffixStyle: const TextStyle(color: Colors.white54, fontSize: 12),
                           filled: true,
                           fillColor: Colors.white.withValues(alpha: 0.06),
                           border: OutlineInputBorder(
@@ -540,9 +559,9 @@ class _CpBarsCurveBlockState extends State<CpBarsCurveBlock> {
                           isDense: true,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                           hintText: widget.s.testTimeLabel,
-                          hintStyle: const TextStyle(color: Colors.white24, fontSize: 11),
+                          hintStyle: const TextStyle(color: Colors.white38, fontSize: 12),
                           suffixText: 'sec',
-                          suffixStyle: const TextStyle(color: Colors.white38, fontSize: 10),
+                          suffixStyle: const TextStyle(color: Colors.white54, fontSize: 12),
                           filled: true,
                           fillColor: Colors.white.withValues(alpha: 0.06),
                           border: OutlineInputBorder(
@@ -575,7 +594,7 @@ class _CpBarsCurveBlockState extends State<CpBarsCurveBlock> {
                           color: calculatedWatts > 0
                               ? EngineRowingUI.neonLime
                               : Colors.white38,
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
                         textAlign: TextAlign.center,
@@ -661,7 +680,7 @@ class _CpBarsCurveBlockState extends State<CpBarsCurveBlock> {
               ),
               child: Text(
                 widget.s.need3DistancesForCp,
-                style: const TextStyle(color: Colors.white54, fontSize: 11),
+                style: const TextStyle(color: Colors.white54, fontSize: 12),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -674,7 +693,7 @@ class _CpBarsCurveBlockState extends State<CpBarsCurveBlock> {
               ),
               child: Text(
                 widget.s.inconsistentTestResults,
-                style: const TextStyle(color: Colors.amber, fontSize: 11),
+                style: const TextStyle(color: Colors.amber, fontSize: 12),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -684,7 +703,7 @@ class _CpBarsCurveBlockState extends State<CpBarsCurveBlock> {
           Center(
             child: Text(
               widget.s.estimationNotice,
-              style: const TextStyle(color: Colors.white38, fontSize: 10),
+              style: const TextStyle(color: Colors.white54, fontSize: 12),
             ),
           ),
         ],
@@ -693,39 +712,7 @@ class _CpBarsCurveBlockState extends State<CpBarsCurveBlock> {
   }
 }
 
-class _BarLegend extends StatelessWidget {
-  final Color color;
-  final String label;
-
-  const _BarLegend({required this.color, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: color.withValues(alpha: 0.9),
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
+// ignore: unused_element
 class _LeaningBadge extends StatelessWidget {
   final BalanceIndexLeaning leaning;
   final AppStrings s;
@@ -765,7 +752,7 @@ class _LeaningBadge extends StatelessWidget {
         text,
         style: TextStyle(
           color: color,
-          fontSize: 9,
+          fontSize: 12,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -790,7 +777,7 @@ class _ResultMetric extends StatelessWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(color: Colors.white70, fontSize: 10),
+          style: const TextStyle(color: Colors.white70, fontSize: 12),
         ),
         const SizedBox(height: 2),
         Text(

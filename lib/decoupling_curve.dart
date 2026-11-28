@@ -6,6 +6,7 @@ import 'engine_rowing_ui.dart';
 import 'heart_rate_zones.dart';
 import 'progress_calcs.dart';
 import 'progress_panel.dart';
+import 'scrollable_chart_container.dart';
 
 /// ويدجت مستقلة لعرض تحليل ومنحنى التفكك القلبي الهوائي (Decoupling) لتمرين محدد
 /// تستقبل نص القراءات ومدة التمرين والمنطقة التدريبية
@@ -97,7 +98,7 @@ class WorkoutDecouplingCurve extends StatelessWidget {
             child: Text(
               s.estimatedCurveNotice,
               style: const TextStyle(
-                fontSize: 11,
+                fontSize: 12,
                 color: EngineRowingUI.captionGrey,
                 fontStyle: FontStyle.italic,
               ),
@@ -145,7 +146,7 @@ class WorkoutDecouplingCurve extends StatelessWidget {
                   Text(
                     s.chipDecoupling,
                     style: const TextStyle(
-                      fontSize: 11,
+                      fontSize: 12,
                       color: EngineRowingUI.labelSlate,
                     ),
                   ),
@@ -226,12 +227,14 @@ class WorkoutDecouplingCurve extends StatelessWidget {
         children: [
           Icon(Icons.shield_outlined, size: 14, color: badgeColor),
           const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.bold,
-              color: badgeColor,
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: badgeColor,
+              ),
             ),
           ),
         ],
@@ -253,7 +256,7 @@ class WorkoutDecouplingCurve extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(fontSize: 10.5, color: color),
+            style: TextStyle(fontSize: 12, color: color),
           ),
           const SizedBox(height: 1),
           Text(
@@ -290,7 +293,7 @@ class WorkoutDecouplingCurve extends StatelessWidget {
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: 12,
                 color: color,
                 fontWeight: FontWeight.w600,
               ),
@@ -322,11 +325,18 @@ class WorkoutDecouplingCurve extends StatelessWidget {
     final effectiveD = durationMinutes > 0 ? durationMinutes : maxX;
     final halfTime = effectiveD / 2.0;
 
-    return SizedBox(
-      height: 220,
-      child: Directionality(
-        textDirection: TextDirection.ltr,
-        child: LineChart(
+    return ScrollableChartFrame(
+      height: 240.0,
+      slotsCount: max(1, readings.length),
+      slotWidth: 64.0,
+      minY: minY,
+      maxY: maxY,
+      yTicksCount: 5,
+      yAxisUnitLabel: 'EF (W/bpm)',
+      formatYLabel: (v) => v.toStringAsFixed(2),
+      bottomReservedSize: 30.0,
+      chartBuilder: (chartWidth, chartHeight) {
+        return LineChart(
           LineChartData(
             gridData: FlGridData(
               show: true,
@@ -346,40 +356,24 @@ class WorkoutDecouplingCurve extends StatelessWidget {
               bottomTitles: AxisTitles(
                 axisNameWidget: const Text(
                   'Minutes (T)',
-                  style: TextStyle(fontSize: 10, color: EngineRowingUI.labelSlate),
+                  style: TextStyle(fontSize: 12, color: EngineRowingUI.labelSlate),
                 ),
                 sideTitles: SideTitles(
                   showTitles: true,
-                  reservedSize: 22,
+                  reservedSize: 30,
                   interval: max(5.0, (maxX - minX) / 6),
                   getTitlesWidget: (val, _) => Text(
                     val.round().toString(),
                     style: const TextStyle(
-                      fontSize: 10,
+                      fontSize: 12,
                       color: EngineRowingUI.captionGrey,
                       fontFeatures: [FontFeature.tabularFigures()],
                     ),
                   ),
                 ),
               ),
-              leftTitles: AxisTitles(
-                axisNameWidget: const Text(
-                  'EF (W/bpm)',
-                  style: TextStyle(fontSize: 10, color: EngineRowingUI.labelSlate),
-                ),
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 34,
-                  interval: max(0.1, (maxY - minY) / 4),
-                  getTitlesWidget: (val, _) => Text(
-                    val.toStringAsFixed(2),
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: EngineRowingUI.captionGrey,
-                      fontFeatures: [FontFeature.tabularFigures()],
-                    ),
-                  ),
-                ),
+              leftTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
               ),
             ),
             borderData: FlBorderData(
@@ -403,7 +397,7 @@ class WorkoutDecouplingCurve extends StatelessWidget {
                     alignment: Alignment.topRight,
                     padding: const EdgeInsets.only(left: 4),
                     style: const TextStyle(
-                      fontSize: 9.5,
+                      fontSize: 12,
                       color: Colors.white70,
                       fontWeight: FontWeight.bold,
                     ),
@@ -422,7 +416,7 @@ class WorkoutDecouplingCurve extends StatelessWidget {
                       show: true,
                       alignment: Alignment.topRight,
                       style: const TextStyle(
-                        fontSize: 9.5,
+                        fontSize: 12,
                         color: Color(0xFF2979FF),
                         fontWeight: FontWeight.bold,
                       ),
@@ -439,7 +433,7 @@ class WorkoutDecouplingCurve extends StatelessWidget {
                       show: true,
                       alignment: Alignment.bottomRight,
                       style: const TextStyle(
-                        fontSize: 9.5,
+                        fontSize: 12,
                         color: Color(0xFFFF9100),
                         fontWeight: FontWeight.bold,
                       ),
@@ -466,7 +460,7 @@ class WorkoutDecouplingCurve extends StatelessWidget {
                       'T: ${spot.x.round()}m\nEF: ${spot.y.toStringAsFixed(2)}\nW: ${r.watts.round()} | HR: ${r.hr.round()}',
                       const TextStyle(
                         color: Colors.white,
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
                     );
@@ -501,47 +495,26 @@ class WorkoutDecouplingCurve extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
   Widget _buildLegend(
       BuildContext context, AppStrings s, DecouplingCalculationResult calc) {
-    return Wrap(
-      spacing: 14,
-      runSpacing: 6,
-      alignment: WrapAlignment.center,
-      children: [
-        _buildLegendItem(EngineRowingUI.neonLime, s.chipEF),
-        _buildLegendItem(const Color(0xFF2979FF), s.firstHalfLabel, isDashed: true),
-        _buildLegendItem(const Color(0xFFFF9100), s.secondHalfLabel, isDashed: true),
-        _buildLegendItem(Colors.white54, 'D/2', isDashed: true),
-      ],
-    );
-  }
-
-  Widget _buildLegendItem(Color color, String label, {bool isDashed = false}) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 14,
-          height: 3,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 5),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: color,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+    return SingleLineLegend(
+      items: [
+        SingleLineLegendItem(color: EngineRowingUI.neonLime, label: s.chipEF),
+        SingleLineLegendItem(
+            color: const Color(0xFF2979FF),
+            label: s.firstHalfLabel,
+            isDashed: true),
+        SingleLineLegendItem(
+            color: const Color(0xFFFF9100),
+            label: s.secondHalfLabel,
+            isDashed: true),
+        const SingleLineLegendItem(
+            color: Colors.white54, label: 'D/2', isDashed: true),
       ],
     );
   }
@@ -580,7 +553,7 @@ class WorkoutDecouplingCurve extends StatelessWidget {
       child: Text(
         label,
         style: const TextStyle(
-          fontSize: 11,
+          fontSize: 12,
           color: EngineRowingUI.textWhite,
           fontWeight: FontWeight.w600,
         ),

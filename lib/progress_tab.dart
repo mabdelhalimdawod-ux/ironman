@@ -101,9 +101,11 @@ class _ProgressTabState extends State<ProgressTab> {
     final user = widget.user;
     if (user != null && user.isAthlete) {
       final db = await DB.db;
-      final playerRows = await db.query('players', where: 'id = ?', whereArgs: [user.id], limit: 1);
+      final playerRows = await db.query('players',
+          where: 'id = ?', whereArgs: [user.id], limit: 1);
       if (playerRows.isNotEmpty) {
-        _curvesShared = (playerRows.first['curves_shared'] as num?)?.toInt() == 1;
+        _curvesShared =
+            (playerRows.first['curves_shared'] as num?)?.toInt() == 1;
       }
       if (user.coachId != null) {
         final teamRows = await db.query(
@@ -136,19 +138,22 @@ class _ProgressTabState extends State<ProgressTab> {
               Expanded(
                 child: Text(
                   name,
-                  style: const TextStyle(color: EngineRowingUI.textWhite, fontSize: 16),
+                  style: const TextStyle(
+                      color: EngineRowingUI.textWhite, fontSize: 16),
                 ),
               ),
             ],
           ),
           content: Text(
             s.curvesNotShared,
-            style: const TextStyle(color: EngineRowingUI.captionGrey, fontSize: 13),
+            style: const TextStyle(
+                color: EngineRowingUI.captionGrey, fontSize: 13),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text(s.cancel, style: const TextStyle(color: EngineRowingUI.captionGrey)),
+              child: Text(s.cancel,
+                  style: const TextStyle(color: EngineRowingUI.captionGrey)),
             ),
           ],
         ),
@@ -268,7 +273,9 @@ class _ProgressTabState extends State<ProgressTab> {
       child: Row(
         children: [
           Icon(
-            _curvesShared ? Icons.lock_open_rounded : Icons.lock_outline_rounded,
+            _curvesShared
+                ? Icons.lock_open_rounded
+                : Icons.lock_outline_rounded,
             color: _curvesShared ? EngineRowingUI.neonLime : Colors.amber,
             size: 20,
           ),
@@ -287,7 +294,8 @@ class _ProgressTabState extends State<ProgressTab> {
                 ),
                 Text(
                   s.shareMyCurvesSubtitle,
-                  style: const TextStyle(color: EngineRowingUI.captionGrey, fontSize: 10.5),
+                  style: const TextStyle(
+                      color: EngineRowingUI.captionGrey, fontSize: 12),
                 ),
               ],
             ),
@@ -337,12 +345,15 @@ class _ProgressTabState extends State<ProgressTab> {
                 onTap: () => _onTeammateTap(s, tm),
                 borderRadius: BorderRadius.circular(10),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: EngineRowingUI.equationCardFill,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: shared ? EngineRowingUI.neonLime.withAlpha(90) : EngineRowingUI.bgGridLine,
+                      color: shared
+                          ? EngineRowingUI.neonLime.withAlpha(90)
+                          : EngineRowingUI.bgGridLine,
                     ),
                   ),
                   child: Row(
@@ -350,24 +361,31 @@ class _ProgressTabState extends State<ProgressTab> {
                     children: [
                       CircleAvatar(
                         radius: 12,
-                        backgroundColor: shared ? EngineRowingUI.neonLime.withAlpha(40) : Colors.white12,
+                        backgroundColor: shared
+                            ? EngineRowingUI.neonLime.withAlpha(40)
+                            : Colors.white12,
                         child: Text(
                           name.isNotEmpty ? name.substring(0, 1) : '?',
                           style: TextStyle(
-                            fontSize: 10.5,
+                            fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: shared ? EngineRowingUI.neonLime : EngineRowingUI.captionGrey,
+                            color: shared
+                                ? EngineRowingUI.neonLime
+                                : EngineRowingUI.captionGrey,
                           ),
                         ),
                       ),
                       const SizedBox(width: 6),
                       Text(
                         name,
-                        style: const TextStyle(color: EngineRowingUI.textWhite, fontSize: 12),
+                        style: const TextStyle(
+                            color: EngineRowingUI.textWhite, fontSize: 12),
                       ),
                       const SizedBox(width: 4),
                       Icon(
-                        shared ? Icons.check_circle_outline_rounded : Icons.lock_outline_rounded,
+                        shared
+                            ? Icons.check_circle_outline_rounded
+                            : Icons.lock_outline_rounded,
                         size: 14,
                         color: shared ? EngineRowingUI.neonLime : Colors.amber,
                       ),
@@ -440,7 +458,7 @@ class _ProgressTabState extends State<ProgressTab> {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: EngineRowingUI.labelSlate,
-                      fontSize: 11.5,
+                      fontSize: 12,
                     ),
                   ),
                 ],

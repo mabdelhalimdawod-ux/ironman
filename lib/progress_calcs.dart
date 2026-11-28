@@ -2,6 +2,7 @@ import 'dart:math';
 import 'app_strings.dart';
 import 'db.dart';
 import 'heart_rate_zones.dart';
+import 'workout_kinds.dart';
 
 /// الثوابت المعتمدة لحالات TSB من مكان واحد
 class TsbThresholds {
@@ -1054,12 +1055,12 @@ class ProgressCalcs {
         periodStart.subtract(Duration(days: periodDurationDays));
     final prevPeriodEnd = periodStart.subtract(const Duration(days: 1));
 
-    // تصفية تمرينات نوع التمرين المحدد (قاعدة عدم التداخل)
+    // تصفية تمرينات نوع التمرين المحدد باستخدام القاعدة الموحدة
     final kindLogs = allAthleteLogs.where((l) {
       final k = (l['kind'] as String?)?.trim();
       return k == null ||
           k.isEmpty ||
-          k.toLowerCase() == workoutKind.toLowerCase();
+          WorkoutKinds.matchesKind(k, workoutKind);
     }).toList();
 
     // تقسيم التمرينات حسب الزون
@@ -1512,6 +1513,233 @@ class ProgressCalcs {
       validPointsCount: valid.length,
     );
   }
+
+  /// تحليل نص تاريخ (YYYY-MM-DD أو ISO) إلى DateTime
+  static DateTime? parseDate(String raw) {
+    final clean = raw.trim().split(' ').first.split('T').first;
+    if (clean.isEmpty) return null;
+    return DateTime.tryParse(clean);
+  }
+
+  /// تنسيق تاريخ DateTime إلى YYYY-MM-DD
+  static String formatDate(DateTime date) => formatDateKey(date);
+
+  /// حساب الواط من السبليت بالثانية لكل 500م: watts = 2.80 / (split / 500)^3
+  static double wattsFromSplit(double splitSeconds) {
+    if (splitSeconds <= 0) return 0.0;
+    final pacePerM = splitSeconds / 500.0;
+    return 2.80 / (pacePerM * pacePerM * pacePerM);
+  }
+
+  /// بناء سلسلة تمرينات بسياسة «كل تمرينة = نقطة» مع التواريخ الفعلية فقط
+  /// وتمييز أفضل تمرينة في اليوم (يمر بها الخط) عن باقي تمرينات نفس اليوم (باهتة).
+  static WorkoutDateSeriesResult buildWorkoutDateSeries({
+    required List<Map<String, Object?>> workouts,
+    required DateTime periodStart,
+    required DateTime periodEnd,
+    required double? Function(Map<String, Object?> row) extractValue,
+    bool higherIsBetter = true,
+    List<DateTime>? sharedActiveDates,
+    String defaultKind = 'Erg',
+  }) {
+    final pStart = DateTime(periodStart.year, periodStart.month, periodStart.day);
+    final pEnd = DateTime(periodEnd.year, periodEnd.month, periodEnd.day);
+
+    final extracted = <_RawWorkoutPoint>[];
+    for (int i = 0; i < workouts.length; i++) {
+      final row = workouts[i];
+      final d = parseDate((row['date'] as String?) ?? '');
+      if (d == null) continue;
+      final dOnly = DateTime(d.year, d.month, d.day);
+      if (dOnly.isBefore(pStart) || dOnly.isAfter(pEnd)) continue;
+
+      final val = extractValue(row);
+      if (val == null || !val.isFinite) continue;
+
+      final hrRaw = row['avg_hr'] ?? row['hr'];
+      final hrVal = hrRaw is num ? hrRaw.toDouble() : null;
+      final rawZone = (row['zone'] as String?) ?? '';
+      final normZone = HeartRateZones.normalizeZoneKey(rawZone);
+      final rawKind =
+          (row['kind'] as String?) ?? (row['session_kind'] as String?) ?? '';
+      final kind = WorkoutKinds.normalizeKind(rawKind) ??
+          (rawKind.trim().isNotEmpty ? rawKind.trim() : defaultKind);
+
+      extracted.add(_RawWorkoutPoint(
+        date: dOnly,
+        dateKey: formatDate(dOnly),
+        orderIndex: i,
+        idOrder: (row['id'] as num?)?.toInt() ?? i,
+        value: val,
+        avgHr: (hrVal != null && hrVal > 0) ? hrVal : null,
+        zoneKey: normZone,
+        kind: kind,
+        rawRow: row,
+      ));
+    }
+
+    if (extracted.isEmpty) {
+      return WorkoutDateSeriesResult(
+        activeDates: sharedActiveDates ?? const [],
+        allPoints: const [],
+        bestPoints: const [],
+        dimmedPoints: const [],
+      );
+    }
+
+    // الترتيب الزمني للتواريخ ثم الترتيب داخل اليوم
+    extracted.sort((a, b) {
+      final cmp = a.date.compareTo(b.date);
+      if (cmp != 0) return cmp;
+      final idCmp = a.idOrder.compareTo(b.idOrder);
+      if (idCmp != 0) return idCmp;
+      return a.orderIndex.compareTo(b.orderIndex);
+    });
+
+    final List<DateTime> activeDates;
+    if (sharedActiveDates != null && sharedActiveDates.isNotEmpty) {
+      activeDates = List<DateTime>.from(sharedActiveDates);
+    } else {
+      final seen = <String>{};
+      activeDates = <DateTime>[];
+      for (final p in extracted) {
+        if (seen.add(p.dateKey)) {
+          activeDates.add(p.date);
+        }
+      }
+    }
+
+    final slotByKey = <String, int>{};
+    for (int idx = 0; idx < activeDates.length; idx++) {
+      slotByKey[formatDate(activeDates[idx])] = idx;
+    }
+
+    // تجميع تمرينات كل يوم لتحديد رقم التمرينة والأفضل في اليوم
+    final byDay = <String, List<_RawWorkoutPoint>>{};
+    for (final p in extracted) {
+      if (!slotByKey.containsKey(p.dateKey)) continue;
+      byDay.putIfAbsent(p.dateKey, () => []).add(p);
+    }
+
+    final allPoints = <WorkoutPlotPoint>[];
+    final bestPoints = <WorkoutPlotPoint>[];
+    final dimmedPoints = <WorkoutPlotPoint>[];
+
+    for (final d in activeDates) {
+      final dKey = formatDate(d);
+      final dayList = byDay[dKey];
+      if (dayList == null || dayList.isEmpty) continue;
+      final slotIdx = slotByKey[dKey]!;
+
+      int bestIdx = 0;
+      for (int i = 1; i < dayList.length; i++) {
+        final better = higherIsBetter
+            ? dayList[i].value > dayList[bestIdx].value
+            : dayList[i].value < dayList[bestIdx].value;
+        if (better) {
+          bestIdx = i;
+        }
+      }
+
+      for (int i = 0; i < dayList.length; i++) {
+        final item = dayList[i];
+        final isBest = i == bestIdx;
+        final pt = WorkoutPlotPoint(
+          date: item.date,
+          dateKey: item.dateKey,
+          xSlotIndex: slotIdx,
+          dayOrder: i + 1,
+          value: item.value,
+          avgHr: item.avgHr,
+          zoneKey: item.zoneKey,
+          kind: item.kind,
+          isBestOfDay: isBest,
+          rawRow: item.rawRow,
+        );
+        allPoints.add(pt);
+        if (isBest) {
+          bestPoints.add(pt);
+        } else {
+          dimmedPoints.add(pt);
+        }
+      }
+    }
+
+    return WorkoutDateSeriesResult(
+      activeDates: activeDates,
+      allPoints: allPoints,
+      bestPoints: bestPoints,
+      dimmedPoints: dimmedPoints,
+    );
+  }
+}
+
+/// نقطة تمرينة واحدة مهيّأة للرسم بسياسة «كل تمرينة = نقطة»
+class WorkoutPlotPoint {
+  final DateTime date;
+  final String dateKey;
+  final int xSlotIndex;
+  final int dayOrder;
+  final double value;
+  final double? avgHr;
+  final String zoneKey;
+  final String kind;
+  final bool isBestOfDay;
+  final Map<String, Object?> rawRow;
+
+  const WorkoutPlotPoint({
+    required this.date,
+    required this.dateKey,
+    required this.xSlotIndex,
+    required this.dayOrder,
+    required this.value,
+    this.avgHr,
+    required this.zoneKey,
+    required this.kind,
+    required this.isBestOfDay,
+    required this.rawRow,
+  });
+}
+
+/// نتيجة سلسلة التمرينات المصنفة إلى أفضل يومية (للخط) ونقاط نفس اليوم الباهتة
+class WorkoutDateSeriesResult {
+  final List<DateTime> activeDates;
+  final List<WorkoutPlotPoint> allPoints;
+  final List<WorkoutPlotPoint> bestPoints;
+  final List<WorkoutPlotPoint> dimmedPoints;
+
+  const WorkoutDateSeriesResult({
+    required this.activeDates,
+    required this.allPoints,
+    required this.bestPoints,
+    required this.dimmedPoints,
+  });
+
+  bool get isEmpty => allPoints.isEmpty;
+}
+
+class _RawWorkoutPoint {
+  final DateTime date;
+  final String dateKey;
+  final int orderIndex;
+  final int idOrder;
+  final double value;
+  final double? avgHr;
+  final String zoneKey;
+  final String kind;
+  final Map<String, Object?> rawRow;
+
+  const _RawWorkoutPoint({
+    required this.date,
+    required this.dateKey,
+    required this.orderIndex,
+    required this.idOrder,
+    required this.value,
+    required this.avgHr,
+    required this.zoneKey,
+    required this.kind,
+    required this.rawRow,
+  });
 }
 
 /// نتيجة مزامنة جدول الكاش daily_load للاعب

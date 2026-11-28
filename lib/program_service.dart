@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'db.dart';
 import 'heart_rate_zones.dart';
 import 'sync_engine.dart';
+import 'workout_kinds.dart';
+export 'workout_kinds.dart';
 
 // ============================================================================
 // ثوابت ومناطق النبض والأنواع المعتمدة في تاب Program (المصدر الموحد للزونات الـ 7)
@@ -64,15 +66,7 @@ String formatZoneToDetailed(String rawZone) {
   }
 }
 
-const List<String> kProgramWorkoutKinds = [
-  'Stretch',
-  'Fitness',
-  'Mob',
-  'bike',
-  'Run',
-  'Erg',
-  'Row',
-];
+const List<String> kProgramWorkoutKinds = WorkoutKinds.all;
 
 const List<String> kProgramTestTypes = [
   '500 m test',

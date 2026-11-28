@@ -548,9 +548,7 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                     const SizedBox(height: 4),
                     DropdownButtonFormField<String>(
                       initialValue:
-                          ProgramService.workoutKinds.contains(slot.kind)
-                              ? slot.kind
-                              : 'إرج',
+                          WorkoutKinds.normalizeKind(slot.kind) ?? 'Erg',
                       dropdownColor: EngineRowingUI.equationCardFill,
                       style: const TextStyle(
                           color: EngineRowingUI.textWhite, fontSize: 14),
@@ -576,8 +574,11 @@ class _CycleTemplatePageState extends State<CycleTemplatePage> {
                               color: EngineRowingUI.neonLime),
                         ),
                       ),
-                      items: ProgramService.workoutKinds.map((k) {
-                        return DropdownMenuItem(value: k, child: Text(k));
+                      items: WorkoutKinds.all.map((k) {
+                        return DropdownMenuItem(
+                          value: k,
+                          child: Text(WorkoutKinds.displayName(k, s)),
+                        );
                       }).toList(),
                       onChanged: (val) {
                         if (val != null) _updateSlotKind(index, val);

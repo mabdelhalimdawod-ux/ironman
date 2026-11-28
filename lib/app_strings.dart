@@ -274,11 +274,16 @@ class AppStrings {
       ? 'تم حفظ القالب وتحديث جدول التمارين'
       : 'Template saved successfully';
 
-  // أنواع التمارين المحددة بدقة
+  // أنواع التمارين المحددة بدقة (القائمة المركزية الموحدة)
   String get typeErg => isArabic ? 'إرج' : 'Erg';
   String get typeWater => isArabic ? 'ماء' : 'Water';
+  String get typeWaterRowing => isArabic ? 'تجديف مائي' : 'Water Rowing';
   String get typeRunning => isArabic ? 'جري' : 'Running';
+  String get typeRun => isArabic ? 'جري' : 'Run';
+  String get typeBike => isArabic ? 'دراجة' : 'Bike';
   String get typeFlexibility => isArabic ? 'مرونة' : 'Flexibility';
+  String get typeStretch => isArabic ? 'إطالات' : 'Stretch';
+  String get typeMobility => isArabic ? 'مرونة حركية' : 'Mobility';
   String get typeStrength => isArabic ? 'قوة' : 'Strength';
   String get typeFitness => isArabic ? 'لياقة' : 'Fitness';
 
@@ -903,12 +908,16 @@ class AppStrings {
   String get periodFilterWeek => isArabic ? 'أسبوع' : 'Week';
   String get periodFilterCycle => isArabic ? 'الدورة المرحلية' : 'Cycle';
 
-  // ==================== Matrix Zone & Capacity Curve (Batch 2) ====================
-  String get capacityCurveTitle =>
-      isArabic ? 'منحنى القدرة' : 'Capacity Curve';
-  String get capacityCurveExplanation => isArabic
-      ? 'كل ما انخفض المنحنى عند منطقة تدريبية، زادت سيطرة اللاعب على قدرته في تلك المنطقة.'
-      : 'The lower the curve at a zone, the greater the athlete\'s capacity control in that zone.';
+  // ==================== Matrix Zone & Energy Index Curve ====================
+  String get energyIndexCurveTitle =>
+      isArabic ? 'منحنى مؤشر الطاقة' : 'Energy Index Curve';
+  String get energyEconomyIndexCurveTitle =>
+      isArabic ? 'منحنى مؤشر اقتصاد الطاقة' : 'Energy Economy Index Curve';
+  String get energyEconomyExplanation => isArabic
+      ? 'كلما انخفض المنحنى عند منطقة دلّ على اقتصاد طاقة أفضل (تكلفة طاقة أقل) للاعب في هذه المنطقة. تقديري.'
+      : 'The lower the curve at a zone, the better the athlete\'s energy economy (lower energy cost) in that zone. Estimated.';
+  String get capacityCurveTitle => energyIndexCurveTitle;
+  String get capacityCurveExplanation => energyEconomyExplanation;
   String get noBaselineYet =>
       isArabic ? 'لا يوجد أساس بعد' : 'No baseline yet';
   String get baselineStartLabel =>
@@ -1068,17 +1077,30 @@ class AppStrings {
   String get selectWorkoutPrompt =>
       isArabic ? 'اختر التمرين' : 'Select workout';
   String get workoutDecouplingTrendTitle => isArabic
-      ? 'منحنى اتجاه التفكك القلبي'
-      : 'Decoupling Trend Curve';
+      ? 'التفكك القلبي % لكل تمرينة'
+      : 'Decoupling % per workout';
+  String get decouplingPerWorkoutTitle => isArabic
+      ? 'التفكك القلبي % لكل تمرينة'
+      : 'Decoupling % per workout';
   String get actualEfForWorkoutTitle => isArabic
       ? 'معامل الكفاءة (EF) الفعلي للتمرين'
       : 'Actual Workout EF';
-  String get weeklyAverageEfTitle => isArabic
-      ? 'متوسط EF أسبوعي'
-      : 'Weekly Average EF';
+  String get efPerWorkoutTitle => isArabic
+      ? 'معامل الكفاءة (EF) لكل تمرينة'
+      : 'EF per workout';
+  String get weeklyAverageEfTitle => efPerWorkoutTitle;
   String get dynamicWattsTitle => isArabic
       ? 'منحنى الواط الديناميكي'
       : 'Dynamic Watt Curve';
+  String get workoutNumberInDay => isArabic ? 'تمرينة رقم' : 'Workout #';
+  String get heartRateShort => isArabic ? 'النبض' : 'HR';
+  String get zoneShort => isArabic ? 'المنطقة' : 'Zone';
+  String get typeShort => isArabic ? 'النوع' : 'Type';
+  String get dailyBestLegend => isArabic ? 'الأحسن في اليوم' : 'Daily Best';
+  String get sameDayDimmedLegend =>
+      isArabic ? 'تمارين أخرى نفس اليوم' : 'Other same-day';
+  String get zoneBaselineLegend =>
+      isArabic ? 'خط الأساس للمنطقة' : 'Zone Baseline';
   String get allZonesLabel => isArabic ? 'كل المناطق' : 'All Zones';
   String get allWorkoutKindsLabel =>
       isArabic ? 'كل الأنواع' : 'All Types';

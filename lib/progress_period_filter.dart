@@ -383,7 +383,7 @@ class _ProgressPeriodFilterState extends State<ProgressPeriodFilter> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 11.5,
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: selected
                         ? EngineRowingUI.bgNavy
@@ -448,7 +448,7 @@ class _ProgressPeriodFilterState extends State<ProgressPeriodFilter> {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: EngineRowingUI.textWhite,
-                          fontSize: 11.5,
+                          fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

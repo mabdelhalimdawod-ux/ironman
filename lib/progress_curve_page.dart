@@ -14,6 +14,7 @@ import 'progress_calcs.dart';
 import 'progress_curve_header.dart';
 import 'progress_panel.dart';
 import 'progress_period_filter.dart';
+import 'scrollable_chart_container.dart';
 import 'ef_zone_curve.dart';
 import 'decoupling_trend_curve.dart';
 import 'dynamic_watts_curve.dart';
@@ -147,7 +148,6 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
   final Set<int> _loadingPlayerIds = {};
 
   late ProgressPeriodSelection _period;
-  String? _selectedWattsZone; // null = جميع الزونات
   String _selectedMatrixKind = 'Erg';
   String _selectedZoneHoursKind = 'ALL';
   List<MatrixZoneIndicatorConfig> _matrixConfigs =
@@ -696,8 +696,6 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
               _buildMatrixZoneKindSelectorBar(s),
             if (widget.curveType == ProgressCurveType.zoneHours)
               _buildZoneHoursKindSelectorBar(s),
-            if (widget.curveType == ProgressCurveType.watts)
-              _buildWattsZoneSelectorBar(s),
 
             // 4. منطقة الرسم الرأسية القابلة للتمرير لأي عدد لاعبين
             Expanded(
@@ -735,7 +733,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
             s.teamAthletesPrompt,
             style: const TextStyle(
               color: EngineRowingUI.captionGrey,
-              fontSize: 10.5,
+              fontSize: 12,
             ),
           ),
           const SizedBox(height: 6),
@@ -834,9 +832,9 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-            for (final kind in kProgramWorkoutKinds)
+            for (final kind in WorkoutKinds.all)
               _buildZoneChip(
-                label: kind,
+                label: WorkoutKinds.displayName(kind, s),
                 color: EngineRowingUI.neonLime,
                 selected:
                     _selectedMatrixKind.toLowerCase() == kind.toLowerCase(),
@@ -867,9 +865,9 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
               selected: _selectedZoneHoursKind == 'ALL',
               onTap: () => _onZoneHoursKindChanged('ALL'),
             ),
-            for (final kind in kProgramWorkoutKinds)
+            for (final kind in WorkoutKinds.all)
               _buildZoneChip(
-                label: kind,
+                label: WorkoutKinds.displayName(kind, s),
                 color: EngineRowingUI.zone2Color,
                 selected:
                     _selectedZoneHoursKind.toLowerCase() == kind.toLowerCase(),
@@ -903,38 +901,6 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
     }
   }
 
-  Widget _buildWattsZoneSelectorBar(AppStrings s) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: const BoxDecoration(
-        color: EngineRowingUI.equationCardFill,
-        border: Border(
-          bottom: BorderSide(color: EngineRowingUI.bgGridLine, width: 1.0),
-        ),
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            _buildZoneChip(
-              label: s.all,
-              color: EngineRowingUI.neonLime,
-              selected: _selectedWattsZone == null,
-              onTap: () => setState(() => _selectedWattsZone = null),
-            ),
-            for (final z in HeartRateZones.orderedZones)
-              _buildZoneChip(
-                label: z,
-                color: HeartRateZones.zoneColor(z),
-                selected: _selectedWattsZone == z,
-                onTap: () => setState(() => _selectedWattsZone = z),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildZoneChip({
     required String label,
     required Color color,
@@ -960,8 +926,10 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
           ),
           child: Text(
             label,
+            maxLines: 1,
+            softWrap: false,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: selected ? FontWeight.bold : FontWeight.w500,
               color: selected ? color : EngineRowingUI.labelSlate,
             ),
@@ -1379,44 +1347,56 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                   color: EngineRowingUI.neonLime,
                   size: 20,
                 ),
-                tooltip: s.capacityCurveTitle,
+                tooltip: s.energyIndexCurveTitle,
                 onPressed: () => _showInfoDialog(
-                  s.capacityCurveTitle,
-                  s.capacityCurveExplanation,
+                  s.energyEconomyIndexCurveTitle,
+                  s.energyEconomyExplanation,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 6),
 
-          // شريط أسماء اللاعبين المختارين
-          Wrap(
-            spacing: 10,
-            runSpacing: 6,
-            children: _selectedPlayerIds.map((pid) {
-              final color = _colorForAthlete(pid);
-              final name = _athleteCache[pid]?.name ?? _nameForId(pid);
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration:
-                        BoxDecoration(color: color, shape: BoxShape.circle),
-                  ),
-                  const SizedBox(width: 5),
-                  Text(
-                    name,
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
+          // شريط أسماء اللاعبين المختارين في سطر أفقي واحد قابل للتمرير
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                for (int i = 0; i < _selectedPlayerIds.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 12),
+                  Builder(
+                    builder: (context) {
+                      final pid = _selectedPlayerIds[i];
+                      final color = _colorForAthlete(pid);
+                      final name = _athleteCache[pid]?.name ?? _nameForId(pid);
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                                color: color, shape: BoxShape.circle),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            name,
+                            maxLines: 1,
+                            softWrap: false,
+                            style: TextStyle(
+                              color: color,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ],
-              );
-            }).toList(),
+              ],
+            ),
           ),
           const SizedBox(height: 14),
 
@@ -1558,7 +1538,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                 Text(
                   s.notEnoughData,
                   style: const TextStyle(
-                      color: EngineRowingUI.captionGrey, fontSize: 11),
+                      color: EngineRowingUI.captionGrey, fontSize: 12),
                 ),
             ],
           ),
@@ -1583,7 +1563,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                     : 0.0;
 
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -1594,7 +1574,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                           color: bestWatts != null
                               ? EngineRowingUI.textWhite
                               : EngineRowingUI.captionGrey,
-                          fontSize: 10,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -1662,7 +1642,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
 
                       // اسم المنطقة
                       SizedBox(
-                        width: max(barWidth + 10, 48),
+                        width: max(barWidth + 16, 86),
                         child: Text(
                           HeartRateZones.zoneDisplayName(z, isArabic: false),
                           textAlign: TextAlign.center,
@@ -1670,7 +1650,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: zColor,
-                            fontSize: 9.5,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -1695,7 +1675,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
     );
   }
 
-  /// رسم منحنى القدرة (Capacity Curve) للاعب
+  /// رسم منحنى مؤشر الطاقة (Energy Index Curve) ومنحنى مؤشر اقتصاد الطاقة
   Widget _buildCapacityCurveChart({
     required AppStrings s,
     required Color athleteColor,
@@ -1716,96 +1696,236 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
       return const SizedBox.shrink();
     }
 
+    final vals = spots.map((e) => e.y).toList();
+    final minVal = max(0.0, (vals.reduce(min) - 30.0).floorToDouble());
+    final maxVal = max(minVal + 60.0, (vals.reduce(max) + 30.0).ceilToDouble());
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Text(
-              s.capacityCurveTitle,
-              style: TextStyle(
-                color: athleteColor,
-                fontSize: 11.5,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(width: 8),
-            // شارة LT1
-            if (result.lt1Point != null)
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                decoration: BoxDecoration(
-                  color: EngineRowingUI.bgNavy,
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(
-                      color: HeartRateZones.zoneColor('Z2'), width: 1.0),
-                ),
-                child: const Text(
-                  'LT1 (تقديري)',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            children: [
+              Text(
+                s.energyIndexCurveTitle,
+                maxLines: 1,
+                softWrap: false,
+                style: TextStyle(
+                  color: athleteColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            const SizedBox(width: 6),
-            // شارة LT2
-            if (result.lt2Point != null)
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                decoration: BoxDecoration(
-                  color: EngineRowingUI.bgNavy,
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(
-                      color: HeartRateZones.zoneColor('Threshold'), width: 1.0),
+              const SizedBox(width: 10),
+              if (result.lt1Point != null)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: EngineRowingUI.bgNavy,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                        color: HeartRateZones.zoneColor('Z2'), width: 1.0),
+                  ),
+                  child: Text(
+                    s.isArabic ? 'LT1 (تقديري)' : 'LT1 (est.)',
+                    maxLines: 1,
+                    softWrap: false,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold),
+                  ),
                 ),
-                child: const Text(
-                  'LT2 (تقديري)',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold),
+              if (result.lt1Point != null && result.lt2Point != null)
+                const SizedBox(width: 8),
+              if (result.lt2Point != null)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: EngineRowingUI.bgNavy,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                        color: HeartRateZones.zoneColor('Threshold'),
+                        width: 1.0),
+                  ),
+                  child: Text(
+                    s.isArabic ? 'LT2 (تقديري)' : 'LT2 (est.)',
+                    maxLines: 1,
+                    softWrap: false,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold),
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
-        const SizedBox(height: 6),
-        SizedBox(
-          height: 100,
-          child: Directionality(
-            textDirection: TextDirection.ltr,
-            child: LineChart(
+        const SizedBox(height: 8),
+        ScrollableChartFrame(
+          height: 200.0,
+          slotsCount: orderedZones.length,
+          slotWidth: 88.0,
+          minY: minVal,
+          maxY: maxVal,
+          yTicksCount: 5,
+          yAxisUnitLabel: s.chipWatts,
+          formatYLabel: (v) => '${v.round()}',
+          bottomReservedSize: 38.0,
+          chartBuilder: (chartWidth, chartHeight) {
+            return LineChart(
               LineChartData(
-                minX: 0,
-                maxX: 6,
-                minY: 60,
-                maxY: 420,
-                gridData: const FlGridData(show: false),
-                titlesData: const FlTitlesData(show: false),
-                borderData: FlBorderData(show: false),
+                minX: -0.5,
+                maxX: (orderedZones.length - 1).toDouble() + 0.5,
+                minY: minVal,
+                maxY: maxVal,
+                clipData: const FlClipData.none(),
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: true,
+                  verticalInterval: 1.0,
+                  getDrawingHorizontalLine: (_) => const FlLine(
+                    color: EngineRowingUI.bgGridLine,
+                    strokeWidth: 0.7,
+                  ),
+                  getDrawingVerticalLine: (_) => FlLine(
+                    color: EngineRowingUI.bgGridLine.withValues(alpha: 0.45),
+                    strokeWidth: 0.6,
+                  ),
+                ),
+                titlesData: FlTitlesData(
+                  leftTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 38.0,
+                      interval: 1.0,
+                      getTitlesWidget: (v, meta) {
+                        if ((v - v.roundToDouble()).abs() > 0.05) {
+                          return const SizedBox.shrink();
+                        }
+                        final idx = v.round();
+                        if (idx < 0 || idx >= orderedZones.length) {
+                          return const SizedBox.shrink();
+                        }
+                        final z = orderedZones[idx];
+                        return SideTitleWidget(
+                          meta: meta,
+                          space: 8,
+                          child: Text(
+                            HeartRateZones.zoneDisplayName(z,
+                                isArabic: s.isArabic),
+                            maxLines: 1,
+                            softWrap: false,
+                            style: TextStyle(
+                              color: HeartRateZones.zoneColor(z),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                borderData: FlBorderData(
+                  show: true,
+                  border: const Border(
+                    bottom: BorderSide(
+                        color: EngineRowingUI.bgGridLine, width: 1.0),
+                    left: BorderSide(
+                        color: EngineRowingUI.bgGridLine, width: 1.0),
+                  ),
+                ),
+                lineTouchData: LineTouchData(
+                  enabled: true,
+                  touchTooltipData: LineTouchTooltipData(
+                    fitInsideHorizontally: true,
+                    fitInsideVertically: true,
+                    getTooltipColor: (_) =>
+                        EngineRowingUI.bgNavy.withValues(alpha: 0.95),
+                    getTooltipItems: (touchedSpots) {
+                      return touchedSpots.map((spot) {
+                        final idx = spot.x.round();
+                        final zName = (idx >= 0 && idx < orderedZones.length)
+                            ? HeartRateZones.zoneDisplayName(
+                                orderedZones[idx],
+                                isArabic: s.isArabic,
+                              )
+                            : '';
+                        return LineTooltipItem(
+                          '$zName\n${spot.y.toStringAsFixed(1)}',
+                          TextStyle(
+                            color: athleteColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        );
+                      }).toList();
+                    },
+                  ),
+                ),
                 lineBarsData: [
                   LineChartBarData(
                     spots: spots,
                     isCurved: true,
                     curveSmoothness: 0.35,
                     color: athleteColor,
-                    barWidth: 2.4,
+                    barWidth: 2.6,
                     dotData: FlDotData(
                       show: true,
                       getDotPainter: (spot, percent, bar, index) =>
                           FlDotCirclePainter(
-                        radius: 3.5,
+                        radius: 4.5,
                         color: athleteColor,
                         strokeColor: Colors.white,
-                        strokeWidth: 1.0,
+                        strokeWidth: 1.2,
                       ),
                     ),
                   ),
                 ],
               ),
-            ),
+            );
+          },
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: EngineRowingUI.equationCardFill,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: athleteColor.withValues(alpha: 0.35)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                s.energyEconomyIndexCurveTitle,
+                style: TextStyle(
+                  color: athleteColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                s.energyEconomyExplanation,
+                style: const TextStyle(
+                  color: EngineRowingUI.labelSlate,
+                  fontSize: 12,
+                  height: 1.4,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -2057,7 +2177,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                   const SizedBox(height: 8),
                   Text(
                     s.textFieldNotCalculatedWarning,
-                    style: const TextStyle(color: Colors.amber, fontSize: 11),
+                    style: const TextStyle(color: Colors.amber, fontSize: 12),
                   ),
                 ],
                 const SizedBox(height: 12),
@@ -2206,13 +2326,13 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                   Text(
                     'Max HR: $mhr bpm (${s.isArabic ? 'البروفايل' : 'Profile'})',
                     style: const TextStyle(
-                        color: EngineRowingUI.captionGrey, fontSize: 10.5),
+                        color: EngineRowingUI.captionGrey, fontSize: 12),
                   ),
                   Text(
                     'RHR: $rhrText',
                     style: TextStyle(
                       color: rhr > 0 ? EngineRowingUI.neonLime : Colors.amber,
-                      fontSize: 10.5,
+                      fontSize: 12,
                     ),
                   ),
                 ],
@@ -2255,9 +2375,11 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                     ),
                     child: Text(
                       label,
+                      maxLines: 1,
+                      softWrap: false,
                       style: const TextStyle(
                         color: EngineRowingUI.neonLime,
-                        fontSize: 10,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -2273,7 +2395,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: EngineRowingUI.captionGrey,
-                fontSize: 10,
+                fontSize: 12,
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -2297,10 +2419,6 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
     required bool isLoading,
     required String metricKey,
   }) {
-    final maPoints = enableMA7
-        ? ProgressCalcs.movingAverage7(points)
-        : const <DateValuePoint>[];
-
     double? minY;
     double? maxY;
     final nonNullVals =
@@ -2311,6 +2429,9 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
       if ((high - low).abs() < 1e-6) {
         minY = low - max(1.0, low.abs() * 0.1);
         maxY = high + max(1.0, high.abs() * 0.1);
+      } else {
+        minY = low - (high - low) * 0.1;
+        maxY = high + (high - low) * 0.1;
       }
     }
 
@@ -2356,7 +2477,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                         '${points.last.value!.toStringAsFixed(1)} $unit'),
                     style: TextStyle(
                       color: athleteColor,
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -2388,18 +2509,28 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
               ),
             )
           else
-            SizedBox(
-              height: 145,
-              child: Directionality(
-                textDirection: TextDirection.ltr,
-                child: LineChart(
+            ScrollableChartFrame(
+              height: 185.0,
+              slotsCount: points.length,
+              slotWidth: 64.0,
+              minY: minY ?? 0.0,
+              maxY: (maxY != null && maxY > (minY ?? 0.0))
+                  ? maxY
+                  : (minY ?? 0.0) + 10.0,
+              yTicksCount: 4,
+              formatYLabel: (val) =>
+                  val.toStringAsFixed(val.abs() < 10 ? 1 : 0),
+              bottomReservedSize: 32.0,
+              chartBuilder: (chartWidth, chartHeight) {
+                final safeMinY = minY ?? 0.0;
+                final safeMaxY =
+                    (maxY != null && maxY > safeMinY) ? maxY : safeMinY + 10.0;
+                return LineChart(
                   LineChartData(
-                    minX: points.length == 1 ? -0.5 : 0.0,
-                    maxX: points.length == 1
-                        ? 0.5
-                        : (points.length - 1).toDouble(),
-                    minY: minY,
-                    maxY: maxY,
+                    minX: -0.5,
+                    maxX: (points.length - 1).toDouble() + 0.5,
+                    minY: safeMinY,
+                    maxY: safeMaxY,
                     gridData: FlGridData(
                       show: true,
                       drawVerticalLine: false,
@@ -2409,35 +2540,31 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                       ),
                     ),
                     titlesData: FlTitlesData(
-                      leftTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          reservedSize: 34,
-                          getTitlesWidget: (val, _) => Text(
-                            val.toStringAsFixed(val.abs() < 10 ? 1 : 0),
-                            style: const TextStyle(
-                              color: EngineRowingUI.captionGrey,
-                              fontSize: 9.5,
-                            ),
-                          ),
-                        ),
-                      ),
+                      leftTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
                       bottomTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
-                          reservedSize: 20,
-                          getTitlesWidget: (val, _) {
+                          reservedSize: 32.0,
+                          interval: 1.0,
+                          getTitlesWidget: (val, meta) {
+                            if ((val - val.roundToDouble()).abs() > 0.05) {
+                              return const SizedBox.shrink();
+                            }
                             final idx = val.round();
-                            if (val == idx.toDouble() &&
-                                idx >= 0 &&
-                                idx < points.length &&
-                                idx % max(1, (points.length ~/ 4)) == 0) {
+                            if (idx >= 0 && idx < points.length) {
                               final d = points[idx].date;
-                              return Text(
-                                '${d.day}/${d.month}',
-                                style: const TextStyle(
-                                  color: EngineRowingUI.captionGrey,
-                                  fontSize: 9.5,
+                              return SideTitleWidget(
+                                meta: meta,
+                                space: 6,
+                                child: Text(
+                                  '${d.day}/${d.month}',
+                                  maxLines: 1,
+                                  softWrap: false,
+                                  style: const TextStyle(
+                                    color: EngineRowingUI.captionGrey,
+                                    fontSize: 12,
+                                  ),
                                 ),
                               );
                             }
@@ -2465,9 +2592,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                           getDotPainter: (spot, percent, bar, index) {
                             final isLast = index == points.length - 1;
                             return FlDotCirclePainter(
-                              radius: isLast
-                                  ? 4.6
-                                  : (points.length == 1 ? 4.2 : 2.6),
+                              radius: isLast ? 4.8 : 3.6,
                               color: isLast
                                   ? const Color(0xFFB8F229)
                                   : athleteColor,
@@ -2477,48 +2602,11 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                           },
                         ),
                       ),
-                      if (maPoints.any((p) => p.value != null))
-                        LineChartBarData(
-                          spots: [
-                            for (int i = 0; i < maPoints.length; i++)
-                              if (maPoints[i].value != null)
-                                FlSpot(i.toDouble(), maPoints[i].value!),
-                          ],
-                          isCurved: true,
-                          color: athleteColor.withValues(alpha: 0.6),
-                          barWidth: 1.5,
-                          dashArray: [5, 4],
-                          dotData: const FlDotData(show: false),
-                        ),
                     ],
                   ),
-                ),
-              ),
+                );
+              },
             ),
-          if (enableMA7 && maPoints.any((p) => p.value != null)) ...[
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Container(
-                  width: 14,
-                  height: 2,
-                  decoration: BoxDecoration(
-                    color: athleteColor.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(1),
-                  ),
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  s.movingAverage7Legend,
-                  style: TextStyle(
-                    color: athleteColor.withValues(alpha: 0.85),
-                    fontSize: 9.5,
-                  ),
-                ),
-              ],
-            ),
-          ],
           _buildCurveFooterChipsAndNotice(s, metricKey),
         ],
       ),
@@ -2761,7 +2849,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                       color: isNoZone
                           ? EngineRowingUI.labelSlate
                           : EngineRowingUI.textWhite,
-                      fontSize: 10.5,
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -2777,7 +2865,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: EngineRowingUI.labelSlate,
-                fontSize: 10,
+                fontSize: 12,
               ),
             ),
           ),
@@ -2790,7 +2878,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: EngineRowingUI.textWhite,
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -2805,7 +2893,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                 textAlign: TextAlign.end,
                 style: TextStyle(
                   color: zColor,
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -2892,7 +2980,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                   tsbLabel,
                   style: TextStyle(
                     color: tsbColor,
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -2974,7 +3062,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                 '${s.missingCpNotice} (${data.missingCpDates.join(', ')})',
                 style: const TextStyle(
                   color: EngineRowingUI.labelSlate,
-                  fontSize: 10.5,
+                  fontSize: 12,
                 ),
               ),
             ),
@@ -3029,16 +3117,22 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    SizedBox(
-                      height: 150,
-                      child: Directionality(
-                        textDirection: TextDirection.ltr,
-                        child: LineChart(
+                    ScrollableChartFrame(
+                      height: 175.0,
+                      slotsCount: entries.length,
+                      slotWidth: 32.0,
+                      minY: loadMinY,
+                      maxY: loadMaxY,
+                      yTicksCount: 4,
+                      yAxisWidth: 46.0,
+                      yAxisUnitLabel: 'CTL / ATL',
+                      formatYLabel: (v) => v.round().toString(),
+                      bottomReservedSize: 18.0,
+                      chartBuilder: (chartWidth, chartHeight) {
+                        return LineChart(
                           LineChartData(
-                            minX: entries.length == 1 ? -0.5 : 0.0,
-                            maxX: entries.length == 1
-                                ? 0.5
-                                : (entries.length - 1).toDouble(),
+                            minX: -0.5,
+                            maxX: (entries.length - 1).toDouble() + 0.5,
                             minY: loadMinY,
                             maxY: loadMaxY,
                             gridData: FlGridData(
@@ -3049,25 +3143,14 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                                 strokeWidth: 0.8,
                               ),
                             ),
-                            titlesData: FlTitlesData(
+                            titlesData: const FlTitlesData(
                               leftTitles: AxisTitles(
-                                sideTitles: SideTitles(
-                                  showTitles: true,
-                                  reservedSize: 34,
-                                  getTitlesWidget: (v, _) => Text(
-                                    v.toInt().toString(),
-                                    style: const TextStyle(
-                                      color: EngineRowingUI.captionGrey,
-                                      fontSize: 9.5,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              bottomTitles: const AxisTitles(
                                   sideTitles: SideTitles(showTitles: false)),
-                              rightTitles: const AxisTitles(
+                              bottomTitles: AxisTitles(
                                   sideTitles: SideTitles(showTitles: false)),
-                              topTitles: const AxisTitles(
+                              rightTitles: AxisTitles(
+                                  sideTitles: SideTitles(showTitles: false)),
+                              topTitles: AxisTitles(
                                   sideTitles: SideTitles(showTitles: false)),
                             ),
                             borderData: FlBorderData(show: false),
@@ -3094,20 +3177,28 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                               ),
                             ],
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     // أعمدة TSB الملونة حسب الحالة تحت خطوط CTL/ATL
-                    SizedBox(
-                      height: 95,
-                      child: Directionality(
-                        textDirection: TextDirection.ltr,
-                        child: BarChart(
+                    ScrollableChartFrame(
+                      height: 145.0,
+                      slotsCount: entries.length,
+                      slotWidth: 32.0,
+                      minY: tsbMinY,
+                      maxY: tsbMaxY,
+                      yTicksCount: 4,
+                      yAxisWidth: 46.0,
+                      yAxisUnitLabel: 'TSB',
+                      formatYLabel: (v) => v.round().toString(),
+                      bottomReservedSize: 32.0,
+                      chartBuilder: (chartWidth, chartHeight) {
+                        return BarChart(
                           BarChartData(
                             minY: tsbMinY,
                             maxY: tsbMaxY,
-                            alignment: BarChartAlignment.spaceBetween,
+                            alignment: BarChartAlignment.spaceAround,
                             gridData: FlGridData(
                               show: true,
                               drawVerticalLine: false,
@@ -3120,37 +3211,33 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                               ),
                             ),
                             titlesData: FlTitlesData(
-                              leftTitles: AxisTitles(
-                                sideTitles: SideTitles(
-                                  showTitles: true,
-                                  reservedSize: 34,
-                                  getTitlesWidget: (v, _) => Text(
-                                    v.toInt().toString(),
-                                    style: const TextStyle(
-                                      color: EngineRowingUI.captionGrey,
-                                      fontSize: 9.5,
-                                    ),
-                                  ),
-                                ),
-                              ),
+                              leftTitles: const AxisTitles(
+                                  sideTitles: SideTitles(showTitles: false)),
                               bottomTitles: AxisTitles(
                                 sideTitles: SideTitles(
                                   showTitles: true,
-                                  reservedSize: 20,
-                                  getTitlesWidget: (val, _) {
+                                  reservedSize: 32.0,
+                                  getTitlesWidget: (val, meta) {
                                     final idx = val.round();
+                                    final step =
+                                        max(1, (entries.length <= 10 ? 1 : 2));
                                     if (idx >= 0 &&
                                         idx < entries.length &&
-                                        idx % max(1, (entries.length ~/ 4)) ==
-                                            0) {
+                                        idx % step == 0) {
                                       final d =
                                           DateTime.tryParse(entries[idx].date);
                                       if (d != null) {
-                                        return Text(
-                                          '${d.day}/${d.month}',
-                                          style: const TextStyle(
-                                            color: EngineRowingUI.captionGrey,
-                                            fontSize: 9.5,
+                                        return SideTitleWidget(
+                                          meta: meta,
+                                          space: 6,
+                                          child: Text(
+                                            '${d.day}/${d.month}',
+                                            maxLines: 1,
+                                            softWrap: false,
+                                            style: const TextStyle(
+                                              color: EngineRowingUI.captionGrey,
+                                              fontSize: 12,
+                                            ),
                                           ),
                                         );
                                       }
@@ -3175,7 +3262,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                                   BarChartRodData(
                                     fromY: 0,
                                     toY: tsbVal,
-                                    width: entries.length > 20 ? 5 : 10,
+                                    width: 10,
                                     color: barColor,
                                     borderRadius: BorderRadius.circular(2),
                                   ),
@@ -3183,8 +3270,8 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                               );
                             }),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                   ],
                 );
@@ -3289,7 +3376,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                   ),
                   style: TextStyle(
                     color: athleteColor,
-                    fontSize: 11.5,
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -3303,22 +3390,23 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                 final cpVals = pts.map((p) => p.value ?? 0.0).toList();
                 final low = cpVals.reduce(min);
                 final high = cpVals.reduce(max);
-                final minY = (high - low).abs() < 1e-6
-                    ? max(0.0, low - 15).floorToDouble()
-                    : null;
-                final maxY = (high - low).abs() < 1e-6
-                    ? (high + 15).ceilToDouble()
-                    : null;
+                final minY = max(0.0, low - 15).floorToDouble();
+                final maxY = max(minY + 10.0, (high + 15).ceilToDouble());
 
-                return SizedBox(
-                  height: 130,
-                  child: Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: LineChart(
+                return ScrollableChartFrame(
+                  height: 185.0,
+                  slotsCount: pts.length,
+                  slotWidth: 68.0,
+                  minY: minY,
+                  maxY: maxY,
+                  yTicksCount: 4,
+                  formatYLabel: (v) => '${v.round()}',
+                  bottomReservedSize: 32.0,
+                  chartBuilder: (chartWidth, chartHeight) {
+                    return LineChart(
                       LineChartData(
-                        minX: pts.length == 1 ? -0.5 : 0.0,
-                        maxX:
-                            pts.length == 1 ? 0.5 : (pts.length - 1).toDouble(),
+                        minX: -0.5,
+                        maxX: (pts.length - 1).toDouble() + 0.5,
                         minY: minY,
                         maxY: maxY,
                         gridData: FlGridData(
@@ -3330,34 +3418,31 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                           ),
                         ),
                         titlesData: FlTitlesData(
-                          leftTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              reservedSize: 34,
-                              getTitlesWidget: (v, _) => Text(
-                                v.toInt().toString(),
-                                style: const TextStyle(
-                                  color: EngineRowingUI.captionGrey,
-                                  fontSize: 9.5,
-                                ),
-                              ),
-                            ),
-                          ),
+                          leftTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false)),
                           bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
-                              reservedSize: 20,
-                              getTitlesWidget: (v, _) {
+                              reservedSize: 32.0,
+                              interval: 1.0,
+                              getTitlesWidget: (v, meta) {
+                                if ((v - v.roundToDouble()).abs() > 0.05) {
+                                  return const SizedBox.shrink();
+                                }
                                 final idx = v.round();
-                                if (v == idx.toDouble() &&
-                                    idx >= 0 &&
-                                    idx < pts.length) {
+                                if (idx >= 0 && idx < pts.length) {
                                   final d = pts[idx].date;
-                                  return Text(
-                                    '${d.day}/${d.month}',
-                                    style: const TextStyle(
-                                      color: EngineRowingUI.captionGrey,
-                                      fontSize: 9.5,
+                                  return SideTitleWidget(
+                                    meta: meta,
+                                    space: 6,
+                                    child: Text(
+                                      '${d.day}/${d.month}',
+                                      maxLines: 1,
+                                      softWrap: false,
+                                      style: const TextStyle(
+                                        color: EngineRowingUI.captionGrey,
+                                        fontSize: 12,
+                                      ),
                                     ),
                                   );
                                 }
@@ -3384,7 +3469,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                               show: true,
                               getDotPainter: (_, __, ___, ____) =>
                                   FlDotCirclePainter(
-                                radius: 3.5,
+                                radius: 4.0,
                                 color: athleteColor,
                                 strokeColor: Colors.white,
                                 strokeWidth: 1.0,
@@ -3393,8 +3478,8 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                           ),
                         ],
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 );
               },
             ),
@@ -3439,7 +3524,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                         '${t['date']} • ${t['test_type'] ?? ''}',
                         style: const TextStyle(
                           color: EngineRowingUI.textWhite,
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -3452,7 +3537,7 @@ class _ProgressCurvePageState extends State<ProgressCurvePage> {
                         ),
                         style: TextStyle(
                           color: athleteColor,
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

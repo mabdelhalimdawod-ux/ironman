@@ -583,7 +583,7 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
                   Text(
                     s.metricsCurvesSubtitle,
                     style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 12,
                         color: Colors.white.withValues(alpha: 0.7)),
                   ),
                 ],
@@ -785,7 +785,7 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
           label,
           style: TextStyle(
             color: isSelected ? _navyDeep : Colors.white70,
-            fontSize: 11.5,
+            fontSize: 12,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -934,39 +934,49 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
               ),
               const SizedBox(height: 12),
 
-              // صف المربعات الخمسة
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: HeartRateZones.orderedZones.map((zoneKey) {
-                  final hasData = _zoneDailyWatts[zoneKey] != null &&
-                      _zoneDailyWatts[zoneKey]!.isNotEmpty;
-                  final isChecked = _selectedZones.contains(zoneKey);
-                  final color = _zoneColors[zoneKey]!;
-                  final label = s.isArabic
-                      ? (_zoneLabelsAr[zoneKey] ?? zoneKey)
-                      : (_zoneLabelsEn[zoneKey] ?? zoneKey);
+              // صف المناطق في سطر أفقي واحد قابل للتمرير
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: [
+                    for (int i = 0; i < HeartRateZones.orderedZones.length; i++) ...[
+                      if (i > 0) const SizedBox(width: 8),
+                      Builder(
+                        builder: (context) {
+                          final zoneKey = HeartRateZones.orderedZones[i];
+                          final hasData = _zoneDailyWatts[zoneKey] != null &&
+                              _zoneDailyWatts[zoneKey]!.isNotEmpty;
+                          final isChecked = _selectedZones.contains(zoneKey);
+                          final color = _zoneColors[zoneKey]!;
+                          final label = s.isArabic
+                              ? (_zoneLabelsAr[zoneKey] ?? zoneKey)
+                              : (_zoneLabelsEn[zoneKey] ?? zoneKey);
 
-                  return _buildZoneCheckboxChip(
-                    zoneKey: zoneKey,
-                    label: label,
-                    color: color,
-                    hasData: hasData,
-                    isChecked: isChecked,
-                    noDataText: s.zoneNoData,
-                    onToggle: hasData
-                        ? () {
-                            setState(() {
-                              if (isChecked) {
-                                _selectedZones.remove(zoneKey);
-                              } else {
-                                _selectedZones.add(zoneKey);
-                              }
-                            });
-                          }
-                        : null,
-                  );
-                }).toList(),
+                          return _buildZoneCheckboxChip(
+                            zoneKey: zoneKey,
+                            label: label,
+                            color: color,
+                            hasData: hasData,
+                            isChecked: isChecked,
+                            noDataText: s.zoneNoData,
+                            onToggle: hasData
+                                ? () {
+                                    setState(() {
+                                      if (isChecked) {
+                                        _selectedZones.remove(zoneKey);
+                                      } else {
+                                        _selectedZones.add(zoneKey);
+                                      }
+                                    });
+                                  }
+                                : null,
+                          );
+                        },
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -1023,7 +1033,7 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
                         : 'Y-Axis: Watts (W)',
                     style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.6),
-                        fontSize: 11),
+                        fontSize: 12),
                   ),
                 ],
               ),
@@ -1108,7 +1118,7 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
                                 '${v.round()} W',
                                 style: const TextStyle(
                                   color: Color(0xFF334155),
-                                  fontSize: 10.5,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -1135,7 +1145,7 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
                                     label,
                                     style: const TextStyle(
                                       color: Color(0xFF334155),
-                                      fontSize: 10.5,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -1175,42 +1185,55 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
                 ),
               const SizedBox(height: 16),
 
-              // ── الدليل البياني (Legend) أسفل المنحنى يعرض الزونات المعلّمة فقط ──
+              // ── الدليل البياني (Legend) أسفل المنحنى في سطر أفقي واحد ──
               if (_selectedZones.isNotEmpty) ...[
                 const Divider(color: _cardBorder, height: 24),
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 8,
-                  children: _selectedZones.map((zKey) {
-                    final color = _zoneColors[zKey]!;
-                    final label = s.isArabic
-                        ? (_zoneLabelsAr[zKey] ?? zKey)
-                        : (_zoneLabelsEn[zKey] ?? zKey);
-                    final count = _zoneDailyWatts[zKey]?.length ?? 0;
-                    return Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 14,
-                          height: 14,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 1.5),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '$label ($count ${s.isArabic ? 'يوم' : 'days'})',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Row(
+                    children: [
+                      for (int i = 0; i < _selectedZones.length; i++) ...[
+                        if (i > 0) const SizedBox(width: 14),
+                        Builder(
+                          builder: (context) {
+                            final zKey = _selectedZones.elementAt(i);
+                            final color = _zoneColors[zKey]!;
+                            final label = s.isArabic
+                                ? (_zoneLabelsAr[zKey] ?? zKey)
+                                : (_zoneLabelsEn[zKey] ?? zKey);
+                            final count = _zoneDailyWatts[zKey]?.length ?? 0;
+                            return Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 14,
+                                  height: 14,
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color: Colors.white, width: 1.5),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '$label ($count ${s.isArabic ? 'يوم' : 'days'})',
+                                  maxLines: 1,
+                                  softWrap: false,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ],
-                    );
-                  }).toList(),
+                    ],
+                  ),
                 ),
               ],
             ],
@@ -1261,7 +1284,7 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
               child: Text(
                 noDataText,
                 style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.4), fontSize: 10),
+                    color: Colors.white.withValues(alpha: 0.4), fontSize: 12),
               ),
             ),
           ],
@@ -1519,7 +1542,7 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
               Text(
                 unit,
                 style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.6), fontSize: 11),
+                    color: Colors.white.withValues(alpha: 0.6), fontSize: 12),
               ),
             ],
           ),
@@ -1570,7 +1593,7 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
                               unit == 'W/bpm' || unit == '%' ? 1 : 0),
                           style: const TextStyle(
                             color: Color(0xFF334155),
-                            fontSize: 10.5,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -1595,7 +1618,7 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
                               label,
                               style: const TextStyle(
                                 color: Color(0xFF334155),
-                                fontSize: 10.5,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -1620,7 +1643,7 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
                             labelResolver: (_) => refLineLabel ?? '',
                             style: const TextStyle(
                                 color: _gold,
-                                fontSize: 10,
+                                fontSize: 12,
                                 fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -1745,7 +1768,7 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
                         extraTag,
                         style: TextStyle(
                           color: accentColor,
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -1789,7 +1812,7 @@ class _MetricsCurvePageState extends State<MetricsCurvePage>
                         item.label,
                         style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.65),
-                            fontSize: 11.5),
+                            fontSize: 12),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 6),

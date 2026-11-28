@@ -61,7 +61,8 @@ void main() {
 
       expect(find.text('أحمد علي'), findsOneWidget);
       expect(find.text(s.hrvTitle), findsOneWidget);
-      expect(find.text(s.ma7Label), findsOneWidget);
+      expect(find.text(s.ma7Label), findsNothing);
+      expect(find.text(s.swcBandLegend), findsNothing);
       expect(find.text(s.estimationNotice), findsOneWidget);
     });
 
@@ -82,9 +83,9 @@ void main() {
       expect(find.text(s.insufficientData), findsOneWidget);
     });
 
-    testWidgets('RhrCurveBlock shows alert banner when RHR is elevated (+5 bpm)', (tester) async {
+    testWidgets('RhrCurveBlock hides unrequested elevated alert banner per Phase N', (tester) async {
       final s = AppStrings(true);
-      // نقاط سابقة حول 55-60، واليوم قفز إلى 72 (أعلى من MA7 + 5)
+      // نقاط سابقة حول 55-60، واليوم قفز إلى 72 (يظل التحذير مخفياً حسب قرار المرحلة ن)
       final rhrPoints = [
         for (int i = 0; i < 7; i++)
           DateValuePoint(date: now.subtract(Duration(days: 7 - i)), value: 58.0),
@@ -104,7 +105,8 @@ void main() {
       );
 
       expect(find.text('محمد سامي'), findsOneWidget);
-      expect(find.text(s.rhrElevatedAlert), findsOneWidget);
+      expect(find.text(s.rhrElevatedAlert), findsNothing);
+      expect(find.text(s.ma7Label), findsNothing);
     });
 
     testWidgets('RhrCurveBlock does not show alert when RHR is normal', (tester) async {
@@ -217,14 +219,14 @@ void main() {
       );
 
       expect(find.text('خالد إبراهيم'), findsOneWidget);
-      expect(find.text(s.reading1Label), findsOneWidget);
-      expect(find.text(s.reading2Label), findsOneWidget);
-      expect(find.text(s.reading3Label), findsOneWidget);
+      expect(find.text(s.reading1Label), findsWidgets);
+      expect(find.text(s.reading2Label), findsWidgets);
+      expect(find.text(s.reading3Label), findsWidgets);
       expect(find.text(s.eupneaLowerIsBetter), findsOneWidget);
       expect(find.text(s.eupneaBelowBaselineNotice), findsOneWidget);
 
       // اختبار النقر على فلتر إخفاء القراءة 1
-      await tester.tap(find.text(s.reading1Label));
+      await tester.tap(find.text(s.reading1Label).first);
       await tester.pumpAndSettle();
       expect(find.text('خالد إبراهيم'), findsOneWidget);
     });

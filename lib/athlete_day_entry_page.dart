@@ -1077,9 +1077,7 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
-                      value: kProgramWorkoutKinds.contains(form.kind)
-                          ? form.kind
-                          : 'Erg',
+                      value: WorkoutKinds.normalizeKind(form.kind) ?? 'Erg',
                       dropdownColor: EngineRowingUI.cardFill,
                       icon: const Icon(Icons.arrow_drop_down,
                           color: EngineRowingUI.neonLime, size: 20),
@@ -1097,10 +1095,10 @@ class _AthleteDayEntryPageState extends State<AthleteDayEntryPage> {
                                 });
                               }
                             },
-                      items: kProgramWorkoutKinds.map((k) {
+                      items: WorkoutKinds.all.map((k) {
                         return DropdownMenuItem<String>(
                           value: k,
-                          child: Text(k),
+                          child: Text(WorkoutKinds.displayName(k, s)),
                         );
                       }).toList(),
                     ),
